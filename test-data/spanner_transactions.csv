@@ -1,0 +1,4 @@
+transaction_id,item_id,customer_id,store_id,quantity_sold,timestamp
+TR-101,ITEM-X1,CUST-001,NYC-01,1,2024-03-06T08:00:00Z
+TR-102,ITEM-Y2,CUST-002,LDN-05,2,2024-03-07T09:20:00Z
+TR-103,ITEM-X1,CUST-005,NYC-01,1,2024-03-08T10:45:00Z

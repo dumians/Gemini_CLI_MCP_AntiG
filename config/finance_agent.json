@@ -1,0 +1,6 @@
+{
+    "model": "gemini-3.1-flash-preview",
+    "domain": "Finance",
+    "source": "Oracle DB @ GCP (ERP)",
+    "mcp_server": "servers/oracle-mcp/index.js"
+}

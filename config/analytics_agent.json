@@ -1,0 +1,7 @@
+{
+    "model": "gemini-3.1-flash-preview",
+    "domain": "Analytics",
+    "source": "BigQuery & AlloyDB CRM",
+    "bq_mcp_server": "servers/bigquery-mcp/index.js",
+    "alloydb_mcp_server": "servers/alloydb-mcp/index.js"
+}

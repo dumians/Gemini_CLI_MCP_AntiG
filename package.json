@@ -1,0 +1,23 @@
+{
+    "name": "adk-multi-domain-demo",
+    "version": "1.0.0",
+    "description": "Enterprise Data Agents Demo across multiple DB domains",
+    "main": "agent/index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node agent/index.js",
+        "start-oracle-mcp": "node servers/oracle-mcp/index.js",
+        "start-spanner-mcp": "node servers/spanner-mcp/index.js",
+        "start-bigquery-mcp": "node servers/bigquery-mcp/index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "@google/genai": "latest",
+        "@modelcontextprotocol/sdk": "latest",
+        "@google-cloud/spanner": "latest",
+        "@google-cloud/bigquery": "latest",
+        "oracledb": "latest",
+        "pg": "^8.13.1",
+        "dotenv": "^16.4.7"
+    }
+}

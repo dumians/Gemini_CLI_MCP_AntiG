@@ -1,0 +1,4 @@
+po_id,supplier_id,item_id,status,total_amount
+PO-9001,101,ITEM-X1,Delayed,50000.00
+PO-9002,102,ITEM-Y2,Shipped,25000.00
+PO-9003,103,ITEM-Z3,Pending,15000.00

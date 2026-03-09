@@ -1,0 +1,4 @@
+ticket_id,customer_id,status,subject,description
+1,CUST-001,Open,Delayed shipment,Customer is upset about ITEM-X1 delay
+2,CUST-002,Resolved,Refund request,Issue with product quality on ITEM-Y2
+3,CUST-005,In Progress,Technical support,Integration issues with the supply chain API
