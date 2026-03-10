@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { askOrchestrator } from '../agent/orchestrator.js';
+import { logger } from '../agent/utils/logging_service.js';
 
 dotenv.config({ path: '../.env' });
 
@@ -44,6 +45,10 @@ app.post('/api/query', async (req, res) => {
 
 app.get('/api/status', (req, res) => {
     res.json(currentStatus);
+});
+
+app.get('/api/admin/logs', (req, res) => {
+    res.json(logger.getLogs());
 });
 
 app.listen(PORT, () => {

@@ -4,7 +4,9 @@ import { groundGraphContext, groundingInstructions } from "./utils/grounding.js"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -25,10 +27,10 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     return client;
 }
 
-export async function handleRetailRequest(query, meshContext = {}) {
-    console.log(`[RetailAgent] Processing request: ${query}`);
-    if (Object.keys(meshContext).length > 0) {
-        console.log(`[RetailAgent] Integrated context from: ${Object.keys(meshContext).join(', ')}`);
+export async function handleRetailRequest(query, context = {}) {
+    logger.log("RetailAgent", `Processing retail query: ${query}`, "INFO");
+    if (Object.keys(context).length > 0) {
+        logger.log("RetailAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO");
     }
 
     // Connect to Spanner MCP (Local or Remote)

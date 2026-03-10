@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Database, Store, BarChart3, Users, Cpu, Activity, ChevronRight, MessageSquare } from 'lucide-react';
+import { Search, Database, Store, BarChart3, Users, Cpu, Activity, ChevronRight, MessageSquare, Shield } from 'lucide-react';
 import { AgentChain } from './components/AgentChain';
 import { DashboardHome } from './components/DashboardHome';
 import { GraphView } from './components/GraphView';
+import { AdminConsole } from './components/AdminConsole';
 
 function App() {
   const [query, setQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [status, setStatus] = useState<any>({ state: 'idle', steps: [] });
+  const [currentView, setCurrentView] = useState<'dashboard' | 'admin'>('dashboard');
 
   // Poll for status when processing
   useEffect(() => {
@@ -66,11 +68,13 @@ function App() {
         </div>
 
         <nav className="flex flex-col gap-2">
-          <NavItem icon={<Activity size={18} />} label="Dashboard" active />
-          <NavItem icon={<Database size={18} />} label="Oracle ERP" />
-          <NavItem icon={<Store size={18} />} label="Spanner Retail" />
-          <NavItem icon={<BarChart3 size={18} />} label="BigQuery Analytics" />
-          <NavItem icon={<Users size={18} />} label="AlloyDB CRM" />
+          <NavItem icon={<Activity size={18} />} label="Dashboard" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
+          <NavItem icon={<Shield size={18} />} label="Mesh Admin" active={currentView === 'admin'} onClick={() => setCurrentView('admin')} />
+          <div className="h-px bg-white/5 my-2" />
+          <NavItem icon={<Database size={18} />} label="Oracle ERP" disabled />
+          <NavItem icon={<Store size={18} />} label="Spanner Retail" disabled />
+          <NavItem icon={<BarChart3 size={18} />} label="BigQuery Analytics" disabled />
+          <NavItem icon={<Users size={18} />} label="AlloyDB CRM" disabled />
         </nav>
 
         <div className="mt-auto p-4 glass rounded-xl border-white/10">
@@ -87,25 +91,29 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header / Search */}
-        <header className="p-6 h-28 flex items-center justify-center">
-          <form onSubmit={handleSearch} className="w-full max-w-3xl relative group">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask the A2A Orchestrator anything..."
-              className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 focus:outline-none focus:border-primary/50 transition-all text-lg glass group-hover:bg-white/10"
-            />
-            <Search className="absolute left-5 top-4 text-white/30 group-hover:text-white/50 transition-colors" />
-            <button type="submit" disabled={isProcessing} className="absolute right-3 top-3 px-4 py-2 bg-primary rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
-              {isProcessing ? "Processing..." : "Analyze"}
-            </button>
-          </form>
-        </header>
+        {currentView === 'dashboard' && (
+          <header className="p-6 h-28 flex items-center justify-center">
+            <form onSubmit={handleSearch} className="w-full max-w-3xl relative group">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Ask the A2A Orchestrator anything..."
+                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 focus:outline-none focus:border-primary/50 transition-all text-lg glass group-hover:bg-white/10"
+              />
+              <Search className="absolute left-5 top-4 text-white/30 group-hover:text-white/50 transition-colors" />
+              <button type="submit" disabled={isProcessing} className="absolute right-3 top-3 px-4 py-2 bg-primary rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50">
+                {isProcessing ? "Processing..." : "Analyze"}
+              </button>
+            </form>
+          </header>
+        )}
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-8 pt-0 scrollbar-hide">
-          {result || isProcessing ? (
+          {currentView === 'admin' ? (
+            <AdminConsole />
+          ) : result || isProcessing ? (
             <div className="max-w-5xl mx-auto flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
               {/* Agent Orchestration Steps */}
@@ -141,15 +149,18 @@ function App() {
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
+function NavItem({ icon, label, active = false, onClick, disabled = false }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void, disabled?: boolean }) {
   return (
-    <div className={`flex items-center justify-between p-3 rounded-xl cursor-not-allowed transition-all ${active ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}>
+    <button
+      onClick={!disabled ? onClick : undefined}
+      className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'} ${active ? 'bg-white/10 text-white shadow-lg' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+    >
       <div className="flex items-center gap-3">
         {icon}
         <span className="font-medium text-sm">{label}</span>
       </div>
       {active && <ChevronRight size={14} />}
-    </div>
+    </button>
   );
 }
 

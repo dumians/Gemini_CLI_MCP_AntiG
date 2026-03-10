@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import dotenv from "dotenv";
 
@@ -32,7 +33,7 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
 }
 
 export async function handleAnalyticsRequest(query, meshContext = {}) {
-    console.log(`[AnalyticsAgent] Processing request: ${query}`);
+    logger.log("AnalyticsAgent", `Processing analytics request: ${query}`, "INFO");
     if (Object.keys(meshContext).length > 0) {
         console.log(`[AnalyticsAgent] Integrated context from: ${Object.keys(meshContext).join(', ')}`);
     }

@@ -5,6 +5,7 @@ import { handleRetailRequest } from "./retail_agent.js";
 import { handleAnalyticsRequest } from "./analytics_agent.js";
 import { handleHRTask } from "./hr_agent.js";
 import { validateDataProduct, getDiscoveryTools } from "./utils/catalog.js";
+import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 
 dotenv.config();
@@ -36,6 +37,7 @@ const geminiTools = getDiscoveryTools();
  * @returns {Promise<{text: string, steps: Array<{agent: string, query: string, result: any}>}>}
  */
 export async function askOrchestrator(query) {
+    logger.log("Orchestrator", `Received query: ${query}`, "INFO");
     const model = ai.getGenerativeModel({
         model: config.model || "gemini-3.1-flash-preview",
         systemInstruction,
@@ -59,6 +61,7 @@ export async function askOrchestrator(query) {
 
                 if (call.name === "call_financial_agent") {
                     agentName = "FinancialAgent";
+                    logger.log("Orchestrator", `Delegating to ${agentName}`, "REASONING");
                     const rawResult = await handleFinancialRequest(call.args.query, meshContext);
                     agentResult = validateDataProduct(rawResult, agentName);
                 } else if (call.name === "call_retail_agent") {
@@ -98,6 +101,7 @@ export async function askOrchestrator(query) {
             response = result.response;
         }
 
+        logger.log("Orchestrator", `Successfully synthesized result`, "INFO");
         return {
             text: response.text(),
             steps: steps
