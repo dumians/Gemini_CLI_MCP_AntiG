@@ -1,11 +1,21 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { SSE_TRANSPORT_PATH, SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import express from 'express';
+import { AlloyDBAuth } from "@google-cloud/alloydb-auth-library";
+import pg from "pg";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+// GCP AlloyDB Configuration
+const auth = new AlloyDBAuth({
+    projectId: process.env.GCP_PROJECT_ID,
+    region: process.env.ALLOYDB_REGION,
+    cluster: process.env.ALLOYDB_CLUSTER,
+});
 
 const server = new Server(
     {
@@ -19,81 +29,78 @@ const server = new Server(
     }
 );
 
-/**
- * For AlloyDB @ GCP (CRMs, Operational Data)
- */
-const TOOLS = [
-    {
-        name: "query_alloydb_sql",
-        description: "Execute a read-only SQL query against AlloyDB CRM databases.",
-        inputSchema: {
-            type: "object",
-            properties: {
-                sql: { type: "string" },
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+        tools: [
+            {
+                name: "query_alloydb_vector",
+                description: "Execute a pgvector query against AlloyDB to find similar items (e.g., support tickets).",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        query: { type: "string" },
+                    },
+                    required: ["query"],
+                },
             },
-            required: ["sql"],
-        },
-    },
-    {
-        name: "search_alloydb_vector",
-        description: "Search for similar customer service tickets or case studies using pgvector in AlloyDB.",
-        inputSchema: {
-            type: "object",
-            properties: {
-                query_text: { type: "string" },
-                limit: { type: "number", default: 5 },
-            },
-            required: ["query_text"],
-        },
-    },
-];
-
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: TOOLS,
-}));
+        ],
+    };
+});
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
-    if (name === "query_alloydb_sql") {
-        // SIMULATED ALLOYDB RESPONSE
-        return {
-            content: [{ type: "text", text: `[Simulated AlloyDB] Result for: ${args.sql}\n- Case: SHIP-1234, Status: ESCALATED, Customer: GlobalRetail Inc.` }],
-        };
-    } else if (name === "search_alloydb_vector") {
-        // SIMULATED VECTOR RESPONSE
-        return {
-            content: [{ type: "text", text: `[Simulated AlloyDB pgvector] Similar tickets for "${args.query_text}":\n1. "Late shipment for node 542" (Score: 0.98)\n2. "Spanner sync issue with ERP" (Score: 0.85)` }],
-        };
+    if (name === "query_alloydb_vector") {
+        let client;
+        try {
+            console.error(`[AlloyDB-MCP] Executing Vector SQL: ${args.query}`);
+            const { ipAddress } = await auth.getIpAddress(process.env.ALLOYDB_INSTANCE);
+            
+            client = new pg.Client({
+                user: process.env.ALLOYDB_USER,
+                password: process.env.ALLOYDB_PASSWORD,
+                database: process.env.ALLOYDB_DB,
+                host: ipAddress,
+                port: 5432,
+                ssl: await auth.getSslCertificates(),
+            });
+
+            await client.connect();
+            const res = await client.query(args.query);
+            await client.end();
+
+            return {
+                content: [{ type: "text", text: JSON.stringify(res.rows, null, 2) }]
+            };
+        } catch (error) {
+            console.error(`[AlloyDB-MCP] Error calling tool '${name}':`, error);
+            if (client) await client.end();
+            return {
+                content: [{
+                    type: "text",
+                    text: `Error executing AlloyDB query: ${error.message}`
+                }]
+            };
+        }
     }
 
     throw new Error(`Tool not found: ${name}`);
 });
 
-// Support both STDIO (local) and SSE (hosted)
-const mode = process.argv[2] === "--sse" ? "sse" : "stdio";
-
-if (mode === "stdio") {
+async function run() {
+    const requiredVars = ['GCP_PROJECT_ID', 'ALLOYDB_REGION', 'ALLOYDB_CLUSTER', 'ALLOYDB_INSTANCE', 'ALLOYDB_USER', 'ALLOYDB_PASSWORD', 'ALLOYDB_DB'];
+    for (const v of requiredVars) {
+        if (!process.env[v]) {
+            console.error(`${v} environment variable not set. Exiting.`);
+            process.exit(1);
+        }
+    }
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("AlloyDB MCP Server running in stdio mode");
-} else {
-    const app = express();
-    let transport;
-
-    app.get("/sse", async (req, res) => {
-        transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
-        await server.connect(transport);
-    });
-
-    app.post("/messages", async (req, res) => {
-        if (transport) {
-            await transport.handlePostMessage(req, res);
-        }
-    });
-
-    const port = process.env.PORT || 8084;
-    app.listen(port, () => {
-        console.error(`AlloyDB MCP Server running on port ${port} (SSE)`);
-    });
+    console.error("AlloyDB MCP Server running on stdio");
 }
+
+run().catch((error) => {
+    console.error("Error running server:", error);
+    process.exit(1);
+});

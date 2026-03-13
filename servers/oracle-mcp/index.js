@@ -5,6 +5,16 @@ import {
     ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import oracledb from "oracledb";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+// Oracle DB@GCP Configuration
+const dbConfig = {
+    user: process.env.ORACLE_USER,
+    password: process.env.ORACLE_PASSWORD,
+    connectString: process.env.ORACLE_CONNECT_STRING, // e.g., "your-host:1521/your-service"
+};
 
 const server = new Server(
     {
@@ -18,70 +28,71 @@ const server = new Server(
     }
 );
 
-// We define tools that the agent can call
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
             {
                 name: "query_oracle_sql",
-                description: "Execute a standard SQL query against the ERP Oracle DB (e.g. Purchase Orders, Invoices).",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        query: { type: "string" },
-                    },
-                    required: ["query"],
-                },
+                description: "Execute a standard SQL query against the Oracle ERP database.",
+                inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
             },
             {
                 name: "query_oracle_graph",
-                description: "Execute an Oracle Graph query to find complex supplier networks.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        match_clause: { type: "string" },
-                    },
-                    required: ["match_clause"],
-                },
+                description: "Execute a Graph (PGQL) query against the Oracle ERP database.",
+                inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
             },
             {
                 name: "query_oracle_vector",
-                description: "Execute an Oracle AI Vector Search against transaction metadata.",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        search_term: { type: "string" },
-                    },
-                    required: ["search_term"],
-                },
-            }
+                description: "Execute a Vector Search query against Oracle AI Vector Search.",
+                inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
+            },
         ],
     };
 });
 
-// Tool execution logic
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    const toolNames = ["query_oracle_sql", "query_oracle_graph", "query_oracle_vector"];
 
-    if (name === "query_oracle_sql") {
-        // In a real environment, we would connect to Oracle via ADC
-        return {
-            content: [{ type: "text", text: `Simulated Oracle SQL result for: ${args.query}\n[{ "supplier_id": 1001, "total_invoices": 50000 }]` }]
-        };
-    } else if (name === "query_oracle_graph") {
-        return {
-            content: [{ type: "text", text: `Simulated Oracle Graph result for: ${args.match_clause}\n[{ "network_depth": 3, "connected_entities": ["SupplierA", "SupplierC"] }]` }]
-        };
-    } else if (name === "query_oracle_vector") {
-        return {
-            content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${args.search_term}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
-        };
+    if (toolNames.includes(name)) {
+        let connection;
+        try {
+            console.error(`[Oracle-MCP] Executing ${name}: ${args.query}`);
+            connection = await oracledb.getConnection(dbConfig);
+            const result = await connection.execute(args.query, [], { outFormat: oracledb.OUT_FORMAT_OBJECT });
+            return {
+                content: [{ type: "text", text: JSON.stringify(result.rows, null, 2) }]
+            };
+        } catch (error) {
+            console.error(`[Oracle-MCP] Error calling tool '${name}':`, error);
+            return {
+                content: [{
+                    type: "text",
+                    text: `Error executing Oracle query: ${error.message}`
+                }]
+            };
+        } finally {
+            if (connection) {
+                try {
+                    await connection.close();
+                } catch (err) {
+                    console.error("Error closing Oracle connection:", err);
+                }
+            }
+        }
     }
 
     throw new Error(`Tool not found: ${name}`);
 });
 
 async function run() {
+    const requiredVars = ['ORACLE_USER', 'ORACLE_PASSWORD', 'ORACLE_CONNECT_STRING'];
+    for (const v of requiredVars) {
+        if (!process.env[v]) {
+            console.error(`${v} environment variable not set. Exiting.`);
+            process.exit(1);
+        }
+    }
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error("Oracle MCP Server running on stdio");

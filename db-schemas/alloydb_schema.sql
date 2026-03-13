@@ -1,4 +1,4 @@
--- AlloyDB CRM Schema (PostgreSQL)
+-- AlloyDB CRM Schema (PostgreSQL) - aqy5e17;]`Az7,uS
 -- Enable pgvector extension for AI similarity search
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE customers (
