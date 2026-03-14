@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { handleAnalyticsRequest } from "./analytics_agent.js";
-import { groundGraphContext, groundingInstructions } from "./utils/grounding.js";
+import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
@@ -48,15 +48,21 @@ export async function handleRetailRequest(query, context = {}) {
         }
     ];
 
+    const catalogContext = groundWithCatalogContext("Retail");
+
     const systemInstruction = `You are a Retail and Supply Chain Specialist Agent. You only have access to Spanner (Global Retail DB). 
     Use Spanner SQL and Spanner Graph (GQL) tools provided.
     
     ${groundingInstructions}
     
+    ${catalogContext}
+    
     Current Mesh Context (Data from other domains):
-    ${JSON.stringify(meshContext, null, 2)}
+    ${JSON.stringify(context, null, 2)}
     
     Use this context to enrich your supply chain reasoning.`;
+
+
 
     const chat = ai.chats.create({
         model: config.model || "gemini-3.1-flash-preview",

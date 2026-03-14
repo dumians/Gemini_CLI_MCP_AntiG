@@ -4,7 +4,8 @@ import { handleFinancialRequest } from "./financial_agent.js";
 import { handleRetailRequest } from "./retail_agent.js";
 import { handleAnalyticsRequest } from "./analytics_agent.js";
 import { handleHRTask } from "./hr_agent.js";
-import { validateDataProduct, getDiscoveryTools } from "./utils/catalog.js";
+import { catalogAgent } from "./catalog_agent.js";
+import { validateDataProduct, getDiscoveryTools, AgentRegistry } from "./utils/catalog.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 
@@ -20,12 +21,14 @@ const systemInstruction = config.system_instruction_prefix + `
   - You interact with agents that return formal 'Data Products'.
   - Every product is automatically validated against a 'Data Contract'.
   - You maintain a shared 'Mesh Context' to enable Cross-Domain Intelligence.
+  - You use the **CatalogAgent** to find where data is located or how schemas relate before querying domain agents.
   
   **Domain Experts**:
   - FinancialAgent (Finance)
   - RetailAgent (Retail)
   - AnalyticsAgent (Analytics)
   - HRAgent (HR)
+  - CatalogAgent (Catalog & Metadata)
   
   Break down the user query and call the appropriate tools. Correlate insights to provide a strategic synthesis.`;
 
@@ -56,46 +59,67 @@ export async function askOrchestrator(query) {
         while (response.functionCalls() && response.functionCalls().length > 0) {
             const toolCallParts = [];
             for (const call of response.functionCalls()) {
+                const startTime = Date.now();
                 let agentResult = "";
                 let agentName = "";
+                let subQuery = call.args.query;
 
-                if (call.name === "call_financial_agent") {
-                    agentName = "FinancialAgent";
-                    logger.log("Orchestrator", `Delegating to ${agentName}`, "REASONING");
-                    const rawResult = await handleFinancialRequest(call.args.query, meshContext);
-                    agentResult = validateDataProduct(rawResult, agentName);
-                } else if (call.name === "call_retail_agent") {
-                    agentName = "RetailAgent";
-                    const rawResult = await handleRetailRequest(call.args.query, meshContext);
-                    agentResult = validateDataProduct(rawResult, agentName);
-                } else if (call.name === "call_analytics_agent") {
-                    agentName = "AnalyticsAgent";
-                    const rawResult = await handleAnalyticsRequest(call.args.query, meshContext);
-                    agentResult = validateDataProduct(rawResult, agentName);
-                } else if (call.name === "call_hr_agent") {
-                    agentName = "HRAgent";
-                    const rawResult = await handleHRTask(call.args.query, meshContext);
-                    agentResult = validateDataProduct(rawResult, agentName);
+                // Map tool call to agent
+                const agentDef = AgentRegistry.find(a => a.toolName === call.name);
+                if (!agentDef) {
+                    logger.log("Orchestrator", `Unknown tool call: ${call.name}`, "ERROR");
+                    continue;
                 }
 
-                // Update Mesh Context with this agent's insights for subsequent calls
-                meshContext[agentName] = {
-                    insights: agentResult.insights,
-                    summary: agentResult.data.substring(0, 200) // Keep context concise
-                };
+                agentName = agentDef.name;
+                logger.logDispatch("Orchestrator", agentName, subQuery);
 
-                steps.push({
-                    agent: agentName,
-                    query: call.args.query,
-                    result: agentResult
-                });
-
-                toolCallParts.push({
-                    functionResponse: {
-                        name: call.name,
-                        response: { result: agentResult }
+                try {
+                    let rawResult;
+                    if (call.name === "call_financial_agent") {
+                        rawResult = await handleFinancialRequest(subQuery, meshContext);
+                    } else if (call.name === "call_retail_agent") {
+                        rawResult = await handleRetailRequest(subQuery, meshContext);
+                    } else if (call.name === "call_analytics_agent") {
+                        rawResult = await handleAnalyticsRequest(subQuery, meshContext);
+                    } else if (call.name === "call_hr_agent") {
+                        rawResult = await handleHRTask(subQuery, meshContext);
+                    } else if (call.name === "call_catalog_agent") {
+                        rawResult = await catalogAgent.process(subQuery, meshContext);
                     }
-                });
+
+                    agentResult = validateDataProduct(rawResult, agentName);
+                    
+                    // Log success with latency
+                    logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime);
+
+                    // Update Mesh Context with this agent's insights for subsequent calls
+                    meshContext[agentName] = {
+                        insights: agentResult.insights,
+                        summary: typeof agentResult.data === 'string' ? agentResult.data.substring(0, 200) : "Complex Data Product"
+                    };
+
+                    steps.push({
+                        agent: agentName,
+                        query: subQuery,
+                        result: agentResult
+                    });
+
+                    toolCallParts.push({
+                        functionResponse: {
+                            name: call.name,
+                            response: { result: agentResult }
+                        }
+                    });
+                } catch (err) {
+                    logger.log(agentName, `Execution failed: ${err.message}`, "ERROR");
+                    toolCallParts.push({
+                        functionResponse: {
+                            name: call.name,
+                            response: { error: err.message }
+                        }
+                    });
+                }
             }
             result = await chat.sendMessage(toolCallParts);
             response = result.response;
@@ -107,7 +131,8 @@ export async function askOrchestrator(query) {
             steps: steps
         };
     } catch (err) {
-        console.error("Orchestration Error:", err);
+        logger.log("Orchestrator", `Orchestration Error: ${err.message}`, "ERROR");
         throw err;
     }
 }
+

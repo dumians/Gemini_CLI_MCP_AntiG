@@ -1,0 +1,21 @@
+{
+    "model": "gemini-3.1-flash-preview",
+    "temperature": 0.3,
+    "max_tokens": 4096,
+    "domain": "Catalog",
+    "source": "Agentic Data Mesh Metadata Layer",
+    "system_instruction_prefix": "You are the Catalog Intelligence Agent for the Agentic Data Mesh.",
+    "schema_sources": [
+        "db-schemas/oracle_schema.sql",
+        "db-schemas/spanner_schema.sql",
+        "db-schemas/bigquery_schema.sql",
+        "db-schemas/alloydb_schema.sql",
+        "db-schemas/hr_schema.sql"
+    ],
+    "cross_domain_keys": {
+        "customer_id": ["alloydb_schema.customers", "bigquery_schema.customer_segments", "bigquery_schema.web_events"],
+        "supplier_id": ["oracle_schema.suppliers", "oracle_schema.purchase_orders"],
+        "store_id": ["spanner_schema.stores", "spanner_schema.global_inventory", "spanner_schema.realtime_transactions"],
+        "dept_id": ["hr_schema.hr_departments", "hr_schema.hr_employees", "hr_schema.hr_recruitment"]
+    }
+}

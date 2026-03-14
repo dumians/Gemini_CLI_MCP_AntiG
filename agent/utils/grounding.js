@@ -1,7 +1,9 @@
 /**
  * GraphRAG Grounding Utility
  * Synchronizes Graph Traversal results with LLM context for verifiable reasoning.
+ * Enhanced with catalog-aware schema context injection.
  */
+import { metadataCatalog } from './catalog.js';
 
 export function groundGraphContext(domain, graphResults) {
     if (!graphResults || graphResults.length === 0) return "";
@@ -17,8 +19,6 @@ export function groundGraphContext(domain, graphResults) {
 }
 
 function formatGraphResult(result) {
-    // Logic to turn DB-specific graph objects into natural language pointers
-    // Example: { source: 'SupplierA', edge: 'HAS_PO', target: 'PO_123' }
     if (typeof result === 'string') return result;
 
     const parts = [];
@@ -28,7 +28,25 @@ function formatGraphResult(result) {
     return parts.join(' -> ');
 }
 
+/**
+ * Enriches an agent's system instruction with catalog metadata for its domain.
+ * Gives the agent awareness of all available tables, columns, and cross-domain links.
+ * @param {string} domain - The domain to get context for (e.g., 'Finance', 'Retail')
+ * @returns {string} Context string to inject into system instructions
+ */
+export function groundWithCatalogContext(domain) {
+    try {
+        return metadataCatalog.getGroundingContext(domain);
+    } catch (e) {
+        console.error(`[Grounding] Failed to get catalog context for ${domain}:`, e.message);
+        return '';
+    }
+}
+
 export const groundingInstructions = `
 When using Graph tools, you MUST ground your final answer in the paths returned.
 If a graph traversal shows a connection between Node A and Node B, explicitly state this relationship as a verified fact from the database graph.
+If catalog context is provided, use it to understand the full schema landscape (including tables, columns, and graph NODE/EDGE definitions) and identify relevant cross-domain relationships. 
+Use the Graphs section in the catalog context to ensure your GQL/PGQL queries use the correct labels and relationships.
 `;
+

@@ -1,0 +1,80 @@
+{
+    "mode": "local",
+    "sources": {
+        "oracle": {
+            "name": "Oracle ERP",
+            "domain": "Finance",
+            "local": {
+                "command": "node",
+                "args": ["servers/oracle-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${ORACLE_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/oracle_schema.sql",
+            "health_check": "/health"
+        },
+        "spanner": {
+            "name": "Spanner Retail",
+            "domain": "Retail",
+            "local": {
+                "command": "node",
+                "args": ["servers/spanner-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${SPANNER_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/spanner_schema.sql",
+            "health_check": "/health"
+        },
+        "bigquery": {
+            "name": "BigQuery Analytics",
+            "domain": "Analytics",
+            "local": {
+                "command": "node",
+                "args": ["servers/bigquery-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${BIGQUERY_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/bigquery_schema.sql",
+            "health_check": "/health"
+        },
+        "alloydb": {
+            "name": "AlloyDB CRM",
+            "domain": "Analytics",
+            "local": {
+                "command": "node",
+                "args": ["servers/alloydb-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${ALLOYDB_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/alloydb_schema.sql",
+            "health_check": "/health"
+        },
+        "oracle_hr": {
+            "name": "Oracle HR",
+            "domain": "HR",
+            "local": {
+                "command": "node",
+                "args": ["servers/oracle-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${HR_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/hr_schema.sql",
+            "health_check": "/health"
+        }
+    }
+}

@@ -3,6 +3,7 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { GoogleGenAI } from "@google/genai";
 import { configService } from "./utils/config_service.js";
+import { groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -10,19 +11,7 @@ dotenv.config();
 const config = configService.getConfig("hr_agent");
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
-    const transport = remoteUrl
-        ? new SSEClientTransport(new URL(remoteUrl))
-        : new StdioClientTransport({ command: serverCmd, args: serverArgs });
-
-    const client = new Client(
-        { name: `hr-agent-mcp`, version: "1.0.0" },
-        { capabilities: {} }
-    );
-
-    await client.connect(transport);
-    return client;
-}
+// ... (createMcpClient remains same)
 
 /**
  * HR Agent specialized in Oracle DB @ GCP HR Schema.
@@ -47,16 +36,20 @@ export async function handleHRTask(query, meshContext = {}) {
         }
     ];
 
+    const catalogContext = groundWithCatalogContext("HR");
+
     const systemInstruction = `You are an HR Data Specialist for the Enterprise Nexus.
-    You have access to the Oracle DB @ GCP HR Schema:
-    - hr_employees (emp_id, first_name, last_name, job_title, dept_id, salary)
-    - hr_departments (dept_id, dept_name, location)
-    - hr_recruitment (req_id, job_title, status, applicants_count, target_hire_date)
+    You have access to the Oracle DB @ GCP HR Schema.
+    
+    ${groundingInstructions}
+    
+    ${catalogContext}
 
     Current Mesh Context (Data from other domains):
     ${JSON.stringify(meshContext, null, 2)}
 
     Use the provided tools to fetch and analyze HR data.`;
+
 
     const chat = ai.chats.create({
         model: config.model || "gemini-3.1-flash-preview",

@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { handleHRTask } from "./hr_agent.js";
-import { groundGraphContext, groundingInstructions } from "./utils/grounding.js";
+import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
@@ -27,7 +27,7 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     return client;
 }
 
-export async function handleFinancialRequest(query, context) {
+export async function handleFinancialRequest(query, context = {}) {
     logger.log("FinancialAgent", `Processing financial query: ${query}`, "INFO");
     if (Object.keys(context).length > 0) {
         logger.log("FinancialAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO");
@@ -48,13 +48,17 @@ export async function handleFinancialRequest(query, context) {
         }
     ];
 
+    const catalogContext = groundWithCatalogContext("Finance");
+
     const systemInstruction = `You are a Financial Data Specialist Agent. You only have access to Oracle DB@GCP (ERP systems). 
     Use standard SQL, Graph, and Vector tools provided for Oracle.
     
     ${groundingInstructions}
     
+    ${catalogContext}
+    
     Current Mesh Context (Data from other domains):
-    ${JSON.stringify(meshContext, null, 2)}
+    ${JSON.stringify(context, null, 2)}
     
     Use this context to enrich your analysis if relevant.`;
 
@@ -74,7 +78,7 @@ export async function handleFinancialRequest(query, context) {
     while (response.functionCalls && response.functionCalls.length > 0) {
         const toolCallParts = [];
         for (const call of response.functionCalls) {
-            const toolResult = await client.callTool(call.name, call.args);
+            const toolResult = await oracleClient.callTool(call.name, call.args);
 
             // Apply Graph Grounding if it's a graph tool
             let formattedResult = toolResult.content[0].text;
@@ -95,7 +99,7 @@ export async function handleFinancialRequest(query, context) {
 
     return {
         domain: "Finance",
-        data: response.text, // In a real scenario, this would be the raw tool output
+        data: response.text,
         metadata: {
             confidence: 0.95,
             source: "Oracle DB @ GCP (ERP)",
@@ -104,3 +108,4 @@ export async function handleFinancialRequest(query, context) {
         insights: "Financial data synthesized with GraphRAG grounding."
     };
 }
+
