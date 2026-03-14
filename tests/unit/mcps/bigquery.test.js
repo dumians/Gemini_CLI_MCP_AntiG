@@ -7,13 +7,19 @@ process.env.GCP_PROJECT_ID = "test-project";
 import { server } from "../../../servers/bigquery-mcp/index.js";
 
 test("BigQuery MCP: List Tools", async () => {
-    // Access the private handler map if necessary, or use the public interface if we can find it
-    // Given the issues with executeRequest, let's try to find where the handlers are stored or 
-    // simply mock the parts that fail.
-    assert.ok(server);
+    const handler = server._requestHandlers.get("tools/list");
+    const result = await handler({ method: "tools/list" });
+    assert.ok(result.tools.some(t => t.name === "query_bigquery"));
 });
 
 test("BigQuery MCP: query_bigquery (Simulation)", async () => {
-    // If executeRequest fails due to transport, we might need a mock transport
-    assert.ok(true);
+    const handler = server._requestHandlers.get("tools/call");
+    const result = await handler({
+        method: "tools/call",
+        params: {
+            name: "query_bigquery",
+            arguments: { query: "SELECT * FROM dataset.table LIMIT 1" }
+        }
+    });
+    assert.ok(result.content[0].text.includes("Simulated BigQuery result"));
 });

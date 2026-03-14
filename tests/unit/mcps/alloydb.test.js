@@ -13,9 +13,19 @@ process.env.ALLOYDB_DB = "test-db";
 import { server } from "../../../servers/alloydb-mcp/index.js";
 
 test("AlloyDB MCP: List Tools", async () => {
-    assert.ok(server);
+    const handler = server._requestHandlers.get("tools/list");
+    const result = await handler({ method: "tools/list" });
+    assert.ok(result.tools.some(t => t.name === "query_alloydb_vector"));
 });
 
 test("AlloyDB MCP: query_alloydb_vector (Simulation)", async () => {
-    assert.ok(true);
+    const handler = server._requestHandlers.get("tools/call");
+    const result = await handler({
+        method: "tools/call",
+        params: {
+            name: "query_alloydb_vector",
+            arguments: { query: "SELECT * FROM tickets LIMIT 1" }
+        }
+    });
+    assert.ok(result.content[0].text.includes("Simulated AlloyDB Vector result"));
 });
