@@ -10,9 +10,18 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // GCP Spanner Configuration
-const spanner = new Spanner({ projectId: process.env.GCP_PROJECT_ID });
-const instance = spanner.instance(process.env.SPANNER_INSTANCE_ID || 'global-retail-instance');
-const database = instance.database(process.env.SPANNER_DATABASE_ID || 'global-retail-db');
+const projectId = process.env.GCP_PROJECT_ID || process.env.PROJECT_ID;
+const instanceId = process.env.SPANNER_INSTANCE_ID || process.env.SPANNER_INSTANCE;
+const databaseId = process.env.SPANNER_DATABASE_ID || process.env.SPANNER_DATABASE;
+
+const spanner = (projectId && process.env.NODE_ENV !== 'test') ? new Spanner({ projectId }) : null;
+
+const getDb = () => {
+    if (spanner && instanceId && databaseId) {
+        return spanner.instance(instanceId).database(databaseId);
+    }
+    return null;
+};
 
 const server = new Server(
     {
@@ -25,20 +34,6 @@ const server = new Server(
         },
     }
 );
-
-// Database Connection
-const spanner = new Spanner({
-    projectId: process.env.PROJECT_ID
-});
-const instanceId = process.env.SPANNER_INSTANCE;
-const databaseId = process.env.SPANNER_DATABASE;
-
-const getDb = () => {
-    if (instanceId && databaseId) {
-        return spanner.instance(instanceId).database(databaseId);
-    }
-    return null;
-};
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
@@ -73,22 +68,30 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     const db = getDb();
 
-    try {
-        if (!db) {
+    if (!db) {
         // FALLBACK TO SIMULATION
         if (name === "query_spanner_sql") {
+            return {
+                content: [{ type: "text", text: `Simulated Spanner SQL result for: ${args.query}\n[{ "store_id": "NYC-01", "stock_level": 4500 }]` }]
+            };
+        } else if (name === "query_spanner_graph") {
+            return {
+                content: [{ type: "text", text: `Simulated Spanner GQL result for: ${args.gql_match}\n[{ "path": ["SupplierA", "WarehouseB", "Store NYC-01"] }]` }]
+            };
+        }
+    }
+
+    try {
+        if (name === "query_spanner_sql") {
             console.error(`[Spanner-MCP] Executing SQL: ${args.query}`);
-            const [rows] = await database.run(args.query);
+            const [rows] = await db.run(args.query);
             const results = rows.map(row => row.toJSON());
-                return {
-                    content: [{ type: "text", text: JSON.stringify(results, null, 2) }]
-                };
-            } else if (name === "query_spanner_graph") {
-            // Note: Spanner Graph is a preview feature and might require specific client library versions or query syntax.
-            // This example uses standard SQL to query graph-like relationships, which is a common pattern.
-            // The agent's prompt should be engineered to generate a valid SQL query for this tool.
-            console.error(`[Spanner-MCP] Executing Graph (SQL): ${args.gql_match}`);
-            const [rows] = await database.run(args.gql_match);
+            return {
+                content: [{ type: "text", text: JSON.stringify(results, null, 2) }]
+            };
+        } else if (name === "query_spanner_graph") {
+            console.error(`[Spanner-MCP] Executing Graph (GQL): ${args.gql_match}`);
+            const [rows] = await db.run(args.gql_match);
             const results = rows.map(row => row.toJSON());
             return {
                 content: [{ type: "text", text: JSON.stringify(results, null, 2) }]
@@ -96,33 +99,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
     } catch (error) {
         console.error(`[Spanner-MCP] Error calling tool '${name}':`, error);
-        // Return a structured error message to the agent
-            return {
-                content: [{
+        return {
+            content: [{
                 type: "text",
                 text: `Error executing Spanner query: ${error.message}`
-            }]
-            };
-        }
-    }
-
-    try {
-        if (name === "query_spanner_sql") {
-            const [rows] = await db.run(args.query);
-            return {
-                content: [{ type: "text", text: JSON.stringify(rows, null, 2) }]
-            };
-        } else if (name === "query_spanner_graph") {
-            // Spanner Graph (GQL) uses the same run method or runPartitionedQuery depending on size, 
-            // but for standard agentic usage, run() is sufficient.
-            const [rows] = await db.run(args.gql_match);
-            return {
-                content: [{ type: "text", text: JSON.stringify(rows, null, 2) }]
-            };
-        }
-    } catch (error) {
-        return {
-            content: [{ type: "text", text: `Error executing Spanner tool: ${error.message}` }],
+            }],
             isError: true
         };
     }
@@ -130,39 +111,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Tool not found: ${name}`);
 });
 
+import { fileURLToPath } from "url";
 
+export { server };
 
-// Support both STDIO (local) and SSE (hosted)
-const mode = process.argv.includes("--sse") ? "sse" : "stdio";
-const portArg = process.argv.find(arg => arg.startsWith("--port="));
-const defaultPort = portArg ? parseInt(portArg.split('=')[1]) : 3002;
-
-if (mode === "stdio") {
-    if (!process.env.GCP_PROJECT_ID) {
-        console.error("GCP_PROJECT_ID environment variable not set. Exiting.");
-        process.exit(1);
-    }
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("Spanner MCP Server running in stdio mode");
-} else {
-    const app = express();
-    let transport;
-
-    app.get("/sse", async (req, res) => {
-        transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
-        await server.connect(transport);
-    });
-
-    app.post("/messages", async (req, res) => {
-        if (transport) {
-            await transport.handlePostMessage(req, res);
+async function run() {
+    if (import.meta.url === fileURLToPath(`file:///${process.argv[1].replace(/\\/g, '/')}`)) {
+        if (!projectId || !instanceId || !databaseId) {
+            console.error("Spanner environment variables not fully set. Running in simulation mode if tools are called.");
         }
-    });
-
-    const port = process.env.PORT || defaultPort;
-    app.listen(port, () => {
-        console.error(`Spanner MCP Server running on port ${port} (SSE)`);
-    });
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+        console.error("Spanner MCP Server running in stdio mode");
+    }
 }
 
+run().catch((error) => {
+    console.error("Error running server:", error);
+    process.exit(1);
+});

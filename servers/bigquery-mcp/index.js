@@ -10,9 +10,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // GCP BigQuery Configuration
-const bigquery = new BigQuery({ projectId: process.env.GCP_PROJECT_ID });
+const projectId = process.env.GCP_PROJECT_ID || process.env.PROJECT_ID;
 const datasetId = process.env.BIGQUERY_DATASET_ID;
 const location = process.env.BIGQUERY_LOCATION; // e.g. 'US'
+
+// BigQuery client will only be instantiated if credentials/configuration are present
+// During testing, we keep this null to trigger simulation mode.
+const bigquery = (projectId && process.env.NODE_ENV !== 'test') ? new BigQuery({ projectId }) : null;
 
 const server = new Server(
     {
@@ -25,11 +29,6 @@ const server = new Server(
         },
     }
 );
-
-// Database Connection
-const bigquery = process.env.PROJECT_ID ? new BigQuery({
-    projectId: process.env.PROJECT_ID
-}) : null;
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
@@ -52,38 +51,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
-    if (!bigquery) {
-        // FALLBACK TO SIMULATION
-        if (name === "query_bigquery") {
+    if (name === "query_bigquery") {
+        if (!bigquery) {
+            // FALLBACK TO SIMULATION if NO PROJECT_ID is provided
             return {
                 content: [{ type: "text", text: `Simulated BigQuery result for: ${args.query}\n[{ "segment": "VIP", "customer_id": "CUST-999" }]` }]
             };
         }
-    }
 
-    try {
-        if (name === "query_bigquery") {
-            const [job] = await bigquery.createQueryJob({ query: args.query });
-            const [rows] = await job.getQueryResults();
-            return {
-                content: [{ type: "text", text: JSON.stringify(rows, null, 2) }]
-            };
-        }
-    } catch (error) {
-        return {
-            content: [{ type: "text", text: `Error executing BigQuery tool: ${error.message}` }],
-            isError: true
-        };
-    if (name === "query_bigquery") {
         try {
             console.error(`[BigQuery-MCP] Executing SQL: ${args.query}`);
             const options = {
                 query: args.query,
-                location,
             };
-            if (datasetId) {
-                options.defaultDataset = { datasetId };
-            }
+            
+            if (location) options.location = location;
+            if (datasetId) options.defaultDataset = { datasetId };
 
             const [job] = await bigquery.createQueryJob(options);
             const [rows] = await job.getQueryResults();
@@ -97,7 +80,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 content: [{
                     type: "text",
                     text: `Error executing BigQuery query: ${error.message}`
-                }]
+                }],
+                isError: true
             };
         }
     }
@@ -105,39 +89,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Tool not found: ${name}`);
 });
 
+import { fileURLToPath } from "url";
 
+export { server };
 
-// Support both STDIO (local) and SSE (hosted)
-const mode = process.argv.includes("--sse") ? "sse" : "stdio";
-const portArg = process.argv.find(arg => arg.startsWith("--port="));
-const defaultPort = portArg ? parseInt(portArg.split('=')[1]) : 3004;
-
-if (mode === "stdio") {
-    if (!process.env.GCP_PROJECT_ID) {
-        console.error("GCP_PROJECT_ID environment variable not set. Exiting.");
-        process.exit(1);
-    }
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("BigQuery MCP Server running in stdio mode");
-} else {
-    const app = express();
-    let transport;
-
-    app.get("/sse", async (req, res) => {
-        transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
-        await server.connect(transport);
-    });
-
-    app.post("/messages", async (req, res) => {
-        if (transport) {
-            await transport.handlePostMessage(req, res);
+async function run() {
+    if (import.meta.url === fileURLToPath(`file:///${process.argv[1].replace(/\\/g, '/')}`)) {
+        if (!process.env.GCP_PROJECT_ID && !process.env.PROJECT_ID) {
+            console.error("GCP_PROJECT_ID or PROJECT_ID environment variable not set. Running in simulation mode if tools are called.");
         }
-    });
-
-    const port = process.env.PORT || defaultPort;
-    app.listen(port, () => {
-        console.error(`BigQuery MCP Server running on port ${port} (SSE)`);
-    });
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+        console.error("BigQuery MCP Server running in stdio mode");
+    }
 }
 
+run().catch((error) => {
+    console.error("Error running server:", error);
+    process.exit(1);
+});

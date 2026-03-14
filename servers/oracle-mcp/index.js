@@ -13,7 +13,7 @@ dotenv.config();
 const dbConfig = {
     user: process.env.ORACLE_USER,
     password: process.env.ORACLE_PASSWORD,
-    connectString: process.env.ORACLE_CONNECT_STRING, // e.g., "your-host:1521/your-service"
+    connectString: process.env.ORACLE_CONNECT_STRING || process.env.ORACLE_URL,
 };
 
 const server = new Server(
@@ -28,16 +28,10 @@ const server = new Server(
     }
 );
 
-
-// Database Connection
 const getConnection = async () => {
-    if (process.env.ORACLE_URL && process.env.ORACLE_USER && process.env.ORACLE_PASS) {
+    if (dbConfig.user && dbConfig.password && dbConfig.connectString && process.env.NODE_ENV !== 'test') {
         try {
-            return await oracledb.getConnection({
-                user: process.env.ORACLE_USER,
-                password: process.env.ORACLE_PASS,
-                connectString: process.env.ORACLE_URL
-            });
+            return await oracledb.getConnection(dbConfig);
         } catch (e) {
             console.error("Oracle Connection Error:", e.message);
             return null;
@@ -46,7 +40,6 @@ const getConnection = async () => {
     return null;
 };
 
-// We define tools that the agent can call
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
@@ -81,11 +74,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             };
         } else if (name === "query_oracle_graph") {
             return {
-                content: [{ type: "text", text: `Simulated Oracle Graph result for: ${args.match_clause}\n[{ "network_depth": 3, "connected_entities": ["SupplierA", "SupplierC"] }]` }]
+                content: [{ type: "text", text: `Simulated Oracle Graph result for: ${args.query}\n[{ "network_depth": 3, "connected_entities": ["SupplierA", "SupplierC"] }]` }]
             };
         } else if (name === "query_oracle_vector") {
             return {
-                content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${args.search_term}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
+                content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${args.query}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
             };
         }
     }
@@ -98,23 +91,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 content: [{ type: "text", text: JSON.stringify(result.rows, null, 2) }]
             };
         } else if (name === "query_oracle_graph") {
-            // Oracle Graph queries typically use PGQL or standard SQL with operators depending on version
-            const result = await connection.execute(args.match_clause, [], { outFormat: oracledb.OUT_FORMAT_OBJECT });
+            const result = await connection.execute(args.query, [], { outFormat: oracledb.OUT_FORMAT_OBJECT });
             await connection.close();
             return {
                 content: [{ type: "text", text: JSON.stringify(result.rows, null, 2) }]
             };
         } else if (name === "query_oracle_vector") {
-            // Real vector search logic would involve TO_VECTOR and VECTOR_DISTANCE
             const vectorQuery = `SELECT * FROM transactions WHERE VECTOR_DISTANCE(vec, TO_VECTOR(:search)) < 0.5`;
-            const result = await connection.execute(vectorQuery, { search: args.search_term }, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+            const result = await connection.execute(vectorQuery, { search: args.query }, { outFormat: oracledb.OUT_FORMAT_OBJECT });
             await connection.close();
             return {
                 content: [{ type: "text", text: JSON.stringify(result.rows, null, 2) }]
             };
         }
     } catch (error) {
-        if (connection) await connection.close();
+        if (connection) {
+            try { await connection.close(); } catch (e) { /* ignore */ }
+        }
         return {
             content: [{ type: "text", text: `Error executing Oracle tool: ${error.message}` }],
             isError: true
@@ -124,42 +117,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Tool not found: ${name}`);
 });
 
+import { fileURLToPath } from "url";
 
+export { server };
 
-// Support both STDIO (local) and SSE (hosted)
-const mode = process.argv.includes("--sse") ? "sse" : "stdio";
-const portArg = process.argv.find(arg => arg.startsWith("--port="));
-const defaultPort = portArg ? parseInt(portArg.split('=')[1]) : 3003;
-
-if (mode === "stdio") {
-    const requiredVars = ['ORACLE_USER', 'ORACLE_PASSWORD', 'ORACLE_CONNECT_STRING'];
-    for (const v of requiredVars) {
-        if (!process.env[v]) {
-            console.error(`${v} environment variable not set. Exiting.`);
-            process.exit(1);
+async function run() {
+    if (import.meta.url === fileURLToPath(`file:///${process.argv[1].replace(/\\/g, '/')}`)) {
+        if (!dbConfig.user || !dbConfig.password || !dbConfig.connectString) {
+            console.error("Oracle environment variables not set. Running in simulation mode if tools are called.");
         }
-    }
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("Oracle MCP Server running in stdio mode");
-} else {
-    const app = express();
-    let transport;
-
-    app.get("/sse", async (req, res) => {
-        transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
+        const transport = new StdioServerTransport();
         await server.connect(transport);
-    });
-
-    app.post("/messages", async (req, res) => {
-        if (transport) {
-            await transport.handlePostMessage(req, res);
-        }
-    });
-
-    const port = process.env.PORT || defaultPort;
-    app.listen(port, () => {
-        console.error(`Oracle MCP Server running on port ${port} (SSE)`);
-    });
+        console.error("Oracle MCP Server running in stdio mode");
+    }
 }
 
+run().catch((error) => {
+    console.error("Error running server:", error);
+    process.exit(1);
+});

@@ -146,8 +146,12 @@ app.get('/api/config/data-sources', (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`\n\x1b[32m[Mesh Server] Running on http://localhost:${PORT}\x1b[0m`);
-    logger.log('Server', `Starting system in ${process.env.NODE_ENV || 'development'} mode`, 'INFO');
-});
+export { app };
+
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`\n\x1b[32m[Mesh Server] Running on http://localhost:${PORT}\x1b[0m`);
+        logger.log('Server', `Starting system in ${process.env.NODE_ENV || 'development'} mode`, 'INFO');
+    });
+}
 
