@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 import { handleFinancialRequest } from "./financial_agent.js";
 import { handleRetailRequest } from "./retail_agent.js";
@@ -8,11 +8,12 @@ import { catalogAgent } from "./catalog_agent.js";
 import { validateDataProduct, getDiscoveryTools, AgentRegistry } from "./utils/catalog.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
+import { kgService } from "./utils/kg_service.js";
 
 dotenv.config();
 
 const config = configService.getConfig("orchestrator");
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const systemInstruction = config.system_instruction_prefix + `
   Your job is to receive complex queries and delegate them to domain-expert agents registered in our **Agentic Catalog**.
@@ -42,9 +43,18 @@ const geminiTools = getDiscoveryTools();
 export async function askOrchestrator(query) {
     const traceId = Math.random().toString(36).substring(2, 10);
     logger.log("Orchestrator", `Received query: ${query}`, "INFO", null, traceId);
+    
+    // 1. Record the User Intent in the Knowledge Graph
+    const intentId = kgService.createIntentNode(query, traceId);
+    
+    // 2. Retrieve Horizontal Context (RAG)
+    const horizontalContext = kgService.getHorizontalContextSummary();
+    
+    const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}`;
+
     const model = ai.getGenerativeModel({
         model: config.model || "gemini-3.1-flash-preview",
-        systemInstruction,
+        systemInstruction: enrichedSystemInstruction,
         tools: geminiTools
     });
 
@@ -99,6 +109,17 @@ export async function askOrchestrator(query) {
                         insights: agentResult.insights,
                         summary: typeof agentResult.data === 'string' ? agentResult.data.substring(0, 200) : "Complex Data Product"
                     };
+
+                    // 3. Link Data Product to the Intent in the KG
+                    const ctxNodeId = kgService.createContextNode('DATA_PRODUCT', {
+                        agent: agentName,
+                        domain: agentDef.domain,
+                        confidence: agentResult.metadata.confidence,
+                        traceId
+                    });
+                    kgService.addEdge(intentId, ctxNodeId, 'SATISFIED_BY', {
+                        subQuery: subQuery
+                    });
 
                     steps.push({
                         agent: agentName,

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 import * as readline from "readline/promises";
 import { handleFinancialRequest } from "./financial_agent.js";
@@ -12,7 +12,7 @@ if (!process.env.GEMINI_API_KEY) {
     process.exit(1);
 }
 
-const ai = new GoogleGenAI({});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function startOrchestrator() {
     console.log("Starting Enterprise A2A Data Orchestrator...");
@@ -56,13 +56,13 @@ async function startOrchestrator() {
         output: process.stdout,
     });
 
-    const chat = ai.chats.create({
+    const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
-        config: {
-            systemInstruction,
-            tools: geminiTools
-        }
+        systemInstruction,
+        tools: geminiTools
     });
+
+    const chat = model.startChat();
 
     console.log("\nOrchestrator Ready. Enter your complex query (or type 'exit' to quit):");
 
@@ -74,11 +74,12 @@ async function startOrchestrator() {
         console.log("\nOrchestrator is delegating...");
 
         try {
-            let response = await chat.sendMessage({ message: query });
+            let result = await chat.sendMessage(query);
+            let response = result.response;
 
-            while (response.functionCalls && response.functionCalls.length > 0) {
+            while (response.functionCalls() && response.functionCalls().length > 0) {
                 const toolCallParts = [];
-                for (const call of response.functionCalls) {
+                for (const call of response.functionCalls()) {
                     let agentResult = "";
                     if (call.name === "call_financial_agent") {
                         agentResult = await handleFinancialRequest(call.args.query);
@@ -95,11 +96,12 @@ async function startOrchestrator() {
                         }
                     });
                 }
-                response = await chat.sendMessage({ message: toolCallParts });
+                result = await chat.sendMessage(toolCallParts);
+                response = result.response;
             }
 
             console.log("\n--- Master Orchestrator Final Response ---");
-            console.log(response.text);
+            console.log(response.text());
             console.log("------------------------------------------\n");
 
         } catch (err) {

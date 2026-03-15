@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handleHRTask } from "./hr_agent.js";
 import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -11,7 +11,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const config = configService.getConfig("finance_agent");
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     const transport = remoteUrl
@@ -62,15 +62,15 @@ export async function handleFinancialRequest(query, context = {}, traceId = null
     
     Use this context to enrich your analysis if relevant.`;
 
-    const chat = ai.chats.create({
-        model: config.model || "gemini-3.1-flash-preview",
-        config: {
-            systemInstruction,
-            tools: geminiTools
-        }
+    const model = genAI.getGenerativeModel({
+        model: config.model || "gemini-1.5-flash",
+        systemInstruction,
+        tools: geminiTools
     });
 
-    let response = await chat.sendMessage({ message: query });
+    const chat = model.startChat();
+    let result = await chat.sendMessage(query);
+    let response = result.response;
 
     // Handle tool calls
     let groundingData = [];
@@ -100,7 +100,8 @@ export async function handleFinancialRequest(query, context = {}, traceId = null
                 }
             });
         }
-        response = await chat.sendMessage({ message: toolCallParts });
+        result = await chat.sendMessage(toolCallParts);
+        response = result.response;
     }
 
     return {

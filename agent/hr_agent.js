@@ -1,7 +1,7 @@
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { configService } from "./utils/config_service.js";
 import { groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
 import dotenv from "dotenv";
@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const config = configService.getConfig("hr_agent");
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     const transport = remoteUrl
@@ -63,15 +63,15 @@ export async function handleHRTask(query, meshContext = {}, traceId = null) {
     Use the provided tools to fetch and analyze HR data.`;
 
 
-    const chat = ai.chats.create({
-        model: config.model || "gemini-3.1-flash-preview",
-        config: {
-            systemInstruction,
-            tools: geminiTools
-        }
+    const model = genAI.getGenerativeModel({
+        model: config.model || "gemini-1.5-flash",
+        systemInstruction,
+        tools: geminiTools
     });
 
-    let response = await chat.sendMessage({ message: query });
+    const chat = model.startChat();
+    let result = await chat.sendMessage(query);
+    let response = result.response;
 
     // Handle tool calls
     while (response.functionCalls && response.functionCalls.length > 0) {
@@ -93,7 +93,8 @@ export async function handleHRTask(query, meshContext = {}, traceId = null) {
                 }
             });
         }
-        response = await chat.sendMessage({ message: toolCallParts });
+        result = await chat.sendMessage(toolCallParts);
+        response = result.response;
     }
 
     const dataProduct = {

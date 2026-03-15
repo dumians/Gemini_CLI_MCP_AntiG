@@ -7,6 +7,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { metadataCatalog, validateDataProduct } from "./utils/catalog.js";
 import { logger } from "./utils/logging_service.js";
 import { groundWithCatalogContext, groundingInstructions } from "./utils/grounding.js";
+import { kgService } from "./utils/kg_service.js";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -32,7 +33,8 @@ class CatalogAgent {
             get_full_catalog: () => metadataCatalog.getCatalog(),
             search_entities: ({ query }) => metadataCatalog.searchEntities(query),
             get_domain_schema: ({ domain }) => metadataCatalog.getSchemaForDomain(domain),
-            get_entity_lineage: ({ entityName }) => metadataCatalog.getEntityLineage(entityName)
+            get_entity_lineage: ({ entityName }) => metadataCatalog.getEntityLineage(entityName),
+            get_horizontal_insights: () => kgService.getHorizontalContextSummary()
         };
     }
 
@@ -69,6 +71,10 @@ class CatalogAgent {
                         name: "get_entity_lineage",
                         description: "Track the lineage of an entity and its cross-domain relationships.",
                         parameters: { type: "object", properties: { entityName: { type: "string" } }, required: ["entityName"] }
+                    },
+                    {
+                        name: "get_horizontal_insights",
+                        description: "Retrieves horizontal context and intent history from the mesh Knowledge Graph."
                     }
                 ]
             }]
