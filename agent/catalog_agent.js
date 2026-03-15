@@ -39,9 +39,9 @@ class CatalogAgent {
     /**
      * Main entry point for the Catalog Agent.
      */
-    async process(query, meshContext = {}) {
+    async process(query, meshContext = {}, traceId = null) {
         const startTime = Date.now();
-        logger.log('CatalogAgent', `Processing metadata query: "${query}"`, 'INFO');
+        logger.log('CatalogAgent', `Processing metadata query: "${query}"`, 'INFO', null, traceId);
 
         // Inject current catalog context into the grounding for this specific run
         const catalogSummary = metadataCatalog.getCatalog();
@@ -86,12 +86,12 @@ class CatalogAgent {
             for (const call of calls) {
                 const toolName = call.functionCall.name;
                 const args = call.functionCall.args;
-                logger.logToolCall('CatalogAgent', toolName, args);
+                logger.logToolCall('CatalogAgent', toolName, args, traceId);
 
                 const toolResult = this.tools[toolName](args);
                 toolResults.push(toolResult);
                 
-                logger.logToolResult('CatalogAgent', toolName, `Found ${Array.isArray(toolResult) ? toolResult.length : 'data'} items`, Date.now() - startTime);
+                logger.logToolResult('CatalogAgent', toolName, `Found ${Array.isArray(toolResult) ? toolResult.length : 'data'} items`, Date.now() - startTime, traceId);
 
                 // Send tool results back to Gemini for final synthesis
                 const secondResult = await chat.sendMessage([{
@@ -111,11 +111,11 @@ class CatalogAgent {
                 insights: text
             };
 
-            logger.logResponse('CatalogAgent', 'Catalog', dataProduct.metadata.confidence, dataProduct.metadata.latency);
+            logger.logResponse('CatalogAgent', 'Catalog', dataProduct.metadata.confidence, dataProduct.metadata.latency, traceId);
             return validateDataProduct(dataProduct, 'CatalogAgent');
 
         } catch (error) {
-            logger.log('CatalogAgent', `Error: ${error.message}`, 'ERROR');
+            logger.log('CatalogAgent', `Error: ${error.message}`, 'ERROR', null, traceId);
             throw error;
         }
     }

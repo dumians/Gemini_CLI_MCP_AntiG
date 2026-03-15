@@ -27,10 +27,10 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     return client;
 }
 
-export async function handleFinancialRequest(query, context = {}) {
-    logger.log("FinancialAgent", `Processing financial query: ${query}`, "INFO");
+export async function handleFinancialRequest(query, context = {}, traceId = null) {
+    logger.log("FinancialAgent", `Processing financial query: ${query}`, "INFO", null, traceId);
     if (Object.keys(context).length > 0) {
-        logger.log("FinancialAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO");
+        logger.log("FinancialAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO", null, traceId);
     }
 
     // Connect to Oracle MCP (Local or Remote)
@@ -78,10 +78,16 @@ export async function handleFinancialRequest(query, context = {}) {
     while (response.functionCalls && response.functionCalls.length > 0) {
         const toolCallParts = [];
         for (const call of response.functionCalls) {
+            const startTime = Date.now();
+            logger.logToolCall("FinancialAgent", call.name, call.args, traceId);
+            
             const toolResult = await oracleClient.callTool(call.name, call.args);
-
+            const duration = Date.now() - startTime;
+            
             // Apply Graph Grounding if it's a graph tool
             let formattedResult = toolResult.content[0].text;
+            logger.logToolResult("FinancialAgent", call.name, formattedResult, duration, traceId);
+
             if (call.name.includes("graph")) {
                 groundingData.push(formattedResult);
                 formattedResult = groundGraphContext("Finance", [formattedResult]);

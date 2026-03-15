@@ -1,4 +1,4 @@
-import { metadataCatalog } from './agent/utils/catalog.js';
+import { metadataCatalog } from '../agent/utils/catalog.js';
 
 async function verify() {
     console.log("--- Starting MetadataCatalog Verification ---");

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Terminal, Workflow, Activity, Clock, Server } from 'lucide-react';
 import { A2AVisualizer } from './A2AVisualizer';
+import { API_BASE_URL } from '../config';
 
 export function AdminConsole() {
     const [logs, setLogs] = useState<any[]>([]);
@@ -9,7 +10,7 @@ export function AdminConsole() {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/admin/logs');
+                const res = await fetch(`${API_BASE_URL}/api/admin/logs`);
                 const data = await res.json();
                 setLogs(data);
             } catch (e) {
@@ -115,13 +116,18 @@ function LogEntry({ log }: { log: any }) {
                         {log.type}
                     </span>
                     <span className="text-xs font-black text-white/90 uppercase tracking-widest">{log.agent}</span>
+                    {log.traceId && (
+                        <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[8px] text-white/40 font-mono font-bold tracking-tight group-hover:bg-white/10 transition-colors">
+                            TRC: {log.traceId.slice(0, 8)}
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center gap-1.5 text-white/30 group-hover:text-white/50 transition-colors">
                     <Clock size={12} />
                     <span className="text-[10px] font-bold">{new Date(log.timestamp).toLocaleTimeString()}</span>
                 </div>
             </div>
-            <p className="text-sm text-white/60 leading-relaxed font-mono">
+            <p className="text-sm text-white/60 leading-relaxed font-mono whitespace-pre-wrap break-words">
                 {log.message}
             </p>
         </div>

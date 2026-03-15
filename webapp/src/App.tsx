@@ -6,6 +6,7 @@ import { GraphView } from './components/GraphView';
 import { AdminConsole } from './components/AdminConsole';
 import { MarketplaceView } from './components/MarketplaceView';
 import { ShoppingBag } from 'lucide-react';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -19,7 +20,7 @@ function App() {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/config/data-sources');
+        const res = await fetch(`${API_BASE_URL}/api/config/data-sources`);
         const data = await res.json();
         setConfig(data);
       } catch (e) {
@@ -35,7 +36,7 @@ function App() {
     if (isProcessing) {
       interval = setInterval(async () => {
         try {
-          const res = await fetch('http://localhost:3001/api/status');
+          const res = await fetch(`${API_BASE_URL}/api/status`);
           const data = await res.json();
           setStatus(data);
           if (data.state === 'completed' || data.state === 'error') {
@@ -49,7 +50,7 @@ function App() {
       // Occasional poll for idle status
       interval = setInterval(async () => {
         try {
-          const res = await fetch('http://localhost:3001/api/status');
+          const res = await fetch(`${API_BASE_URL}/api/status`);
           const data = await res.json();
           setStatus(data);
         } catch (e) {}
@@ -67,7 +68,7 @@ function App() {
     setStatus({ ...status, state: 'processing', steps: [] });
 
     try {
-      const res = await fetch('http://localhost:3001/api/query', {
+      const res = await fetch(`${API_BASE_URL}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query }),

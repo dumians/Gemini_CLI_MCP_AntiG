@@ -11,14 +11,26 @@ dotenv.config();
 const config = configService.getConfig("hr_agent");
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// ... (createMcpClient remains same)
+async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
+    const transport = remoteUrl
+        ? new SSEClientTransport(new URL(remoteUrl))
+        : new StdioClientTransport({ command: serverCmd, args: serverArgs });
+
+    const client = new Client(
+        { name: `hr-agent-mcp`, version: "1.0.0" },
+        { capabilities: {} }
+    );
+
+    await client.connect(transport);
+    return client;
+}
 
 /**
  * HR Agent specialized in Oracle DB @ GCP HR Schema.
  * Handles employee data, recruitment pipelines, and department structures.
  */
-export async function handleHRTask(query, meshContext = {}) {
-    console.log(`[HRAgent] Processing request: ${query}`);
+export async function handleHRTask(query, meshContext = {}, traceId = null) {
+    logger.log("HRAgent", `Processing HR task: ${query}`, "INFO", null, traceId);
 
     // Connect to Oracle HR MCP (Local or Remote)
     const hrMcpUrl = process.env.HR_MCP_URL || process.env.ORACLE_MCP_URL;
@@ -65,18 +77,26 @@ export async function handleHRTask(query, meshContext = {}) {
     while (response.functionCalls && response.functionCalls.length > 0) {
         const toolCallParts = [];
         for (const call of response.functionCalls) {
+            const startTime = Date.now();
+            logger.logToolCall("HRAgent", call.name, call.args, traceId);
+
             const toolResult = await client.callTool(call.name, call.args);
+            const duration = Date.now() - startTime;
+            
+            const resultText = toolResult.content[0].text;
+            logger.logToolResult("HRAgent", call.name, resultText, duration, traceId);
+
             toolCallParts.push({
                 functionResponse: {
                     name: call.name,
-                    response: { result: toolResult.content[0].text }
+                    response: { result: resultText }
                 }
             });
         }
         response = await chat.sendMessage({ message: toolCallParts });
     }
 
-    return {
+    const dataProduct = {
         domain: config.domain || "HR",
         data: response.text,
         metadata: {
@@ -85,4 +105,7 @@ export async function handleHRTask(query, meshContext = {}) {
         },
         insights: "HR pipeline and employee metrics synthesized using latest Gemini capabilities."
     };
+
+    logger.logResponse("HRAgent", "HR", dataProduct.metadata.confidence, 0, traceId); // Duration not tracked here yet
+    return validateDataProduct(dataProduct, 'HRAgent');
 }

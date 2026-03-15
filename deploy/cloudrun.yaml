@@ -1,0 +1,49 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: mesh-orchestrator
+  labels:
+    cloud.googleapis.com/location: europe-west1
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/PROJECT_ID/mesh-orchestrator:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: GEMINI_API_KEY
+              key: latest
+        # Updated URLs to match the names in mcp-services.yaml
+        - name: SPANNER_MCP_URL
+          value: "https://retail-spanner-mcp-XYZ-ew.a.run.app"
+        - name: BIGQUERY_MCP_URL
+          value: "https://analytics-bigquery-mcp-XYZ-ew.a.run.app"
+        - name: ALLOYDB_MCP_URL
+          value: "https://crm-alloydb-mcp-XYZ-ew.a.run.app"
+        - name: ORACLE_MCP_URL
+          value: "https://hr-oracle-mcp-XYZ-ew.a.run.app"
+        - name: HR_MCP_URL # Re-using Oracle for HR domain demo
+          value: "https://hr-oracle-mcp-XYZ-ew.a.run.app"
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: mesh-webapp
+  labels:
+    cloud.googleapis.com/location: europe-west1
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/PROJECT_ID/mesh-webapp:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: VITE_API_BASE_URL
+          value: "https://mesh-orchestrator-XYZ-ew.a.run.app"

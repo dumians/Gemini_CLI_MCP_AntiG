@@ -5,7 +5,7 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy root package.json for workspace dependencies if any
+# Copy root package.json for workspace dependencies
 COPY package*.json ./
 RUN npm install --production
 
@@ -13,12 +13,12 @@ RUN npm install --production
 COPY servers/ ./servers/
 COPY agent/utils/ ./agent/utils/
 
-# Default to one of the servers - can be overridden via CMD or entrypoint
-# But better to have individual ones or use an environment variable to pick.
-# For simplicity, we'll suggest passing the server path as an argument.
-
+# Default port for Cloud Run
 EXPOSE 8080
 
-# The actual command should be set per-deployment, e.g.:
-# node servers/oracle-mcp/index.js
-CMD ["node", "servers/oracle-mcp/index.js"]
+# Use an environment variable to determine which server to run.
+# Example: MCP_SERVICE=bigquery-mcp
+ENV MCP_SERVICE=oracle-mcp
+
+# Start the selected MCP server in SSE mode on the Cloud Run port
+CMD node servers/${MCP_SERVICE}/index.js --sse --port 8080

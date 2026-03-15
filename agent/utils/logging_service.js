@@ -36,15 +36,17 @@ class LoggingService {
      * @param {string} message - The log message.
      * @param {string} type - One of LogTypes values.
      * @param {object} [meta] - Optional structured metadata (payload, latency, etc.)
+     * @param {string} [traceId] - Optional trace identifier for request correlation.
      */
-    log(agent, message, type = 'INFO', meta = null) {
+    log(agent, message, type = 'INFO', meta = null, traceId = null) {
         const entry = {
             id: `${this._sessionId}-${this.logs.length}`,
             timestamp: new Date().toISOString(),
             agent,
             message,
             type,
-            meta
+            meta,
+            traceId
         };
 
         this.logs.unshift(entry);
@@ -78,48 +80,48 @@ class LoggingService {
     /**
      * Record an A2A dispatch event (orchestrator → sub-agent).
      */
-    logDispatch(sourceAgent, targetAgent, query) {
+    logDispatch(sourceAgent, targetAgent, query, traceId = null) {
         this.log(sourceAgent, `Dispatching to ${targetAgent}: "${query}"`, LogTypes.A2A_DISPATCH, {
             source: sourceAgent,
             target: targetAgent,
             query,
             direction: 'outbound'
-        });
+        }, traceId);
         this._updateAgentStatus(targetAgent, 'processing', `Handling: ${query.substring(0, 80)}`);
     }
 
     /**
      * Record an A2A response event (sub-agent → orchestrator).
      */
-    logResponse(agent, domain, confidence, durationMs) {
+    logResponse(agent, domain, confidence, durationMs, traceId = null) {
         this.log(agent, `Returned result (confidence: ${confidence}, ${durationMs}ms)`, LogTypes.A2A_RESPONSE, {
             domain,
             confidence,
             durationMs,
             direction: 'inbound'
-        });
+        }, traceId);
         this._updateAgentStatus(agent, 'idle', `Last: ${domain} query (${durationMs}ms)`);
     }
 
     /**
      * Record a tool call through MCP.
      */
-    logToolCall(agent, toolName, args) {
+    logToolCall(agent, toolName, args, traceId = null) {
         this.log(agent, `MCP Tool: ${toolName}`, LogTypes.TOOL_CALL, {
             tool: toolName,
             args: typeof args === 'object' ? JSON.stringify(args).substring(0, 200) : args
-        });
+        }, traceId);
     }
 
     /**
      * Record a tool result from MCP.
      */
-    logToolResult(agent, toolName, resultPreview, durationMs) {
+    logToolResult(agent, toolName, resultPreview, durationMs, traceId = null) {
         this.log(agent, `Tool ${toolName} returned (${durationMs}ms)`, LogTypes.TOOL_RESULT, {
             tool: toolName,
             preview: resultPreview?.substring?.(0, 150),
             durationMs
-        });
+        }, traceId);
     }
 
     /**

@@ -27,10 +27,10 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     return client;
 }
 
-export async function handleRetailRequest(query, context = {}) {
-    logger.log("RetailAgent", `Processing retail query: ${query}`, "INFO");
+export async function handleRetailRequest(query, context = {}, traceId = null) {
+    logger.log("RetailAgent", `Processing retail query: ${query}`, "INFO", null, traceId);
     if (Object.keys(context).length > 0) {
-        logger.log("RetailAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO");
+        logger.log("RetailAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO", null, traceId);
     }
 
     // Connect to Spanner MCP (Local or Remote)
@@ -62,8 +62,6 @@ export async function handleRetailRequest(query, context = {}) {
     
     Use this context to enrich your supply chain reasoning.`;
 
-
-
     const chat = ai.chats.create({
         model: config.model || "gemini-3.1-flash-preview",
         config: {
@@ -80,10 +78,16 @@ export async function handleRetailRequest(query, context = {}) {
     while (response.functionCalls && response.functionCalls.length > 0) {
         const toolCallParts = [];
         for (const call of response.functionCalls) {
+            const startTime = Date.now();
+            logger.logToolCall("RetailAgent", call.name, call.args, traceId);
+
             const toolResult = await client.callTool(call.name, call.args);
+            const duration = Date.now() - startTime;
 
             // Apply Graph Grounding if it's a graph tool
             let formattedResult = toolResult.content[0].text;
+            logger.logToolResult("RetailAgent", call.name, formattedResult, duration, traceId);
+
             if (call.name.includes("graph")) {
                 groundingData.push(formattedResult);
                 formattedResult = groundGraphContext("Retail", [formattedResult]);

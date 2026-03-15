@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ShoppingBag, Database, Share2, Info, Boxes, Search } from 'lucide-react';
+import { Share2, Info, Boxes, Search, Database, ShoppingBag } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export function MarketplaceView() {
     const [catalog, setCatalog] = useState<any>(null);
@@ -9,7 +10,7 @@ export function MarketplaceView() {
     useEffect(() => {
         const fetchCatalog = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/catalog');
+                const res = await fetch(`${API_BASE_URL}/api/catalog`);
                 const data = await res.json();
                 setCatalog(data);
             } catch (e) {

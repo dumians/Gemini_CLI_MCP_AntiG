@@ -5,6 +5,10 @@ FROM node:20-slim
 
 WORKDIR /app
 
+# Standard environment variables
+ENV NODE_ENV=production
+ENV PORT=8080
+
 # Install dependencies for both agent and server
 COPY package*.json ./
 RUN npm install --production

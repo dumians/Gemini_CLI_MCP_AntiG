@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Workflow, ArrowRight, Zap, Database, Search, MessageSquare, Clock } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 interface A2AEvent {
     id: string;
@@ -17,7 +18,7 @@ export function A2AVisualizer() {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/admin/events');
+                const res = await fetch(`${API_BASE_URL}/api/admin/events`);
                 const data = await res.json();
                 setEvents(data);
                 setIsLoading(false);

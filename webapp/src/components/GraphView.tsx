@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
-import { ForceGraph2D } from 'react-force-graph';
+import ForceGraph2D from 'react-force-graph-2d';
+import { API_BASE_URL } from '../config';
 
 export function GraphView({ data: initialData }: { data?: any }) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -11,7 +12,7 @@ export function GraphView({ data: initialData }: { data?: any }) {
 
         const fetchGraph = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/catalog/graph');
+                const res = await fetch(`${API_BASE_URL}/api/catalog/graph`);
                 const data = await res.json();
                 setGraphData(data);
             } catch (e) {

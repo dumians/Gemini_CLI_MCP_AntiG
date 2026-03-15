@@ -1,0 +1,31 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: mesh-orchestrator
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/PROJECT_ID/mesh-orchestrator:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: GEMINI_API_KEY
+              key: latest
+        - name: ORACLE_MCP_URL
+          value: http://hr-mcp.default.svc.cluster.local/sse
+        - name: SPANNER_MCP_URL
+          value: http://spanner-mcp.default.svc.cluster.local/sse
+        - name: BIGQUERY_MCP_URL
+          value: http://bigquery-mcp.default.svc.cluster.local/sse
+        - name: ALLOYDB_MCP_URL
+          value: http://alloydb-mcp.default.svc.cluster.local/sse
+        - name: HR_MCP_URL
+          value: http://hr-mcp.default.svc.cluster.local/sse

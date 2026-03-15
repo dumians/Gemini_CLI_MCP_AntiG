@@ -32,23 +32,23 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     }
 }
 
-export async function handleAnalyticsRequest(query, meshContext = {}) {
-    logger.log("AnalyticsAgent", `Processing analytics request: ${query}`, "INFO");
+export async function handleAnalyticsRequest(query, meshContext = {}, traceId = null) {
+    logger.log("AnalyticsAgent", `Processing analytics request: ${query}`, "INFO", null, traceId);
     if (Object.keys(meshContext).length > 0) {
-        console.log(`[AnalyticsAgent] Integrated context from: ${Object.keys(meshContext).join(', ')}`);
+        logger.log("AnalyticsAgent", `Integrated context from: ${Object.keys(meshContext).join(', ')}`, "INFO", null, traceId);
     }
 
     // Connect to BigQuery MCP (Local or Remote)
     const bqMcpUrl = process.env.BIGQUERY_MCP_URL;
     const bqClient = await createMcpClient("node", [config.bq_mcp_server || "servers/bigquery-mcp/index.js"], bqMcpUrl);
     const bqTools = await bqClient.listTools();
-    console.log(`[AnalyticsAgent] BQ Tools found: ${bqTools?.tools?.length || 0}`);
+    logger.log("AnalyticsAgent", `BQ Tools found: ${bqTools?.tools?.length || 0}`, "DEBUG", null, traceId);
 
     // Connect to AlloyDB MCP (Local or Remote)
     const alloydbMcpUrl = process.env.ALLOYDB_MCP_URL;
     const alloydbClient = await createMcpClient("node", [config.alloydb_mcp_server || "servers/alloydb-mcp/index.js"], alloydbMcpUrl);
     const alloydbTools = await alloydbClient.listTools();
-    console.log(`[AnalyticsAgent] AlloyDB Tools found: ${alloydbTools?.tools?.length || 0}`);
+    logger.log("AnalyticsAgent", `AlloyDB Tools found: ${alloydbTools?.tools?.length || 0}`, "DEBUG", null, traceId);
 
     // Aggregate Tools
     const bqToolList = (bqTools?.tools || []).map(t => ({ ...t, _client: bqClient }));
@@ -91,12 +91,20 @@ export async function handleAnalyticsRequest(query, meshContext = {}) {
     while (response.functionCalls && response.functionCalls.length > 0) {
         const toolCallParts = [];
         for (const call of response.functionCalls) {
+            const startTime = Date.now();
+            logger.logToolCall("AnalyticsAgent", call.name, call.args, traceId);
+
             const tool = allTools.find(t => t.name === call.name);
             const result = await tool._client.callTool(call.name, call.args);
+            const duration = Date.now() - startTime;
+            
+            const resultText = result.content[0].text;
+            logger.logToolResult("AnalyticsAgent", call.name, resultText, duration, traceId);
+
             toolCallParts.push({
                 functionResponse: {
                     name: call.name,
-                    response: { result: result.content[0].text }
+                    response: { result: resultText }
                 }
             });
         }

@@ -1,0 +1,91 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: retail-spanner-mcp
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+        env:
+        - name: MCP_SERVICE
+          value: "spanner-mcp"
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: SPANNER_INSTANCE_ID
+          value: "global-retail-instance"
+        - name: SPANNER_DATABASE_ID
+          value: "global-retail-db"
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: analytics-bigquery-mcp
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+        env:
+        - name: MCP_SERVICE
+          value: "bigquery-mcp"
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: BIGQUERY_DATASET_ID
+          value: "marketing_edw"
+        - name: BIGQUERY_LOCATION
+          value: "EU"
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: crm-alloydb-mcp
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+        env:
+        - name: MCP_SERVICE
+          value: "alloydb-mcp"
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: ALLOYDB_REGION
+          value: "europe-west1"
+        - name: ALLOYDB_CLUSTER
+          value: "crm-cluster"
+        - name: ALLOYDB_INSTANCE
+          value: "crm-instance-1"
+        - name: ALLOYDB_USER
+          value: "postgres"
+        - name: ALLOYDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ALLOYDB_PASSWORD
+              key: latest
+        - name: ALLOYDB_DB
+          value: "postgres"
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: hr-oracle-mcp
+spec:
+  template:
+    spec:
+      containers:
+      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+        env:
+        - name: MCP_SERVICE
+          value: "oracle-mcp"
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: ORACLE_USER
+          value: "ERP_READER"
+        - name: ORACLE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ORACLE_PASSWORD
+              key: latest
+        - name: ORACLE_CONNECT_STRING
+          value: "your-oracle-host:1521/xe"

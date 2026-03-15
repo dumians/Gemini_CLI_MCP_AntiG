@@ -40,7 +40,8 @@ const geminiTools = getDiscoveryTools();
  * @returns {Promise<{text: string, steps: Array<{agent: string, query: string, result: any}>}>}
  */
 export async function askOrchestrator(query) {
-    logger.log("Orchestrator", `Received query: ${query}`, "INFO");
+    const traceId = Math.random().toString(36).substring(2, 10);
+    logger.log("Orchestrator", `Received query: ${query}`, "INFO", null, traceId);
     const model = ai.getGenerativeModel({
         model: config.model || "gemini-3.1-flash-preview",
         systemInstruction,
@@ -67,31 +68,31 @@ export async function askOrchestrator(query) {
                 // Map tool call to agent
                 const agentDef = AgentRegistry.find(a => a.toolName === call.name);
                 if (!agentDef) {
-                    logger.log("Orchestrator", `Unknown tool call: ${call.name}`, "ERROR");
+                    logger.log("Orchestrator", `Unknown tool call: ${call.name}`, "ERROR", null, traceId);
                     continue;
                 }
 
                 agentName = agentDef.name;
-                logger.logDispatch("Orchestrator", agentName, subQuery);
+                logger.logDispatch("Orchestrator", agentName, subQuery, traceId);
 
                 try {
                     let rawResult;
                     if (call.name === "call_financial_agent") {
-                        rawResult = await handleFinancialRequest(subQuery, meshContext);
+                        rawResult = await handleFinancialRequest(subQuery, meshContext, traceId);
                     } else if (call.name === "call_retail_agent") {
-                        rawResult = await handleRetailRequest(subQuery, meshContext);
+                        rawResult = await handleRetailRequest(subQuery, meshContext, traceId);
                     } else if (call.name === "call_analytics_agent") {
-                        rawResult = await handleAnalyticsRequest(subQuery, meshContext);
+                        rawResult = await handleAnalyticsRequest(subQuery, meshContext, traceId);
                     } else if (call.name === "call_hr_agent") {
-                        rawResult = await handleHRTask(subQuery, meshContext);
+                        rawResult = await handleHRTask(subQuery, meshContext, traceId);
                     } else if (call.name === "call_catalog_agent") {
-                        rawResult = await catalogAgent.process(subQuery, meshContext);
+                        rawResult = await catalogAgent.process(subQuery, meshContext, traceId);
                     }
 
                     agentResult = validateDataProduct(rawResult, agentName);
                     
                     // Log success with latency
-                    logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime);
+                    logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime, traceId);
 
                     // Update Mesh Context with this agent's insights for subsequent calls
                     meshContext[agentName] = {
