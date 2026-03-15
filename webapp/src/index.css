@@ -1,51 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  --bg-deep: #050506;
+  --bg-obsidian: #0A0A0B;
+  --primary: #3B82F6;
+  --primary-glow: rgba(59, 130, 246, 0.5);
+  --accent: #8B5CF6;
+  --emerald: #10B981;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #0a0a0b;
-  color: #e5e7eb;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-deep);
+  color: #F8FAFC;
+  font-family: 'Outfit', system-ui, sans-serif;
+  letter-spacing: -0.01em;
   overflow-x: hidden;
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.03);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.glass-hover:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #F8FAFC 30%, #94A3B8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.animate-pulse-slow {
-  animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.command-gradient {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
 }
 
-@keyframes pulse {
+.mesh-glow {
+  box-shadow: 0 0 20px var(--primary-glow);
+}
 
-  0%,
-  100% {
-    opacity: 1;
-  }
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
 
-  50% {
-    opacity: 0.5;
-  }
+.scanline::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(59, 130, 246, 0.1);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

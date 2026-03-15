@@ -4,9 +4,12 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { askOrchestrator } from '../agent/orchestrator.js';
 import { logger } from '../agent/utils/logging_service.js';
 import { metadataCatalog } from '../agent/utils/catalog.js';
+import { authMiddleware } from './middleware/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: '../.env' });
@@ -17,6 +20,31 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// --- Authentication Endpoints ---
+
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    // Simple auth check against .env
+    if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+        const token = jwt.sign(
+            { username, role: 'admin' },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        logger.log('Auth', `User ${username} logged in successfully`, 'INFO');
+        return res.json({ token, user: { username, role: 'admin' } });
+    }
+
+    logger.log('Auth', `Failed login attempt for user: ${username}`, 'WARNING');
+    res.status(401).json({ error: 'Invalid credentials' });
+});
+
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+    res.json(req.user);
+});
+
 // Real-time status tracking
 let currentStatus = {
     state: "idle",
@@ -24,8 +52,8 @@ let currentStatus = {
     steps: []
 };
 
-// --- Mesh Query Endpoint ---
-app.post('/api/query', async (req, res) => {
+// --- Mesh Query Endpoint (PROTECTED) ---
+app.post('/api/query', authMiddleware, async (req, res) => {
     const { query } = req.body;
     if (!query) {
         return res.status(400).json({ error: "Query is required" });
@@ -51,7 +79,7 @@ app.post('/api/query', async (req, res) => {
 
 // --- Catalog & Metadata Endpoints ---
 
-app.get('/api/catalog', (req, res) => {
+app.get('/api/catalog', authMiddleware, (req, res) => {
     try {
         res.json(metadataCatalog.getCatalog());
     } catch (error) {
@@ -59,7 +87,7 @@ app.get('/api/catalog', (req, res) => {
     }
 });
 
-app.get('/api/catalog/graph', (req, res) => {
+app.get('/api/catalog/graph', authMiddleware, (req, res) => {
     try {
         const catalog = metadataCatalog.getCatalog();
         const graphData = { nodes: [], links: [] };
@@ -119,24 +147,24 @@ app.get('/api/catalog/graph', (req, res) => {
 
 // --- Agent & A2A Status Endpoints ---
 
-app.get('/api/status', (req, res) => {
+app.get('/api/status', authMiddleware, (req, res) => {
     res.json({
         ...currentStatus,
         agents: logger.getAgentStatuses()
     });
 });
 
-app.get('/api/admin/events', (req, res) => {
+app.get('/api/admin/events', authMiddleware, (req, res) => {
     res.json(logger.getA2AEvents());
 });
 
-app.get('/api/admin/logs', (req, res) => {
+app.get('/api/admin/logs', authMiddleware, (req, res) => {
     res.json(logger.getLogs());
 });
 
 // --- Configuration Endpoints ---
 
-app.get('/api/config/data-sources', (req, res) => {
+app.get('/api/config/data-sources', authMiddleware, (req, res) => {
     try {
         const dsPath = path.join(__dirname, '../config/data_sources.json');
         const config = JSON.parse(fs.readFileSync(dsPath, 'utf8'));

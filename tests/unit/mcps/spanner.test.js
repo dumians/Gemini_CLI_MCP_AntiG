@@ -20,7 +20,7 @@ test("Spanner MCP: query_spanner_sql (Simulation)", async () => {
         method: "tools/call",
         params: {
             name: "query_spanner_sql",
-            arguments: { sql: "SELECT * FROM Singers LIMIT 1" }
+            arguments: { query: "SELECT * FROM Singers LIMIT 1" }
         }
     });
     assert.ok(result.content[0].text.includes("Simulated Spanner SQL result"));

@@ -75,9 +75,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     if (name === "query_alloydb_vector") {
+        const query = args.query || args.sql || "";
         if (process.env.NODE_ENV === 'test') {
             return {
-                content: [{ type: "text", text: `Simulated AlloyDB Vector result for: ${args.query}\n[{ "ticket_id": 1, "similarity": 0.98 }]` }]
+                content: [{ type: "text", text: `Simulated AlloyDB Vector result for: ${query}\n[{ "ticket_id": 1, "similarity": 0.98 }]` }]
             };
         }
         let client;

@@ -20,7 +20,7 @@ test("Oracle MCP: query_oracle_sql (Simulation)", async () => {
         method: "tools/call",
         params: {
             name: "query_oracle_sql",
-            arguments: { sql: "SELECT * FROM ERP_INVOICES FETCH FIRST 1 ROWS ONLY" }
+            arguments: { query: "SELECT * FROM ERP_INVOICES FETCH FIRST 1 ROWS ONLY" }
         }
     });
     assert.ok(result.content[0].text.includes("Simulated Oracle SQL result"));

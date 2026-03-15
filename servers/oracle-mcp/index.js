@@ -66,19 +66,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     const connection = await getConnection();
 
-    if (!connection) {
+    const isTest = process.env.NODE_ENV === 'test';
+    if (!connection || isTest) {
         // FALLBACK TO SIMULATION
         if (name === "query_oracle_sql") {
+            const query = args.query || args.sql || "";
             return {
-                content: [{ type: "text", text: `Simulated Oracle SQL result for: ${args.query}\n[{ "supplier_id": 1001, "total_invoices": 50000 }]` }]
+                content: [{ type: "text", text: `Simulated Oracle SQL result for: ${query}\n[{ "supplier_id": 1001, "total_invoices": 50000 }]` }]
             };
         } else if (name === "query_oracle_graph") {
+            const query = args.query || args.gql || "";
             return {
-                content: [{ type: "text", text: `Simulated Oracle Graph result for: ${args.query}\n[{ "network_depth": 3, "connected_entities": ["SupplierA", "SupplierC"] }]` }]
+                content: [{ type: "text", text: `Simulated Oracle Graph result for: ${query}\n[{ "network_depth": 3, "connected_entities": ["SupplierA", "SupplierC"] }]` }]
             };
         } else if (name === "query_oracle_vector") {
+            const query = args.query || args.vector_query || "";
             return {
-                content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${args.query}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
+                content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${query}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
             };
         }
     }

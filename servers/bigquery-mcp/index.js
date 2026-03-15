@@ -52,10 +52,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     if (name === "query_bigquery") {
-        if (!bigquery) {
-            // FALLBACK TO SIMULATION if NO PROJECT_ID is provided
+        const query = args.query || args.sql || "";
+        const isTest = process.env.NODE_ENV === 'test';
+        if (!bigquery || isTest) {
+            // FALLBACK TO SIMULATION
             return {
-                content: [{ type: "text", text: `Simulated BigQuery result for: ${args.query}\n[{ "segment": "VIP", "customer_id": "CUST-999" }]` }]
+                content: [{ type: "text", text: `Simulated BigQuery result for: ${query}\n[{ "segment": "VIP", "customer_id": "CUST-999" }]` }]
             };
         }
 

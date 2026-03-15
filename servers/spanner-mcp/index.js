@@ -67,16 +67,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     const db = getDb();
+    const isTest = process.env.NODE_ENV === 'test';
 
-    if (!db) {
+    if (!db || isTest) {
         // FALLBACK TO SIMULATION
         if (name === "query_spanner_sql") {
+            const query = args.query || args.sql || "";
             return {
-                content: [{ type: "text", text: `Simulated Spanner SQL result for: ${args.query}\n[{ "store_id": "NYC-01", "stock_level": 4500 }]` }]
+                content: [{ type: "text", text: `Simulated Spanner SQL result for: ${query}\n[{ "store_id": "NYC-01", "stock_level": 4500 }]` }]
             };
         } else if (name === "query_spanner_graph") {
+            const gql = args.gql_match || args.query || "";
             return {
-                content: [{ type: "text", text: `Simulated Spanner GQL result for: ${args.gql_match}\n[{ "path": ["SupplierA", "WarehouseB", "Store NYC-01"] }]` }]
+                content: [{ type: "text", text: `Simulated Spanner GQL result for: ${gql}\n[{ "path": ["SupplierA", "WarehouseB", "Store NYC-01"] }]` }]
             };
         }
     }
