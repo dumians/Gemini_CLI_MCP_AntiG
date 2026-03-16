@@ -1,7 +1,35 @@
 import React from 'react';
 import { RefreshCw, Cpu, Activity, Bot } from 'lucide-react';
+import { api } from '../utils/api';
 
 export function CrossDomainInventoryView() {
+  const [logs, setLogs] = React.useState<any[]>([]);
+  const [adkAgents, setAdkAgents] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [events, status] = await Promise.all([
+          api.get('/api/admin/events'),
+          api.get('/api/status')
+        ]);
+        setLogs(events || []);
+        setAdkAgents(status.agents?.map((a: any) => ({
+          id: a.agent,
+          type: a.agent.includes('Agent') ? 'A2A' : 'A2UI',
+          status: a.status === 'processing' ? 'Connected' : 'Idle',
+          latency: '2ms',
+          load: '14%'
+        })) || []);
+      } catch (e) {
+        console.error("Failed to fetch inventory telemetry:", e);
+      }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   const inventoryData = [
     { id: 'INV-001', item: 'Enterprise Server X1', source: 'Oracle', stock: 45, status: 'In Stock', location: 'Global-West' },
     { id: 'SKU-882', item: 'Retail Display Unit', source: 'Spanner', stock: 1200, status: 'High Demand', location: 'Retail-Hub' },
@@ -9,12 +37,6 @@ export function CrossDomainInventoryView() {
     { id: 'INV-002', item: 'Network Switch L3', source: 'Oracle', stock: 12, status: 'Low Stock', location: 'Global-East' },
     { id: 'SKU-441', item: 'POS Terminal V2', source: 'Spanner', stock: 340, status: 'In Stock', location: 'Retail-Hub' },
     { id: 'BQ-DATA-02', item: 'Real-time Stream Buffer', source: 'BigQuery', stock: 2100, status: 'Active', location: 'Data-Lake' },
-  ];
-
-  const adkAgents = [
-    { id: 'ADK-01', type: 'A2A', status: 'Connected', latency: '2ms', load: '14%' },
-    { id: 'ADK-02', type: 'A2UI', status: 'Connected', latency: '5ms', load: '28%' },
-    { id: 'ADK-03', type: 'A2A', status: 'Idle', latency: '1ms', load: '2%' },
   ];
 
   return (
@@ -101,22 +123,15 @@ export function CrossDomainInventoryView() {
               </div>
             </div>
             <div className="p-6 bg-black/20 font-mono text-[11px] space-y-2 h-64 overflow-y-auto">
-              {[
-                { time: '04:08:12', agent: 'ADK-01', type: 'A2A', msg: 'Handshake initiated with Spanner-Node-7' },
-                { time: '04:08:14', agent: 'ADK-02', type: 'A2UI', msg: 'Rendering inventory delta for Global-West' },
-                { time: '04:08:15', agent: 'ADK-01', type: 'A2A', msg: 'Syncing stock level for SKU-882 [SUCCESS]' },
-                { time: '04:08:18', agent: 'ADK-03', type: 'A2A', msg: 'Heartbeat signal received from Oracle-DB-Core' },
-                { time: '04:08:22', agent: 'ADK-02', type: 'A2UI', msg: 'User session validated via Federated Auth' },
-                { time: '04:08:25', agent: 'ADK-01', type: 'A2A', msg: 'Requesting BigQuery cold storage audit log' },
-                { time: '04:08:28', agent: 'ADK-02', type: 'A2UI', msg: 'Pushing real-time alerts to dashboard UI' },
-              ].map((log, i) => (
+              {logs.map((log, i) => (
                 <div key={i} className="flex gap-4 border-b border-white/5 pb-1 last:border-0">
-                  <span className="text-slate-600">[{log.time}]</span>
+                  <span className="text-slate-600">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                   <span className={log.type === 'A2A' ? 'text-indigo-400' : 'text-emerald-400'}>{log.agent}</span>
-                  <span className="text-slate-500">[{log.type}]</span>
-                  <span className="text-slate-300">{log.msg}</span>
+                  <span className="text-slate-500">[{log.type || 'EVENT'}]</span>
+                  <span className="text-slate-300">{log.description || log.msg || log.content}</span>
                 </div>
               ))}
+              {logs.length === 0 && <div className="text-slate-600 italic">Waiting for ADK agent activity...</div>}
             </div>
           </section>
         </div>

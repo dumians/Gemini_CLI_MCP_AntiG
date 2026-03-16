@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Bar 
 } from 'recharts';
+import { api } from '../utils/api';
 
 export function OracleDetailView() {
   const financialData = [

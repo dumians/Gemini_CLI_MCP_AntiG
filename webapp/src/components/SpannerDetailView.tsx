@@ -5,6 +5,7 @@ import {
   ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, 
   LineChart, Line 
 } from 'recharts';
+import { api } from '../utils/api';
 
 export function SpannerDetailView() {
   const [inventory, setInventory] = React.useState([

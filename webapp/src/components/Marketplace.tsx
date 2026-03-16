@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, ShoppingCart, GitBranch, Database, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
+import { api } from '../utils/api';
 
 export function MarketplaceView() {
   const [dataProducts, setDataProducts] = useState<any[]>([]);
@@ -15,32 +16,29 @@ export function MarketplaceView() {
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/catalog');
-        if (res.ok) {
-          const data = await res.json();
-          // Transform backend catalog into marketplace products format
-          const sources = Object.entries(data.sources || {}).map(([id, src]: [string, any]) => ({
-            id: `src-${id}`,
-            name: src.name,
-            type: 'Source',
-            domain: src.description || 'Enterprise Data Source',
-            owner: 'System Admin',
-            quality: 99,
-            access: 'Approved'
-          }));
-          
-          const entities = Object.entries(data.entities || {}).map(([id, ent]: [string, any]) => ({
-            id: `ent-${id}`,
-            name: ent.name,
-            type: ent.type === 'PROPERTY_GRAPH' ? 'Graph' : 'Table',
-            domain: ent.description || 'Derived Entity',
-            owner: 'Data Steward',
-            quality: 95,
-            access: ent.type === 'PROPERTY_GRAPH' ? 'Request' : 'Approved'
-          }));
+        const data = await api.get('/api/catalog');
+        // Transform backend catalog into marketplace products format
+        const sources = Object.entries(data.sources || {}).map(([id, src]: [string, any]) => ({
+          id: `src-${id}`,
+          name: src.name,
+          type: 'Source',
+          domain: src.description || 'Enterprise Data Source',
+          owner: 'System Admin',
+          quality: 99,
+          access: 'Approved'
+        }));
+        
+        const entities = Object.entries(data.entities || {}).map(([id, ent]: [string, any]) => ({
+          id: `ent-${id}`,
+          name: ent.name,
+          type: ent.type === 'PROPERTY_GRAPH' ? 'Graph' : 'Table',
+          domain: ent.description || 'Derived Entity',
+          owner: 'Data Steward',
+          quality: 95,
+          access: ent.type === 'PROPERTY_GRAPH' ? 'Request' : 'Approved'
+        }));
 
-          setDataProducts([...sources, ...entities]);
-        }
+        setDataProducts([...sources, ...entities]);
       } catch (e) {
         console.error("Failed to fetch catalog:", e);
       } finally {

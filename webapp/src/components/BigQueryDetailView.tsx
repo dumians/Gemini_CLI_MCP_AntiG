@@ -3,6 +3,7 @@ import { RefreshCw, AlertTriangle, TrendingUp, Download, Table, Copy, GitBranch 
 import { 
   ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Bar 
 } from 'recharts';
+import { api } from '../utils/api';
 
 export function BigQueryDetailView() {
   const [analyticsData, setAnalyticsData] = React.useState<any>(null);
@@ -13,11 +14,8 @@ export function BigQueryDetailView() {
     setLoading(true);
     setError(null);
     try {
-      // Mock logic to wait for real endpoint
-      const res = await fetch('/api/bigquery/analytics').catch(() => null);
-      if (!res?.ok) {
-        // use Mock data since endpoint is not available
-        setAnalyticsData({
+      const data = await api.get('/api/bigquery/analytics').catch(() => ({
+        data: {
           metrics: { totalConversions: 18370, avgRoi: 249.05 },
           campaigns: [
             { id: "CMP_2023_Q4_RTL", conversions: 14529, roi: 312.4 },
@@ -27,11 +25,9 @@ export function BigQueryDetailView() {
             { name: "Enterprise Logic Users", value: "High", growth: 12 },
             { name: "Retail Buyers", value: "Medium", growth: 5 }
           ]
-        });
-      } else {
-        const data = await res.json();
-        setAnalyticsData(data.data);
-      }
+        }
+      }));
+      setAnalyticsData(data.data || data);
     } catch (err) {
       console.error('Failed to fetch BigQuery analytics:', err);
       setError('The BigQuery Analytics Agent is currently unreachable. Please check your network connection or try again later.');

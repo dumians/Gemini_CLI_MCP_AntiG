@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Database, Store, BarChart3, Users, Zap, ShieldCheck } from 'lucide-react';
 import type { View } from '../types';
+import { api } from '../utils/api';
 
 interface DashboardHomeProps {
   onNavigate: (view: View) => void;
@@ -13,11 +14,8 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     // Fetch live status from the backend orchestrator
     const fetchStatus = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/status');
-        if (res.ok) {
-          const data = await res.json();
-          setStatusData(data);
-        }
+        const data = await api.get('/api/status');
+        setStatusData(data);
       } catch (e) {
         console.error("Failed to fetch status:", e);
       }
