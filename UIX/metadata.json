@@ -1,0 +1,5 @@
+{
+  "name": "Enterprise Data Agent Dashboard",
+  "description": "A high-performance enterprise dashboard for monitoring data agents, orchestrating cross-domain inventory, and analyzing real-time analytics across Oracle, Spanner, and BigQuery.",
+  "requestFramePermissions": []
+}

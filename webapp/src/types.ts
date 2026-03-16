@@ -1,0 +1,1 @@
+export type View = 'dashboard' | 'spanner-detail' | 'bigquery-detail' | 'marketplace' | 'governance' | 'governance-detail' | 'oracle-detail' | 'alloy-detail' | 'cross-domain-inventory' | 'data-domains' | 'analysis';

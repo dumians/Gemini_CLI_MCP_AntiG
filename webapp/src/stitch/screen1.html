@@ -1,0 +1,303 @@
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Data Agent Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1111d4",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-72 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark flex flex-col h-screen">
+<div class="p-6 flex items-center gap-3">
+<div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined">dataset</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-slate-100 text-base font-bold leading-none">Data Agent</h1>
+<p class="text-slate-500 dark:text-slate-400 text-xs mt-1">v2.4.0-enterprise</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 mt-4">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">database</span>
+<span class="text-sm">Oracle ERP</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="text-sm">Spanner Retail</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm">BigQuery Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm">AlloyDB CRM</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="bg-slate-100 dark:bg-slate-800/50 rounded-xl p-4">
+<div class="flex items-center gap-3 mb-3">
+<div class="size-8 rounded-full bg-slate-300 dark:bg-slate-700 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="User profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRWM7USIMO4BvNO9bl2IpBrLCNCAAaKCKX_KeZRjwh8xcAWloetSi3lnX3WYNUQvlgZGknXPnCxGCnfJgprzFdO8Tpm8rlUccNINH2qUwxF9JrtmHMyv-KFCABG9hzrTq29iOd74gxp9ge9zRNgmT3TYBDSt2vbByJ6DZa4Jhjx16AammwoXX6Yv4gTOApEeDo9xPGXgZbTGzyQ1SRgeSDduU63hAiWlEai3jgKy1bXxrrfUr76zliot1_OF4PpgufENojPWgm9e0"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-semibold truncate">Enterprise Admin</p>
+<p class="text-[10px] text-slate-500">Tier: Platinum</p>
+</div>
+</div>
+<button class="w-full py-2 bg-slate-200 dark:bg-slate-700 text-xs font-medium rounded-lg hover:bg-primary hover:text-white transition-all">Settings</button>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-screen overflow-y-auto bg-slate-50 dark:bg-[#0a0a18]">
+<!-- Top Search Header -->
+<header class="sticky top-0 z-10 pt-12 pb-8 px-12 flex flex-col items-center">
+<div class="w-full max-w-3xl glass rounded-2xl p-2 shadow-2xl">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-6 text-slate-400">search_spark</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white py-4 pl-16 pr-32 text-lg placeholder:text-slate-500" placeholder="Ask the Data Agent anything..." type="text"/>
+<div class="absolute right-3 flex items-center gap-2">
+<kbd class="hidden sm:inline-flex items-center px-2 py-1 bg-slate-200 dark:bg-white/10 rounded text-[10px] text-slate-500 dark:text-slate-400">⌘ K</kbd>
+<button class="bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/80 transition-all shadow-lg shadow-primary/20">Ask Agent</button>
+</div>
+</div>
+</div>
+</header>
+<div class="px-12 pb-12 max-w-7xl mx-auto w-full space-y-8">
+<!-- Active Task Card -->
+<section class="w-full">
+<div class="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-primary/20 rounded-2xl overflow-hidden shadow-xl">
+<div class="flex flex-col md:flex-row">
+<!-- Task Visual/Icon Area -->
+<div class="w-full md:w-64 bg-slate-100 dark:bg-primary/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800">
+<div class="size-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary text-4xl">auto_mode</span>
+</div>
+<span class="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full uppercase tracking-widest">Active Task</span>
+</div>
+<!-- Task Details Area -->
+<div class="flex-1 p-8">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-1">A2A Orchestrator</h2>
+<p class="text-slate-500 dark:text-slate-400">Processing cross-domain inventory synchronization</p>
+</div>
+<div class="text-right">
+<span class="text-2xl font-bold text-primary">65%</span>
+<p class="text-xs text-slate-500 uppercase tracking-widest">Efficiency Rate</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 65%;"></div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3 text-sm text-green-500">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span>Connecting to Spanner Retail... <span class="font-bold">Complete</span></span>
+</div>
+<div class="flex items-center gap-3 text-sm text-slate-900 dark:text-slate-200">
+<span class="material-symbols-outlined text-sm animate-pulse">sync</span>
+<span class="font-medium">Analyzing Inventory Data...</span>
+</div>
+<div class="flex items-center gap-3 text-sm text-slate-400">
+<span class="material-symbols-outlined text-sm">circle</span>
+<span>Cross-referencing with Oracle ERP... <span class="italic text-xs">Waiting</span></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 2x2 Domain Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Oracle Card -->
+<div class="group bg-white dark:bg-slate-900/40 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/40 transition-all">
+<div class="flex items-center justify-between mb-6">
+<div class="size-12 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500 transition-colors">
+<span class="material-symbols-outlined text-orange-500 group-hover:text-white">monitoring</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-700 cursor-pointer">more_vert</span>
+</div>
+<h3 class="text-lg font-bold mb-1">Oracle ERP</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Global Resource Planning</p>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">ERP Connections</span>
+<span class="text-green-500 font-semibold">Active</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Primary Node</span>
+<span class="font-mono text-xs">us-east-1</span>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/50">
+<div class="h-16 w-full flex items-end gap-1">
+<div class="flex-1 bg-primary/20 h-1/2 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 h-2/3 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-3/4 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/20 h-1/2 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/60 h-5/6 rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-3/4 rounded-t-sm"></div>
+<div class="flex-1 bg-primary h-full rounded-t-sm"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Spanner Card -->
+<div class="group bg-white dark:bg-slate-900/40 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/40 transition-all">
+<div class="flex items-center justify-between mb-6">
+<div class="size-12 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+<span class="material-symbols-outlined text-blue-500 group-hover:text-white">hub</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-700 cursor-pointer">more_vert</span>
+</div>
+<h3 class="text-lg font-bold mb-1">Spanner Retail</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Distributed Inventory Cloud</p>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Global Inventory</span>
+<span class="text-blue-400 font-semibold">Synced</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Avg. Latency</span>
+<span class="font-semibold">12ms</span>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/50 relative overflow-hidden rounded-lg h-16">
+<div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500 to-transparent"></div>
+<div class="flex items-center justify-center h-full">
+<span class="material-symbols-outlined text-blue-400 animate-pulse">language</span>
+</div>
+</div>
+</div>
+</div>
+<!-- BigQuery Card -->
+<div class="group bg-white dark:bg-slate-900/40 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/40 transition-all">
+<div class="flex items-center justify-between mb-6">
+<div class="size-12 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500 transition-colors">
+<span class="material-symbols-outlined text-purple-500 group-hover:text-white">bar_chart_4_bars</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-700 cursor-pointer">more_vert</span>
+</div>
+<h3 class="text-lg font-bold mb-1">BigQuery Analytics</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6">High-Performance Insights</p>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Marketing Insights</span>
+<span class="text-purple-400 font-semibold">Ready</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Active Jobs</span>
+<span class="font-semibold">14</span>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/50">
+<div class="grid grid-cols-4 gap-2">
+<div class="h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
+<div class="size-2 rounded-full bg-purple-500"></div>
+</div>
+<div class="h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
+<div class="size-2 rounded-full bg-purple-500"></div>
+</div>
+<div class="h-10 bg-purple-500/30 rounded-lg flex items-center justify-center animate-pulse">
+<div class="size-2 rounded-full bg-purple-500"></div>
+</div>
+<div class="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- AlloyDB Card -->
+<div class="group bg-white dark:bg-slate-900/40 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/40 transition-all">
+<div class="flex items-center justify-between mb-6">
+<div class="size-12 rounded-xl bg-cyan-500/10 flex items-center justify-center group-hover:bg-cyan-500 transition-colors">
+<span class="material-symbols-outlined text-cyan-500 group-hover:text-white">support_agent</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-700 cursor-pointer">more_vert</span>
+</div>
+<h3 class="text-lg font-bold mb-1">AlloyDB CRM</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Customer Relationship Cluster</p>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Service Status</span>
+<span class="text-green-500 font-semibold">Online</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-slate-500">Pending Tickets</span>
+<span class="font-semibold text-cyan-400">3 Priority</span>
+</div>
+<div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/50 flex gap-2">
+<div class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-slate-500">person</span>
+</div>
+<div class="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-slate-500">person</span>
+</div>
+<div class="size-8 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-primary">add</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer Stats -->
+<footer class="mt-auto px-12 py-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs text-slate-500 uppercase tracking-widest">
+<div class="flex gap-8">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-green-500"></div>
+<span>System Latency: 4ms</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-primary"></div>
+<span>Data Integrity: 99.99%</span>
+</div>
+</div>
+<div>
+                Last sync: 2 minutes ago
+            </div>
+</footer>
+</main>
+
+```</body></html>
