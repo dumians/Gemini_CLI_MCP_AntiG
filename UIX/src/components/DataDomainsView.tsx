@@ -1,71 +1,52 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { Plus, Database, Bot, Settings } from 'lucide-react';
+import { GraphView } from './GraphView';
 
-export function DataDomainsView() {
-  const [settings, setSettings] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export const DataDomainsView = () => {
+  const [settings, setSettings] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
 
   const fetchSettings = async () => {
     try {
-      // In webapp, data sources come from /api/config/data-sources, agents from /api/status.
-      // But we'll try catching them or using fallback data if endpoints are different.
-      const resConfig = await fetch('http://localhost:3001/api/config/data-sources').catch(() => null);
-      const resStatus = await fetch('http://localhost:3001/api/status').catch(() => null);
-      
-      let dataSources = [];
-      let agents = [];
-
-      if (resConfig?.ok) {
-        dataSources = await resConfig.json();
-      } else {
-         dataSources = [
-           { id: 'bq-prod', name: 'BigQuery Production', enabled: true },
-           { id: 'spanner-global', name: 'Cloud Spanner', enabled: true },
-           { id: 'oracle-erp', name: 'Oracle Financials', enabled: true },
-           { id: 'alloy-crm', name: 'AlloyDB Customer Data', enabled: true }
-         ];
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setSettings(data);
       }
-
-      if (resStatus?.ok) {
-        const d = await resStatus.json();
-        agents = d.agents?.map((a: any) => ({
-           id: a.agent,
-           name: a.agent,
-           status: a.status === 'processing' ? 'active' : 'idle'
-        })) || [];
-      } else {
-        agents = [
-          { id: 'agent-1', name: 'RetailAgent', status: 'active' },
-          { id: 'agent-2', name: 'FinancialAgent', status: 'idle' }
-        ];
-      }
-
-      setSettings({ dataSources, agents });
-    } catch (e) {
+    } catch(e) {
       console.error(e);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchSettings();
   }, []);
 
   const handleAddSource = async () => {
     const name = prompt('Enter Data Source Name:');
     if (!name) return;
-    alert("This action would normally add a new source via the Settings API.");
-    // In a full implementation, you'd POST this to the backend.
+    await fetch('/api/settings/add-source', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: name.toLowerCase().replace(/\s/g, '-'), name })
+    });
+    fetchSettings();
   };
 
   const handleAddAgent = async () => {
     const name = prompt('Enter Agent Name:');
     if (!name) return;
-    alert("This action would normally spawn a new agent via the Control API.");
+    await fetch('/api/settings/add-agent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: name.toLowerCase().replace(/\s/g, '-'), name })
+    });
+    fetchSettings();
   };
 
   if (loading) return <div className="p-8 text-slate-400">Loading domains...</div>;
+  if (!settings) return null;
 
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto w-full">
@@ -83,11 +64,15 @@ export function DataDomainsView() {
           </button>
           <button 
             onClick={handleAddAgent}
-            className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-colors"
+            className="bg-primary text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 flex items-center gap-2"
           >
             <Plus size={16} /> Add Domain Agent
           </button>
         </div>
+      </div>
+
+      <div className="w-full">
+        <GraphView />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -96,7 +81,7 @@ export function DataDomainsView() {
             <Database className="text-primary" /> Connected Sources
           </h3>
           <div className="space-y-4">
-            {settings?.dataSources?.map((source: any) => (
+            {settings.dataSources.map((source: any) => (
               <div key={source.id} className="p-4 bg-slate-800/30 rounded-2xl border border-slate-700/50 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="size-10 rounded-xl bg-slate-700 flex items-center justify-center text-slate-400">
@@ -120,7 +105,7 @@ export function DataDomainsView() {
             <Bot className="text-primary" /> Domain Agents
           </h3>
           <div className="space-y-4">
-            {settings?.agents?.map((agent: any) => (
+            {settings.agents.map((agent: any) => (
               <div key={agent.id} className="p-4 bg-slate-800/30 rounded-2xl border border-slate-700/50 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -143,4 +128,4 @@ export function DataDomainsView() {
       </div>
     </div>
   );
-}
+};

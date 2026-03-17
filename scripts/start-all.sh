@@ -10,14 +10,17 @@ fi
 
 echo -e "\033[0;36m--- Starting Agentic Data Mesh Local Stack ---\033[0m"
 
-# 0. Set Environment Defaults
-echo -e "\033[0;33m[0/3] Configuring Environment...\033[0m"
+# 0. Cleanup Old Processes & Set Environment Defaults
+echo -e "\033[0;33m[0/4] Cleaning up old processes...\033[0m"
+lsof -ti:3000,3001,5173,5174,3002,3003,3004,3005,3006 | xargs kill -9 2>/dev/null
 
-# Verify GEMINI_API_KEY
-if [ -z "$GEMINI_API_KEY" ]; then
-    if [ -f ".env" ]; then
-        source .env
-    fi
+echo -e "\033[0;33m[1/4] Configuring Environment...\033[0m"
+
+# Verify GEMINI_API_KEY and export all .env variables
+if [ -f ".env" ]; then
+    set -a
+    source .env
+    set +a
 fi
 
 if [ -z "$GEMINI_API_KEY" ]; then
@@ -46,8 +49,8 @@ set_default_env() {
 
 set_default_env "SPANNER_DATABASE_ID" "global-retail-db"
 set_default_env "BIGQUERY_DATASET_ID" "marketing_edw"
-set_default_env "BIGQUERY_LOCATION" "US"
-set_default_env "ALLOYDB_REGION" "us-central1"
+set_default_env "BIGQUERY_LOCATION" "EU"
+set_default_env "ALLOYDB_REGION" "europe-west1"
 set_default_env "ALLOYDB_CLUSTER" "crm-cluster"
 set_default_env "ALLOYDB_INSTANCE" "crm-instance-1"
 set_default_env "ALLOYDB_USER" "postgres"
@@ -65,18 +68,27 @@ if [ "$LOCAL_MCP" = true ]; then
     echo -e "\033[0;37m      Local MCP SSE endpoints active: Spanner (3002), Oracle (3003), BQ (3004), AlloyDB (3005), HR (3006)\033[0m"
 fi
 
-# 2. Start Web UI in background
-echo -e "\033[0;33m[1/3] Starting Web UI...\033[0m"
-(cd webapp && npm run dev) &
+# 2. Start UIX App in background
+echo -e "\033[0;33m[2/4] Starting UIX App...\033[0m"
+(cd UIX && npm run dev) &
 
 # 3. Start Backend Orchestrator in background
-echo -e "\033[0;33m[2/3] Starting Backend Orchestrator...\033[0m"
+echo -e "\033[0;33m[3/4] Starting Backend Orchestrator...\033[0m"
 (cd server && npm run start) &
 
 echo -e "\033[0;32m--- Mesh is booting up ---\033[0m"
-echo "Web UI: http://localhost:5173"
+echo "UIX App: http://localhost:3000"
 echo "Backend: http://localhost:3001"
-echo "Press Ctrl+C to stop (Note: Background processes may need manual termination)."
+echo "Press Ctrl+C to stop."
+
+# Cleanup function to kill background processes on exit
+cleanup() {
+    echo -e "\n\033[0;31mStopping Mesh OS and cleaning up processes...\033[0m"
+    kill $(jobs -p) 2>/dev/null
+    exit
+}
+
+trap cleanup SIGINT SIGTERM EXIT
 
 # Keep the script running
 wait

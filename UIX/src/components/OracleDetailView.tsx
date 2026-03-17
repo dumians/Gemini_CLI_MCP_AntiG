@@ -1,11 +1,8 @@
-
+import React from 'react';
 import { Download } from 'lucide-react';
-import { 
-  ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Bar 
-} from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 
-
-export function OracleDetailView() {
+export const OracleDetailView = () => {
   const financialData = [
     { month: 'Jan', revenue: 450000, expenses: 320000, compliance: 98 },
     { month: 'Feb', revenue: 520000, expenses: 340000, compliance: 99 },
@@ -150,4 +147,4 @@ export function OracleDetailView() {
       </div>
     </div>
   );
-}
+};

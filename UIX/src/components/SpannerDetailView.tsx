@@ -1,157 +1,93 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X, TrendingUp, Search, RefreshCw, MoreVertical, Terminal } from 'lucide-react';
 import { 
-  ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, 
-  LineChart, Line 
-} from 'recharts';
+  Package, Search, RefreshCw, AlertTriangle, MoreVertical, Terminal
+} from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, LineChart, Line } from 'recharts';
 
+const STOCK_THRESHOLD = 50000;
 
-export function SpannerDetailView() {
+export const SpannerDetailView = () => {
   const [inventory, setInventory] = React.useState([
-    { id: 1, loc: 'Berlin-Central-01', region: 'EMEA', stock: 84203, trend: '+1.2k', cap: 75, status: 'Synchronized' },
-    { id: 2, loc: 'SF-Bay-Logistics', region: 'US-West', stock: 122900, trend: null, cap: 92, status: 'Synchronized' },
-    { id: 3, loc: 'Singapore-Hub-C', region: 'APAC', stock: 45112, trend: null, cap: 40, status: 'Updating' },
-    { id: 4, loc: 'Tokyo-East-Data', region: 'APAC', stock: 1200, trend: '-200', cap: 15, status: 'Synchronized' },
+    { id: 'WH-EU-01', loc: 'Berlin Hub', region: 'EMEA', stock: 124500, status: 'Synced', trend: '+2.4%' },
+    { id: 'WH-US-02', loc: 'SF Distribution', region: 'NAMER', stock: 89000, status: 'Synced', trend: '-1.2%' },
+    { id: 'WH-AP-01', loc: 'Singapore Central', region: 'APAC', stock: 45200, status: 'Updating', trend: '+0.8%' },
+    { id: 'WH-AP-02', loc: 'Tokyo Logistics', region: 'APAC', stock: 156000, status: 'Synced', trend: '+5.1%' },
+    { id: 'WH-EU-02', loc: 'London Gateway', region: 'EMEA', stock: 32000, status: 'Error', trend: '-4.5%' },
   ]);
 
-  const [alerts, setAlerts] = React.useState<{id: string, message: string, type: 'warning' | 'error'}[]>([]);
-  const STOCK_THRESHOLD = 5000;
-
   const performanceData = [
-    { day: 'Mon', latency: 14, uptime: 99.98 },
-    { day: 'Tue', latency: 12, uptime: 99.99 },
-    { day: 'Wed', latency: 18, uptime: 99.95 },
-    { day: 'Thu', latency: 11, uptime: 99.99 },
-    { day: 'Fri', latency: 13, uptime: 99.97 },
-    { day: 'Sat', latency: 10, uptime: 100.00 },
-    { day: 'Sun', latency: 12, uptime: 99.99 },
+    { day: 'Mon', latency: 12, uptime: 99.9 },
+    { day: 'Tue', latency: 15, uptime: 99.8 },
+    { day: 'Wed', latency: 8, uptime: 100 },
+    { day: 'Thu', latency: 22, uptime: 99.5 },
+    { day: 'Fri', latency: 14, uptime: 99.9 },
+    { day: 'Sat', latency: 10, uptime: 100 },
+    { day: 'Sun', latency: 11, uptime: 100 },
   ];
 
   const stockHistoryData = [
-    { day: 'Mon', Berlin: 82000, SF: 120000, Singapore: 42000, Tokyo: 1500 },
-    { day: 'Tue', Berlin: 83500, SF: 121500, Singapore: 43500, Tokyo: 1400 },
-    { day: 'Wed', Berlin: 81000, SF: 123000, Singapore: 41000, Tokyo: 1300 },
-    { day: 'Thu', Berlin: 84000, SF: 122000, Singapore: 45000, Tokyo: 1250 },
-    { day: 'Fri', Berlin: 85000, SF: 124000, Singapore: 44000, Tokyo: 1200 },
-    { day: 'Sat', Berlin: 84203, SF: 122900, Singapore: 45112, Tokyo: 1200 },
-    { day: 'Sun', Berlin: 84500, SF: 123500, Singapore: 46000, Tokyo: 1150 },
+    { day: 'Mon', Berlin: 120000, SF: 85000, Singapore: 42000, Tokyo: 150000 },
+    { day: 'Tue', Berlin: 121000, SF: 86000, Singapore: 43000, Tokyo: 152000 },
+    { day: 'Wed', Berlin: 119000, SF: 84000, Singapore: 44000, Tokyo: 151000 },
+    { day: 'Thu', Berlin: 122000, SF: 87000, Singapore: 45000, Tokyo: 154000 },
+    { day: 'Fri', Berlin: 123000, SF: 88000, Singapore: 44000, Tokyo: 155000 },
+    { day: 'Sat', Berlin: 124000, SF: 89000, Singapore: 45000, Tokyo: 156000 },
+    { day: 'Sun', Berlin: 124500, SF: 89000, Singapore: 45200, Tokyo: 156000 },
   ];
 
-  // Simulation of real-time updates
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      setInventory(prev => prev.map(item => {
-        const change = Math.floor(Math.random() * 1000) - 500;
-        const newStock = Math.max(0, item.stock + change);
-        
-        let newStatus = item.status;
-        if (Math.random() > 0.95) {
-          newStatus = Math.random() > 0.5 ? 'Updating' : 'Synchronized';
-        }
-        if (Math.random() > 0.98) {
-          newStatus = 'Error';
-        }
-
-        return { ...item, stock: newStock, status: newStatus };
-      }));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Alert monitoring logic
-  React.useEffect(() => {
-    const newAlerts: {id: string, message: string, type: 'warning' | 'error'}[] = [];
+    const fetchInventory = async () => {
+      try {
+         const res = await fetch('/api/spanner/inventory');
+         if (res.ok) {
+           const data = await res.json();
+           if (data.data?.length > 0) {
+             const mapped = data.data.map((item: any) => ({
+                id: item.transaction_id || `TX-${Math.random().toString(36).substr(2, 5)}`,
+                loc: `Store ${item.store_id}`,
+                region: 'Global',
+                stock: item.quantity_sold ? item.quantity_sold * 1000 : Math.floor(Math.random() * 150000),
+                status: 'Synced',
+                trend: '+0%'
+             })).slice(0, 5);
+             setInventory(mapped);
+           }
+         }
+      } catch (err) {
+         console.error('Failed to fetch Spanner inventory:', err);
+      }
+    };
     
-    inventory.forEach(item => {
-      if (item.stock < STOCK_THRESHOLD) {
-        newAlerts.push({
-          id: `stock-${item.id}`,
-          message: `Low stock alert: ${item.loc} (${item.stock} units)`,
-          type: 'warning'
-        });
-      }
-      if (item.status === 'Error') {
-        newAlerts.push({
-          id: `sync-${item.id}`,
-          message: `Sync failure detected: ${item.loc}`,
-          type: 'error'
-        });
-      }
-    });
-
-    setAlerts(newAlerts);
-  }, [inventory]);
+    fetchInventory();
+  }, []);
 
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto w-full">
-      {/* Alerts Section */}
-      <AnimatePresence>
-        {alerts.length > 0 && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="space-y-2 overflow-hidden"
-          >
-            {alerts.map(alert => (
-              <div 
-                key={alert.id}
-                className={`flex items-center gap-3 p-4 rounded-xl border ${
-                  alert.type === 'error' 
-                    ? 'bg-red-500/10 border-red-500/30 text-red-400' 
-                    : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
-                }`}
-              >
-                <AlertTriangle size={18} />
-                <span className="text-sm font-medium">{alert.message}</span>
-                <button 
-                  onClick={() => setAlerts(prev => prev.filter(a => a.id !== alert.id))}
-                  className="ml-auto hover:opacity-70"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <section className="relative w-full h-[400px] glass rounded-2xl overflow-hidden border-slate-800">
-        <div className="absolute inset-0 bg-[#0c0c1e]">
-          <svg className="w-full h-full opacity-40" viewBox="0 0 1000 500">
-            <path d="M150,100 Q200,80 250,120 T350,150 T450,100" fill="none" stroke="#1e293b" strokeWidth="2" />
-            <path d="M600,200 Q700,180 800,250 T900,200" fill="none" stroke="#1e293b" strokeWidth="2" />
-            <path className="map-glow" d="M220,150 Q400,50 780,220" fill="none" stroke="#22c55e" strokeDasharray="8 4" strokeWidth="1.5" />
-            <path className="map-glow" d="M220,150 Q300,300 500,400" fill="none" stroke="#22c55e" strokeDasharray="4 4" strokeWidth="1.5" />
-            <path className="map-glow" d="M780,220 Q850,350 500,400" fill="none" stroke="#22c55e" strokeDasharray="6 2" strokeWidth="1.5" />
-            <circle className="map-glow" cx="220" cy="150" fill="#22c55e" r="4" />
-            <circle className="map-glow" cx="780" cy="220" fill="#22c55e" r="4" />
-            <circle className="map-glow" cx="500" cy="400" fill="#22c55e" r="4" />
-          </svg>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">Spanner Retail Database</h2>
+          <p className="text-slate-400">Global, strongly consistent inventory management.</p>
         </div>
-        <div className="absolute top-6 left-6 z-10">
-          <h2 className="text-2xl font-bold text-white mb-1">Global Inventory Flow</h2>
-          <p className="text-slate-400 text-sm">Real-time cross-region synchronization active</p>
+        <div className="flex gap-3">
+          <button className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2">
+            <RefreshCw size={16} /> Force Sync
+          </button>
+          <button className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 flex items-center gap-2">
+            <Package size={16} /> New Shipment
+          </button>
         </div>
-        <div className="absolute bottom-6 right-6 flex gap-4">
-          <div className="glass p-3 rounded-xl">
-            <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Active Nodes</p>
-            <p className="text-xl font-mono text-green-500">142</p>
-          </div>
-          <div className="glass p-3 rounded-xl">
-            <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Sync Velocity</p>
-            <p className="text-xl font-mono text-green-500">4.2GB/s</p>
-          </div>
-        </div>
-      </section>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="glass rounded-2xl p-6 border-slate-800">
-          <div className="flex justify-between items-start mb-6">
-            <h3 className="text-lg font-bold text-slate-100">Performance</h3>
-            <TrendingUp className="text-slate-500" size={20} />
+        <div className="glass rounded-2xl border-slate-800 p-6 flex flex-col justify-between">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+              <RefreshCw size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">System Health</h3>
+              <p className="text-xs text-slate-400">Primary Node: us-east1</p>
+            </div>
           </div>
           <div className="space-y-6">
             <div>
@@ -294,7 +230,7 @@ export function SpannerDetailView() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         <div className="glass rounded-2xl border-slate-800 overflow-hidden flex flex-col">
           <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-white/5">
             <div className="flex items-center gap-3">
@@ -387,4 +323,4 @@ export function SpannerDetailView() {
       </section>
     </div>
   );
-}
+};

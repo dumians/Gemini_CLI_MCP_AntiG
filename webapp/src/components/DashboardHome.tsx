@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Database, Store, BarChart3, Users, Zap, ShieldCheck } from 'lucide-react';
 import type { View } from '../types';
 import { api } from '../utils/api';

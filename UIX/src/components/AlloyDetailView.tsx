@@ -1,7 +1,7 @@
-
+import React from 'react';
 import { Users } from 'lucide-react';
 
-export function AlloyDetailView() {
+export const AlloyDetailView = () => {
   return (
     <div className="p-8 flex items-center justify-center h-[60vh]">
       <div className="text-center space-y-4">
@@ -16,4 +16,4 @@ export function AlloyDetailView() {
       </div>
     </div>
   );
-}
+};

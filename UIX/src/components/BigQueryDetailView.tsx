@@ -1,11 +1,8 @@
 import React from 'react';
-import { RefreshCw, AlertTriangle, TrendingUp, Download, Table, GitBranch } from 'lucide-react';
-import { 
-  ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Bar 
-} from 'recharts';
-import { api } from '../utils/api';
+import { RefreshCw, AlertTriangle, TrendingUp, GitBranch, Table, Download } from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 
-export function BigQueryDetailView() {
+export const BigQueryDetailView = () => {
   const [analyticsData, setAnalyticsData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -14,20 +11,10 @@ export function BigQueryDetailView() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.get('/api/bigquery/analytics').catch(() => ({
-        data: {
-          metrics: { totalConversions: 18370, avgRoi: 249.05 },
-          campaigns: [
-            { id: "CMP_2023_Q4_RTL", conversions: 14529, roi: 312.4 },
-            { id: "CMP_2023_Q4_B2B", conversions: 3841, roi: 185.7 }
-          ],
-          segments: [
-            { name: "Enterprise Logic Users", value: "High", growth: 12 },
-            { name: "Retail Buyers", value: "Medium", growth: 5 }
-          ]
-        }
-      }));
-      setAnalyticsData(data.data || data);
+      const res = await fetch('/api/bigquery/analytics');
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      setAnalyticsData(data.data);
     } catch (err) {
       console.error('Failed to fetch BigQuery analytics:', err);
       setError('The BigQuery Analytics Agent is currently unreachable. Please check your network connection or try again later.');
@@ -42,7 +29,7 @@ export function BigQueryDetailView() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="flex items-center justify-center h-[60vh]">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="animate-spin text-primary" size={48} />
           <p className="text-slate-400 font-medium animate-pulse">Fetching Real-time Analytics...</p>
@@ -53,7 +40,7 @@ export function BigQueryDetailView() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-12 px-4">
+      <div className="flex items-center justify-center h-[60vh] px-4">
         <div className="max-w-md w-full glass p-8 rounded-3xl border-red-500/30 text-center space-y-6">
           <div className="size-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
             <AlertTriangle className="text-red-500" size={40} />
@@ -209,4 +196,4 @@ export function BigQueryDetailView() {
       </div>
     </div>
   );
-}
+};

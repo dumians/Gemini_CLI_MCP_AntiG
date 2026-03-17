@@ -48,6 +48,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     };
 });
 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
@@ -56,9 +63,30 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const isTest = process.env.NODE_ENV === 'test';
         if (!bigquery || isTest) {
             // FALLBACK TO SIMULATION
-            return {
-                content: [{ type: "text", text: `Simulated BigQuery result for: ${query}\n[{ "segment": "VIP", "customer_id": "CUST-999" }]` }]
-            };
+            try {
+                const csvPath = path.resolve(__dirname, '../../test-data/bigquery_segments.csv');
+                const fileContent = fs.readFileSync(csvPath, 'utf-8');
+                const lines = fileContent.trim().split('\n');
+                if (lines.length > 0) {
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    const rows = lines.slice(1).map(line => {
+                        const values = line.split(',');
+                        const obj = {};
+                        headers.forEach((h, i) => {
+                            obj[h] = values[i] ? values[i].trim() : null;
+                        });
+                        return obj;
+                    });
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(rows, null, 2) }]
+                    };
+                }
+            } catch (e) {
+                console.error("Error reading simulation CSV:", e);
+                return {
+                    content: [{ type: "text", text: `Simulated BigQuery result for: ${query}\n[{ "segment": "VIP", "customer_id": "CUST-999" }]` }]
+                };
+            }
         }
 
         try {
@@ -91,7 +119,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Tool not found: ${name}`);
 });
 
-import { fileURLToPath } from "url";
+
 
 export { server };
 

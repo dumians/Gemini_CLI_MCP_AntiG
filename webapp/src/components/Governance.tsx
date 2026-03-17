@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShieldAlert, ShieldCheck, CheckCircle2, AlertTriangle, FileText, Activity, Shield, Users, Server, Globe, Store, Database } from 'lucide-react';
+import { useState } from 'react';
+import { ShieldAlert, ShieldCheck, CheckCircle2, AlertTriangle, Activity, Shield, Users, Server, Globe, Store, Database } from 'lucide-react';
 
 import type { View } from '../types';
 

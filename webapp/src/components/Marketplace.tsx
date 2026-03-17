@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, ShoppingCart, GitBranch, Database, ShieldCheck } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useState, useEffect } from 'react';
+import { Search, Filter, ShoppingCart, GitBranch, Database } from 'lucide-react';
 import { api } from '../utils/api';
 
 export function MarketplaceView() {

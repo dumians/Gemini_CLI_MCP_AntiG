@@ -62,6 +62,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     };
 });
 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     const connection = await getConnection();
@@ -69,21 +76,54 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const isTest = process.env.NODE_ENV === 'test';
     if (!connection || isTest) {
         // FALLBACK TO SIMULATION
-        if (name === "query_oracle_sql") {
-            const query = args.query || args.sql || "";
-            return {
-                content: [{ type: "text", text: `Simulated Oracle SQL result for: ${query}\n[{ "supplier_id": 1001, "total_invoices": 50000 }]` }]
-            };
-        } else if (name === "query_oracle_graph") {
-            const query = args.query || args.gql || "";
-            return {
-                content: [{ type: "text", text: `Simulated Oracle Graph result for: ${query}\n[{ "network_depth": 3, "connected_entities": ["SupplierA", "SupplierC"] }]` }]
-            };
-        } else if (name === "query_oracle_vector") {
-            const query = args.query || args.vector_query || "";
-            return {
-                content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${query}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
-            };
+        try {
+            const csvPath = path.resolve(__dirname, '../../test-data/oracle_orders.csv');
+            const fileContent = fs.readFileSync(csvPath, 'utf-8');
+            const lines = fileContent.trim().split('\n');
+            let rows = [];
+            if (lines.length > 0) {
+                const headers = lines[0].split(',').map(h => h.trim());
+                rows = lines.slice(1).map(line => {
+                    const values = line.split(',');
+                    const obj = {};
+                    headers.forEach((h, i) => {
+                        obj[h] = values[i] ? values[i].trim() : null;
+                    });
+                    return obj;
+                });
+            }
+            if (name === "query_oracle_sql") {
+                return {
+                    content: [{ type: "text", text: JSON.stringify(rows, null, 2) }]
+                };
+            } else if (name === "query_oracle_graph") {
+                // Return a mocked graph response formatted from the same rows
+                return {
+                    content: [{ type: "text", text: JSON.stringify([{ "network_depth": rows.length, "connected_entities": rows.map(r => r.po_id) }], null, 2) }]
+                };
+            } else if (name === "query_oracle_vector") {
+                return {
+                    content: [{ type: "text", text: JSON.stringify([{ "metadata": "Matched from Oracle DB CSV rows", "distance": 0.12, "match": rows[0] || {} }], null, 2) }]
+                };
+            }
+        } catch (e) {
+            console.error("Error reading Oracle simulation CSV:", e);
+            if (name === "query_oracle_sql") {
+                const query = args.query || args.sql || "";
+                return {
+                    content: [{ type: "text", text: `Simulated Oracle SQL result for: ${query}\n[{ "supplier_id": 1001, "total_invoices": 50000 }]` }]
+                };
+            } else if (name === "query_oracle_graph") {
+                const query = args.query || args.gql || "";
+                return {
+                    content: [{ type: "text", text: `Simulated Oracle Graph result for: ${query}\n[{ "network_depth": 3, "connected_entities": ["SupplierA", "SupplierC"] }]` }]
+                };
+            } else if (name === "query_oracle_vector") {
+                const query = args.query || args.vector_query || "";
+                return {
+                    content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${query}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
+                };
+            }
         }
     }
 
@@ -121,7 +161,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Tool not found: ${name}`);
 });
 
-import { fileURLToPath } from "url";
+
 
 export { server };
 

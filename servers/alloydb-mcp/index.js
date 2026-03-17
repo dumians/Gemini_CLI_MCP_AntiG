@@ -10,7 +10,12 @@ import {
 import express from 'express';
 import pg from "pg";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
 import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Mock AlloyDBAuth if library is missing to allow simulation mode tests
 class AlloyDBAuth {
@@ -76,10 +81,33 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === "query_alloydb_vector") {
         const query = args.query || args.sql || "";
-        if (process.env.NODE_ENV === 'test') {
-            return {
-                content: [{ type: "text", text: `Simulated AlloyDB Vector result for: ${query}\n[{ "ticket_id": 1, "similarity": 0.98 }]` }]
-            };
+        const isTest = process.env.NODE_ENV === 'test';
+        if (isTest || (!pool && !process.env.ALLOYDB_INSTANCE)) {
+            try {
+                const csvPath = path.resolve(__dirname, '../../test-data/alloydb_tickets.csv');
+                const fileContent = fs.readFileSync(csvPath, 'utf-8');
+                const lines = fileContent.trim().split('\n');
+                let rows = [];
+                if (lines.length > 0) {
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    rows = lines.slice(1).map(line => {
+                        const values = line.split(',');
+                        const obj = {};
+                        headers.forEach((h, i) => {
+                            obj[h] = values[i] ? values[i].trim() : null;
+                        });
+                        return obj;
+                    });
+                }
+                return {
+                    content: [{ type: "text", text: JSON.stringify([{ "similarity": 0.98, "ticket": rows[0] || {} }], null, 2) }]
+                };
+            } catch (e) {
+                console.error("Error reading AlloyDB simulation CSV:", e);
+                return {
+                    content: [{ type: "text", text: `Simulated AlloyDB Vector result for: ${query}\n[{ "ticket_id": 1, "similarity": 0.98 }]` }]
+                };
+            }
         }
         let client;
         try {

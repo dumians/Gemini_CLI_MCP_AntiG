@@ -63,16 +63,16 @@ if ($LocalMCP) {
 
 }
 
-# 2. Start Web UI in background
-Write-Host "[1/3] Starting Web UI..." -ForegroundColor Yellow
-Start-Process npm.cmd -ArgumentList "run dev" -WorkingDirectory "webapp" -NoNewWindow
+# 2. Start UIX App in background
+Write-Host "[1/3] Starting UIX App..." -ForegroundColor Yellow
+Start-Process npm.cmd -ArgumentList "run dev" -WorkingDirectory "UIX" -NoNewWindow
 
 # 3. Start Backend Orchestrator in background
 Write-Host "[2/3] Starting Backend Orchestrator..." -ForegroundColor Yellow
 Start-Process npm.cmd -ArgumentList "run start" -WorkingDirectory "server" -NoNewWindow
 
 Write-Host "--- Mesh is booting up ---" -ForegroundColor Green
-Write-Host "Web UI: http://localhost:5173"
+Write-Host "UIX App: http://localhost:3000"
 Write-Host "Backend: http://localhost:3001"
 Write-Host "Press Ctrl+C in this terminal to stop (Note: Background processes may need manual termination)."
 
