@@ -1,0 +1,6 @@
+customer_id,name,email,lifetime_value,support_tier,created_at
+C-001,John Doe,john.doe@alloydb.example.com,5200.50,Gold,2024-01-15T08:00:00Z
+C-002,Jane Smith,jane.smith@alloydb.example.com,1240.20,Silver,2024-02-01T10:00:00Z
+C-003,Bob Johnson,bob.johnson@alloydb.example.com,9800.00,Platinum,2023-11-20T11:00:00Z
+C-004,Alice Brown,alice.brown@alloydb.example.com,150.75,Bronze,2024-03-10T09:00:00Z
+C-005,Charlie Wilson,charlie.wilson@alloydb.example.com,4100.00,Gold,2024-01-22T14:30:00Z

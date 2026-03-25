@@ -1,0 +1,16 @@
+{
+  "metrics": {
+    "uptime": {
+      "FinancialAgent": "99.9%",
+      "RetailAgent": "99.99%",
+      "AnalyticsAgent": "100%"
+    },
+    "latency": {
+      "FinancialAgent": "45ms",
+      "RetailAgent": "12ms",
+      "AnalyticsAgent": "120ms"
+    },
+    "data_products_count": 5,
+    "active_contracts": 3
+  }
+}

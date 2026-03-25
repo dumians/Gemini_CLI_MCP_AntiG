@@ -9,19 +9,26 @@ import type { View } from '../types';
 
 export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?: string) => void }) => {
   const [status, setStatus] = React.useState<any>({ agents: [], steps: [] });
+  const [metrics, setMetrics] = React.useState<any>({ uptime: {}, latency: {} });
   const [searchText, setSearchText] = React.useState('');
   
   React.useEffect(() => {
-    const fetchStatus = async () => {
+    const fetchData = async () => {
       try {
-        const data = await api.get('/api/status');
-        setStatus(data);
+        const [statusData, metricsData] = await Promise.all([
+          api.get('/api/status'),
+          api.get('/api/metrics')
+        ]);
+        setStatus(statusData);
+        if (metricsData.metrics) {
+          setMetrics(metricsData.metrics);
+        }
       } catch (err) {
         console.error(err);
       }
     };
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 2000);
+    fetchData();
+    const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -65,9 +72,9 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
       {/* Data Source Summary */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { name: 'Oracle ERP', status: getAgentStatus('FinancialAgent'), uptime: '99.9%', latency: '45ms', color: 'orange' },
-          { name: 'Spanner Retail', status: getAgentStatus('RetailAgent'), uptime: '99.99%', latency: '12ms', color: 'blue' },
-          { name: 'BigQuery Analytics', status: getAgentStatus('AnalyticsAgent'), uptime: '100%', latency: '120ms', color: 'purple' },
+          { name: 'Oracle ERP', status: getAgentStatus('FinancialAgent'), uptime: metrics.uptime?.FinancialAgent || 'N/A', latency: metrics.latency?.FinancialAgent || 'N/A', color: 'orange' },
+          { name: 'Spanner Retail', status: getAgentStatus('RetailAgent'), uptime: metrics.uptime?.RetailAgent || 'N/A', latency: metrics.latency?.RetailAgent || 'N/A', color: 'blue' },
+          { name: 'BigQuery Analytics', status: getAgentStatus('AnalyticsAgent'), uptime: metrics.uptime?.AnalyticsAgent || 'N/A', latency: metrics.latency?.AnalyticsAgent || 'N/A', color: 'purple' },
         ].map((source) => (
           <div key={source.name} className="glass p-5 rounded-2xl border-slate-800 flex flex-col gap-4">
             <div className="flex justify-between items-center">

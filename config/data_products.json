@@ -1,0 +1,6 @@
+{
+  "products": [
+    { "id": "PROD-001", "name": "Customer Master Data", "description": "Unified profile of customers across CRM and ERP.", "owner": "Finance Team", "tables": ["customers", "orders"], "domain": "Finance" },
+    { "id": "PROD-002", "name": "Retail Sales Analytics", "description": "Consolidated sales transactions and inventory levels.", "owner": "Retail Hub", "tables": ["sales", "inventory"], "domain": "Retail" }
+  ]
+}

@@ -325,6 +325,127 @@ app.put('/api/contracts/:id', authMiddleware, (req, res) => {
     }
 });
 
+app.get('/api/products', authMiddleware, (req, res) => {
+    try {
+        const productsPath = path.join(__dirname, '../config/data_products.json');
+        let productsData = { products: [] };
+        if (fs.existsSync(productsPath)) {
+            productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+        }
+        res.json(productsData);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load products" });
+    }
+});
+
+app.post('/api/products', authMiddleware, (req, res) => {
+    const { name, description, owner, tables, domain } = req.body;
+    if (!name || !owner) return res.status(400).json({ error: "Missing required fields: name, owner" });
+
+    const validDomains = ['Finance', 'Retail', 'Analytics', 'HR', 'CRM'];
+    if (domain && !validDomains.includes(domain)) {
+        return res.status(400).json({ error: `Invalid Data Domain: ${domain}. Allowed domains: ${validDomains.join(', ')}` });
+    }
+
+    try {
+        const productsPath = path.join(__dirname, '../config/data_products.json');
+        let productsData = { products: [] };
+        if (fs.existsSync(productsPath)) {
+            productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+        }
+
+        const newProduct = {
+            id: `PROD-${Math.floor(Math.random() * 1000)}`,
+            name,
+            description,
+            owner,
+            tables: tables || [],
+            domain: domain || 'General'
+        };
+
+        productsData.products.push(newProduct);
+        fs.writeFileSync(productsPath, JSON.stringify(productsData, null, 2));
+
+        // Graph RAG linking: Automatically link dependencies
+        try {
+            if (tables && tables.length > 0) {
+                if (!metadataCatalog._initialized) metadataCatalog.initialize();
+                tables.forEach(tableId => {
+                    metadataCatalog.crossDomainLinks.push({
+                        key: `${newProduct.id}_link`,
+                        sourceA: newProduct.id,
+                        sourceB: tableId,
+                        type: 'CROSS_DOMAIN',
+                        confidence: 1.0
+                    });
+                });
+            }
+        } catch (linkError) {
+            console.error("Failed to link dependencies to Knowledge Graph:", linkError);
+        }
+
+        res.status(201).json({ message: "Product published successfully", data: newProduct });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/products/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    const { name, description, owner, tables, domain } = req.body;
+
+    try {
+        const productsPath = path.join(__dirname, '../config/data_products.json');
+        let productsData = { products: [] };
+        if (fs.existsSync(productsPath)) {
+            productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+        }
+
+        const prodIndex = productsData.products.findIndex(p => p.id === id);
+        if (prodIndex === -1) return res.status(404).json({ error: `Product ${id} not found.` });
+
+        productsData.products[prodIndex] = {
+            ...productsData.products[prodIndex],
+            name: name || productsData.products[prodIndex].name,
+            description: description || productsData.products[prodIndex].description,
+            owner: owner || productsData.products[prodIndex].owner,
+            tables: tables || productsData.products[prodIndex].tables,
+            domain: domain || productsData.products[prodIndex].domain
+        };
+
+        fs.writeFileSync(productsPath, JSON.stringify(productsData, null, 2));
+        res.json({ message: `Product ${id} updated successfully`, data: productsData.products[prodIndex] });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/metrics', authMiddleware, (req, res) => {
+    try {
+        const metricsPath = path.join(__dirname, '../config/metrics.json');
+        let metricsData = { metrics: {} };
+        if (fs.existsSync(metricsPath)) {
+            metricsData = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
+        }
+        res.json(metricsData);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load metrics" });
+    }
+});
+
+app.get('/api/lineage', authMiddleware, (req, res) => {
+    try {
+        const lineagePath = path.join(__dirname, '../config/lineage.json');
+        let lineageData = { edges: [] };
+        if (fs.existsSync(lineagePath)) {
+            lineageData = JSON.parse(fs.readFileSync(lineagePath, 'utf8'));
+        }
+        res.json(lineageData);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load lineage" });
+    }
+});
+
 app.get('/api/settings', authMiddleware, (req, res) => {
     try {
         const dsConfig = storageProvider.get('data_sources');
@@ -428,7 +549,7 @@ app.get('/api/mesh/cross_inventory', authMiddleware, async (req, res) => {
         const prompt = `Synthesize cross-domain inventory and identify data lineage across the following data sources: ${sourcesText}. Use Graph RAG to link relationships.`;
         
         const result = await askOrchestrator(prompt, req.user.username);
-        res.json({ status: 'success', summary: result.summary, steps: result.steps });
+        res.json({ status: 'success', summary: result.text, steps: result.steps });
     } catch (err) {
         res.status(500).json({ status: "error", message: err.message });
     }

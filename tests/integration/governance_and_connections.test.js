@@ -127,7 +127,8 @@ test("Server to MCP Server Reachability", async (t) => {
         process.env.SPANNER_MCP_URL || 'http://localhost:3002/sse',
         process.env.BIGQUERY_MCP_URL || 'http://localhost:3004/sse',
         process.env.ORACLE_MCP_URL || 'http://localhost:3003/sse',
-        process.env.ALLOYDB_MCP_URL || 'http://localhost:3005/sse'
+        process.env.ALLOYDB_MCP_URL || 'http://localhost:3005/sse',
+        process.env.DATAPLEX_MCP_URL || 'http://localhost:3007/sse'
     ];
 
     for (const url of mcpUrls) {

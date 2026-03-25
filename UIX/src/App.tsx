@@ -76,7 +76,7 @@ function App() {
             {activeView === 'oracle-detail' && <OracleDetailView />}
             {activeView === 'alloy-detail' && <AlloyDetailView />}
             {activeView === 'domains' && <DataDomainsView />}
-            {activeView === 'cross-domain' && <CrossDomainInventoryView />}
+            {activeView === 'cross-domain-inventory' && <CrossDomainInventoryView />}
           </div>
         </div>
       </main>

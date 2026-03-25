@@ -1,17 +1,25 @@
 import React from 'react';
-import { Search, Filter, Lock, Unlock, Zap, Shield, Sparkles } from 'lucide-react';
+import { api } from '../utils/api';
+import { Search, Filter, Lock, Unlock, Zap, Shield, Sparkles, RefreshCw } from 'lucide-react';
+import { GraphView } from './GraphView';
 
 export const MarketplaceView = () => {
   const [activeTab, setActiveTab] = React.useState('products');
 
-  const dataProducts = [
-    { id: 1, name: 'Global Retail Sales - Realtime', owner: 'Commerce Team', status: 'approved', access: 'open', risk: 'low', type: 'Stream' },
-    { id: 2, name: 'Customer Demographic Master', owner: 'Marketing Data', status: 'approved', access: 'restricted', risk: 'high', type: 'BigQuery' },
-    { id: 3, name: 'Supply Chain Logistics (EMEA)', owner: 'Operations', status: 'pending', access: 'restricted', risk: 'medium', type: 'Spanner' },
-    { id: 4, name: 'Q3 Financial Ledgers', owner: 'Finance Dept', status: 'approved', access: 'locked', risk: 'critical', type: 'Oracle' },
-    { id: 5, name: 'Website Interaction Events', owner: 'Digital Team', status: 'approved', access: 'open', risk: 'low', type: 'Stream' },
-    { id: 6, name: 'B2B CRM Pipeline', owner: 'Sales Ops', status: 'review', access: 'restricted', risk: 'medium', type: 'AlloyDB' },
-  ];
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [editingProductId, setEditingProductId] = React.useState<string | null>(null);
+  const [productFormData, setProductFormData] = React.useState({ name: '', description: '', owner: '', tables: [] as string[], domain: '' });
+  const [productLoading, setProductLoading] = React.useState(false);
+  const [showPublishForm, setShowPublishForm] = React.useState(false);
+
+  const fetchProducts = async () => {
+    try {
+      const data = await api.get('/api/products');
+      setProducts(data.products || []);
+    } catch (err) {
+      console.error('Failed to load products:', err);
+    }
+  };
 
   const subscribers = [
     { id: 'SUB-01', user: 'Mark Greene', role: 'Analytics Lead', product: 'Global Retail Sales', domain: 'Marketing', efficiency: 'High' },
@@ -35,7 +43,41 @@ export const MarketplaceView = () => {
 
   React.useEffect(() => {
     fetchContracts();
+    fetchProducts();
   }, []);
+
+  const handleEditProduct = (prod: any) => {
+    setEditingProductId(prod.id);
+    setProductFormData({ name: prod.name, description: prod.description || '', owner: prod.owner, tables: prod.tables || [], domain: prod.domain || '' });
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!editingProductId) return;
+    setProductLoading(true);
+    try {
+      await api.put(`/api/products/${editingProductId}`, productFormData);
+      setEditingProductId(null);
+      fetchProducts();
+    } catch (err) {
+      console.error('Failed to update product:', err);
+    } finally {
+      setProductLoading(false);
+    }
+  };
+
+  const handlePublishProduct = async () => {
+    setProductLoading(true);
+    try {
+      await api.post('/api/products', productFormData);
+      setShowPublishForm(false);
+      setProductFormData({ name: '', description: '', owner: '', tables: [], domain: '' });
+      fetchProducts();
+    } catch (err) {
+      console.error('Failed to publish product:', err);
+    } finally {
+      setProductLoading(false);
+    }
+  };
 
   const handleEditContract = (ctr: any) => {
     setEditingContractId(ctr.id);
@@ -93,6 +135,14 @@ export const MarketplaceView = () => {
         >
           Data Contracts
         </button>
+        <button 
+          onClick={() => setActiveTab('consumer')} 
+          className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === 'consumer' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          My Subscriptions
+        </button>
       </div>
 
       <div className="flex gap-4 items-center">
@@ -103,55 +153,182 @@ export const MarketplaceView = () => {
             placeholder="Search thousands of data products by name, tag, or owner..."
           />
         </div>
+        <button 
+          onClick={() => setShowPublishForm(!showPublishForm)}
+          className="glass px-6 py-3 rounded-xl flex items-center gap-2 text-sm font-medium hover:bg-white/5 transition-colors text-primary font-bold"
+        >
+          <Sparkles size={18} /> {showPublishForm ? 'Cancel Publish' : 'Publish Data Product'}
+        </button>
         <button className="glass px-6 py-3 rounded-xl flex items-center gap-2 text-sm font-medium hover:bg-white/5 transition-colors">
           <Filter size={18} /> Filters
         </button>
       </div>
 
+      {showPublishForm && (
+        <div className="glass rounded-2xl border-slate-800 p-6 space-y-4 bg-slate-900/60 transition-all">
+          <h3 className="text-lg font-bold text-white mb-4">Publish New Data Product</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-400">Product Name</label>
+              <input 
+                type="text" 
+                value={productFormData.name}
+                onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
+                className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                placeholder="e.g. Commerce Analytics Hub"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-400">Owner Team</label>
+              <input 
+                type="text" 
+                value={productFormData.owner}
+                onChange={(e) => setProductFormData({ ...productFormData, owner: e.target.value })}
+                className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                placeholder="e.g. Analytics Ops"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-xs font-bold text-slate-400">Description</label>
+              <textarea 
+                value={productFormData.description}
+                onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
+                className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white h-20"
+                placeholder="Describe the value of this data product..."
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-400">Data Domain</label>
+              <select 
+                value={productFormData.domain}
+                onChange={(e) => setProductFormData({ ...productFormData, domain: e.target.value })}
+                className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+              >
+                <option value="">Select Domain</option>
+                <option value="Finance">Finance</option>
+                <option value="Retail">Retail</option>
+                <option value="Analytics">Analytics</option>
+                <option value="HR">HR</option>
+                <option value="CRM">CRM</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-4 pt-2">
+            <button 
+              onClick={handlePublishProduct}
+              disabled={productLoading}
+              className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-bold flex items-center justify-center gap-2"
+            >
+              {productLoading && <RefreshCw size={14} className="animate-spin" />}
+              Publish To Marketplace
+            </button>
+            <button 
+              onClick={() => setShowPublishForm(false)}
+              className="flex-1 bg-slate-800 text-white rounded-lg py-2 text-sm font-bold"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'products' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {dataProducts.map((prod, i) => (
+          {products.map((prod, i) => (
             <div key={i} className="glass rounded-2xl border-slate-800 p-6 flex flex-col hover:border-primary/30 transition-colors group cursor-pointer">
               <div className="flex justify-between items-start mb-4">
-                <div className={`p-2 rounded-lg ${
-                  prod.type === 'Stream' ? 'bg-cyan-500/10 text-cyan-400' :
-                  prod.type === 'BigQuery' ? 'bg-purple-500/10 text-purple-400' :
-                  prod.type === 'Spanner' ? 'bg-blue-500/10 text-blue-400' :
-                  prod.type === 'Oracle' ? 'bg-orange-500/10 text-orange-400' :
-                  'bg-emerald-500/10 text-emerald-400'
-                }`}>
-                  {prod.type === 'Stream' ? <Zap size={20} /> : <Database size={20} />}
-                </div>
-                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                  prod.status === 'approved' ? 'bg-green-500/10 text-green-500' :
-                  prod.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' :
-                  'bg-slate-700 text-slate-300'
-                }`}>
-                  {prod.status}
-                </span>
-              </div>
-              
-              <h3 className="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors">{prod.name}</h3>
-              <p className="text-xs text-slate-500 mb-6 flex-1">Maintained by {prod.owner}</p>
-              
-              <div className="flex items-center justify-between pt-4 border-t border-slate-800/50">
                 <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-                    {prod.access === 'open' ? <Unlock size={14} className="text-green-500" /> : 
-                     prod.access === 'locked' ? <Lock size={14} className="text-red-500" /> :
-                     <Shield size={14} className="text-yellow-500" />}
-                    <span className="capitalize">{prod.access}</span>
-                  </span>
+                  <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                    <Database size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white mb-1 group-hover:text-primary transition-colors">{prod.name}</h3>
+                    <p className="text-xs text-slate-500 truncate max-w-[150px]">{prod.owner}</p>
+                  </div>
                 </div>
-                <button className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  prod.access === 'open' ? 'bg-primary/20 hover:bg-primary/30 text-primary' :
-                  prod.access === 'locked' ? 'bg-slate-800 text-slate-500 cursor-not-allowed' :
-                  'bg-slate-800 hover:bg-slate-700 text-white'
-                }`}>
-                  {prod.access === 'open' ? 'Access Data' : 
-                   prod.access === 'locked' ? 'Restricted' : 'Request Access'}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleEditProduct(prod); }}
+                  className="text-xs text-primary font-bold hover:text-primary/80"
+                >
+                  Edit
                 </button>
               </div>
+              
+              {editingProductId === prod.id ? (
+                <div className="space-y-4 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50 mt-4">
+                  <h4 className="text-sm font-bold text-white mb-2">Editing Product {prod.id}</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5 col-span-2">
+                      <label className="text-[10px] font-bold text-slate-400">Product Name</label>
+                      <input 
+                        type="text" 
+                        value={productFormData.name}
+                        onChange={(e) => setProductFormData({ ...productFormData, name: e.target.value })}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5 col-span-2">
+                      <label className="text-[10px] font-bold text-slate-400">Description</label>
+                      <textarea 
+                        value={productFormData.description}
+                        onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white h-16"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-400">Owner</label>
+                      <input 
+                        type="text" 
+                        value={productFormData.owner}
+                        onChange={(e) => setProductFormData({ ...productFormData, owner: e.target.value })}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-400">Domain</label>
+                      <input 
+                        type="text" 
+                        value={productFormData.domain}
+                        onChange={(e) => setProductFormData({ ...productFormData, domain: e.target.value })}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      onClick={handleUpdateProduct}
+                      disabled={productLoading}
+                      className="flex-1 bg-primary px-3 py-1.5 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5"
+                    >
+                      {productLoading && <RefreshCw size={12} className="animate-spin" />}
+                      Save
+                    </button>
+                    <button 
+                      onClick={() => setEditingProductId(null)}
+                      className="flex-1 bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold text-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors">{prod.name} Data Product</h3>
+                  <p className="text-xs text-slate-500 mb-6 flex-1">{prod.description || 'Unified profile of customers across CRM and ERP.'}</p>
+                  
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs">
+                    <span className="text-slate-400">Domain: <span className="text-white font-mono">{prod.domain || 'General'}</span></span>
+                    <span className="text-slate-400">Owner: <span className="text-white font-mono">{prod.owner || 'Finance'}</span></span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs mt-2">
+                    <span className="text-slate-400">Access: <span className="text-white font-mono">{prod.access || 'open'}</span></span>
+                    <button className="px-4 py-1.5 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg text-xs font-bold transition-all">
+                      Access Data
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -192,8 +369,16 @@ export const MarketplaceView = () => {
       )}
 
       {activeTab === 'contracts' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {contracts.map((ctr, i) => (
+        <div className="space-y-6">
+          <div className="w-full">
+            <h4 className="text-sm font-bold text-white mb-2">Contracts & Product Lineage Graph</h4>
+            <div className="h-[400px]">
+              <GraphView />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {contracts.map((ctr, i) => (
             <div key={i} className="glass rounded-2xl border-slate-800 p-6 flex flex-col hover:border-primary/30 transition-colors group">
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -276,6 +461,45 @@ export const MarketplaceView = () => {
               )}
             </div>
           ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'consumer' && (
+        <div className="space-y-6">
+          <section className="glass rounded-2xl border-slate-800 p-6">
+            <h3 className="text-lg font-bold text-white mb-6">Active Subscriptions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.slice(0, 2).map((prod: any, i: number) => (
+                <div key={i} className="glass rounded-xl border-slate-800 p-6 flex flex-col justify-between hover:border-slate-700 transition-all bg-slate-900/40">
+                  <div>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-2 bg-primary/20 rounded-lg text-primary">
+                        <Zap size={20} />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-green-500/30 bg-green-500/10 text-green-500">Subscribed</span>
+                    </div>
+                    <h4 className="text-md font-bold text-white mb-1">{prod.name}</h4>
+                    <p className="text-xs text-slate-400 mb-4 line-clamp-2">{prod.description}</p>
+                    
+                    <div className="space-y-2 text-xs text-slate-300">
+                      <div className="flex justify-between">
+                        <span>API Usage This Month</span>
+                        <span className="font-mono text-white">{Math.floor(Math.random() * 5000) + 1000} calls</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Data Transferred</span>
+                        <span className="font-mono text-white">{(Math.random() * 5).toFixed(2)} GB</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button className="mt-6 w-full text-xs font-medium text-slate-300 hover:text-white justify-center flex items-center gap-2 glass py-2 rounded-lg hover:bg-white/5 transition-colors">
+                    Access Data Endpoint
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       )}
     </div>

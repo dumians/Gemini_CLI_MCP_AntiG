@@ -1,15 +1,10 @@
 import React from 'react';
 import { RefreshCw, Activity, Bot } from 'lucide-react';
+import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { GraphView } from './GraphView';
 
 export const CrossDomainInventoryView = () => {
-  const [inventoryData] = React.useState([
-    { id: 'SKU-STORE-7', item: 'Store Linking Node', source: 'Spanner', stock: 1, status: 'Healthy', location: 'Graph-Relational' },
-    { id: 'INV-001', item: 'Enterprise Server X1', source: 'Oracle', stock: 45, status: 'In Stock', location: 'Global-West' },
-    { id: 'SKU-882', item: 'Retail Display Unit', source: 'Spanner', stock: 1200, status: 'High Demand', location: 'Retail-Hub' },
-    { id: 'BQ-DATA-01', item: 'Cold Storage Archive', source: 'BigQuery', stock: 850, status: 'Optimized', location: 'Data-Lake' },
-    { id: 'CUST-LINK-A', item: 'Cross-Domain Customer Bridge', source: 'AlloyDB', stock: 1, status: 'Active', location: 'Mesh-Internal' },
-  ]);
+  const [inventoryData, setInventoryData] = React.useState<any[]>([]);
 
   const [agentOutput, setAgentOutput] = React.useState<{ summary: string; steps: any[] }>({ summary: '', steps: [] });
   const [loading, setLoading] = React.useState(false);
@@ -19,12 +14,39 @@ export const CrossDomainInventoryView = () => {
       setLoading(true);
       const { api } = await import('../utils/api');
       try {
-        const result = await api.get('/api/mesh/cross_inventory');
+        const [result, graphResult] = await Promise.all([
+          api.get('/api/mesh/cross_inventory'),
+          api.get('/api/catalog/graph')
+        ]);
+
         if (result.status === 'success') {
           setAgentOutput({
             summary: result.summary || 'No summary returned.',
             steps: result.steps || []
           });
+        }
+
+        if (graphResult && graphResult.nodes) {
+          const mappedInventory = graphResult.nodes
+            .filter((n: any) => n.type === 'TABLE' || n.type === 'entity') // Accept TABLE type nodes from catalog
+            .map((n: any) => ({
+              id: n.id,
+              item: n.label,
+              source: n.id.includes('ora') ? 'Oracle' : n.id.includes('span') ? 'Spanner' : n.id.includes('bq') ? 'BigQuery' : 'AlloyDB',
+              stock: Math.floor(Math.random() * 1000), // Simulated stock for visual
+              location: 'Mesh Graph',
+              status: 'Online'
+            }));
+          setInventoryData(mappedInventory.length > 0 ? mappedInventory : [
+            { id: 'INV-001', item: 'User Profile Extension', source: 'Oracle', stock: 540, location: 'Global ERP', status: 'Online' },
+            { id: 'INV-002', item: 'Clickstream Tracking', source: 'Spanner', stock: 120, location: 'Regional POS', status: 'Online' },
+            { id: 'INV-003', item: 'Marketing Segmentation', source: 'BigQuery', stock: 980, location: 'Cloud Storage', status: 'Online' }
+          ]);
+        } else {
+          setInventoryData([
+            { id: 'INV-001', item: 'User Profile Extension (Fallback)', source: 'Oracle', stock: 540, location: 'Global ERP', status: 'Online' },
+            { id: 'INV-002', item: 'Clickstream Tracking (Fallback)', source: 'Spanner', stock: 120, location: 'Regional POS', status: 'Online' },
+          ]);
         }
       } catch (err) {
         console.error('Failed to fetch mesh inventory:', err);
@@ -58,6 +80,25 @@ export const CrossDomainInventoryView = () => {
 
       <div className="w-full">
         <GraphView />
+      </div>
+
+      <div className="glass rounded-2xl border-slate-800 p-6">
+        <h3 className="text-lg font-bold text-white mb-6">Stock Level Distribution (Cross-Domain)</h3>
+        <div className="h-[250px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={inventoryData.slice(0, 10)}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="item" tick={{ fill: '#cbd5e1', fontSize: 11 }} tickLine={{ stroke: '#475569' }} truncate={true} />
+              <YAxis tick={{ fill: '#cbd5e1', fontSize: 11 }} tickLine={{ stroke: '#475569' }} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
+                itemStyle={{ color: '#3b82f6' }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Bar dataKey="stock" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">

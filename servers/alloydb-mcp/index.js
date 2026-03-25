@@ -72,6 +72,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     required: ["query"],
                 },
             },
+            {
+                name: "query_alloydb_crm",
+                description: "Execute a query against AlloyDB CRM tables to find customer profiles and support tiers.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        query: { type: "string" },
+                    },
+                    required: ["query"],
+                },
+            },
         ],
     };
 });
@@ -152,6 +163,38 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 }],
                 isError: true,
             };
+        }
+    }
+
+    if (name === "query_alloydb_crm") {
+        const query = args.query || args.sql || "";
+        const isTest = process.env.NODE_ENV === 'test';
+        if (isTest || (!pool && !process.env.ALLOYDB_INSTANCE)) {
+            try {
+                const csvPath = path.resolve(__dirname, '../../test-data/alloydb_crm_customers.csv');
+                const fileContent = fs.readFileSync(csvPath, 'utf-8');
+                const lines = fileContent.trim().split('\n');
+                let rows = [];
+                if (lines.length > 0) {
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    rows = lines.slice(1).map(line => {
+                        const values = line.split(',');
+                        const obj = {};
+                        headers.forEach((h, i) => {
+                            obj[h] = values[i] ? values[i].trim() : null;
+                        });
+                        return obj;
+                    });
+                }
+                return {
+                    content: [{ type: "text", text: JSON.stringify(rows.slice(0, 5), null, 2) }]
+                };
+            } catch (e) {
+                console.error("Error reading AlloyDB CRM simulation CSV:", e);
+                return {
+                    content: [{ type: "text", text: `Simulated CRM result for: ${query}\n[{ "customer_id": "C-001", "name": "Real Live User" }]` }]
+                };
+            }
         }
     }
 

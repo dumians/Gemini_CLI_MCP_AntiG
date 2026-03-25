@@ -6,6 +6,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
+import { memoryBankService } from "./utils/memory_bank_service.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -39,6 +40,18 @@ async function getOracleClient() {
 
 export async function handleFinancialRequest(query, context = {}, traceId = null) {
     logger.log("FinancialAgent", `Processing financial query: ${query}`, "INFO", null, traceId);
+    
+    let memoriesContext = "";
+    try {
+        const memories = await memoryBankService.retrieveMemories('admin', query);
+        if (memories && memories.length > 0) {
+            memoriesContext = `\n\n[RETRIEVED FINANCIAL MEMORIES]\n` + memories.map(m => `- ${m.fact}`).join('\n');
+            logger.log("FinancialAgent", `Retrieved ${memories.length} memories`, "INFO", null, traceId);
+        }
+    } catch (err) {
+        logger.log("FinancialAgent", `Failed to retrieve memories: ${err.message}`, "WARNING", null, traceId);
+    }
+
     if (Object.keys(context).length > 0) {
         logger.log("FinancialAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO", null, traceId);
     }
@@ -68,6 +81,7 @@ export async function handleFinancialRequest(query, context = {}, traceId = null
     
     Current Mesh Context (Data from other domains):
     ${JSON.stringify(context, null, 2)}
+    ${memoriesContext}
     
     Use this context to enrich your analysis if relevant.`;
 

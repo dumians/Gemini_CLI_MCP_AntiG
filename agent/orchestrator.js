@@ -148,6 +148,14 @@ export async function askOrchestrator(query, userId = 'admin') {
                     } else {
                         // Dynamic ADK dispatching trigger
                         rawResult = await meshAgentFactory.runAgent(agentDef, subQuery, filteredContext, traceId);
+                        
+                        try {
+                            const { DataplexAgent } = await import('./dataplex_agent.js');
+                            const dataplex = new DataplexAgent();
+                            await dataplex.trackLineage(agentName, 'MeshLineage', 'processed_query', traceId);
+                        } catch (err) {
+                            logger.log("Orchestrator", `Failed to log lineage: ${err.message}`, "WARNING", null, traceId);
+                        }
                     }
 
                     agentResult = validateDataProduct(rawResult, agentName);

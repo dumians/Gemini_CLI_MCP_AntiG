@@ -41,7 +41,7 @@ export const OracleDetailView = () => {
         <div className="lg:col-span-2 space-y-8">
           <section className="glass rounded-2xl border-slate-800 p-6">
             <h3 className="text-lg font-bold text-white mb-6">Financial Performance</h3>
-            <div className="h-80 w-full">
+            <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={financialData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />

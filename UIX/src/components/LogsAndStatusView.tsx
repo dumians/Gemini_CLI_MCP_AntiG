@@ -14,7 +14,7 @@ export const LogsAndStatusView = () => {
         api.get('/api/admin/logs'),
         api.get('/api/status')
       ]);
-      setLogs(logsData);
+      setLogs(Array.isArray(logsData) ? logsData : logsData?.logs || []);
       setStatus(statusData);
     } catch (err) {
       console.error('Failed to fetch logs and status:', err);

@@ -100,7 +100,7 @@ export const AlloyDetailView = () => {
               <span className="text-slate-500 flex items-center gap-1.5"><div className="size-2 rounded-full bg-slate-500" /> Neutral</span>
             </div>
           </div>
-          <div className="flex-1">
+          <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={sentimentData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />

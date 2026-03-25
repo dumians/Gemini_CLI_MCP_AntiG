@@ -35,6 +35,19 @@ export class DataplexAgent {
                     },
                     required: ["entityId", "tag"]
                 }
+            },
+            {
+                name: "track_lineage",
+                description: "Tracks Data Lineage relationship between source and target entities",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        source: { type: "STRING" },
+                        target: { type: "STRING" },
+                        relationship: { type: "STRING" }
+                    },
+                    required: ["source", "target"]
+                }
             }
         ];
     }
@@ -47,6 +60,8 @@ export class DataplexAgent {
                 return this.evaluatePolicy(args.domain, args.dataProduct, traceId);
             case "tag_entity":
                 return this.tagEntity(args.entityId, args.tag, traceId);
+            case "track_lineage":
+                return this.trackLineage(args.source, args.target, args.relationship, traceId);
             default:
                 throw new Error(`Tool ${toolName} not found`);
         }
@@ -79,5 +94,34 @@ export class DataplexAgent {
     async tagEntity(entityId, tag, traceId) {
         logger.log('DataplexAgent', `Tagged ${entityId} with ${tag}`, 'INFO', null, traceId);
         return { message: `Entity ${entityId} tagged with ${tag}` };
+    }
+
+    async trackLineage(source, target, relationship, traceId) {
+        logger.log('DataplexAgent', `Tracked Lineage: ${source} -> ${target} (${relationship || 'accessed'})`, 'INFO', null, traceId);
+        
+        try {
+            const lineagePath = path.join(__dirname, '../config/lineage.json');
+            let lineageData = { edges: [] };
+            if (fs.existsSync(lineagePath)) {
+                lineageData = JSON.parse(fs.readFileSync(lineagePath, 'utf8'));
+            }
+            
+            // Check if edge already exists
+            const exists = lineageData.edges.find((e) => e.source === source && e.target === target);
+            if (!exists) {
+                lineageData.edges.push({
+                    source,
+                    target,
+                    relationship: relationship || 'accessed',
+                    timestamp: new Date().toISOString()
+                });
+                fs.writeFileSync(lineagePath, JSON.stringify(lineageData, null, 2));
+            }
+            
+            return { status: "SUCCESS", message: `Lineage recorded from ${source} to ${target}` };
+        } catch (error) {
+            logger.log('DataplexAgent', `Failed to record lineage: ${error.message}`, 'ERROR', null, traceId);
+            return { status: "ERROR", message: `Failed to record lineage: ${error.message}` };
+        }
     }
 }

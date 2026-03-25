@@ -13,6 +13,7 @@ export function GraphView({ data: initialData }: { data?: any }) {
 
         const resizeObserver = new ResizeObserver((entries) => {
             for (let entry of entries) {
+                if (entry.contentRect.width === 0) continue; // Ignore 0 width during component mount
                 setDimensions({
                     width: entry.contentRect.width,
                     height: 400
