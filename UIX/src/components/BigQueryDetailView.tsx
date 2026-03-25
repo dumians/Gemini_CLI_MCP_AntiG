@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw, AlertTriangle, TrendingUp, GitBranch, Table, Download } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
+import { api } from '../utils/api';
 
 export const BigQueryDetailView = () => {
   const [analyticsData, setAnalyticsData] = React.useState<any>(null);
@@ -11,9 +12,7 @@ export const BigQueryDetailView = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/bigquery/analytics');
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
+      const data = await api.get('/api/bigquery/analytics');
       setAnalyticsData(data.data);
     } catch (err) {
       console.error('Failed to fetch BigQuery analytics:', err);

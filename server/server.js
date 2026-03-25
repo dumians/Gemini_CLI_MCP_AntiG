@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import { askOrchestrator } from '../agent/orchestrator.js';
 import { logger } from '../agent/utils/logging_service.js';
 import { metadataCatalog, AgentRegistry } from '../agent/utils/catalog.js';
+import { storageProvider } from '../agent/utils/storage_service.js';
 import { authMiddleware } from './middleware/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -159,24 +160,22 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
             });
 
             // Link to Source
-            if (ent.source) {
+            if (ent.sourceId) {
                 graphData.links.push({
-                    source: ent.source,
+                    source: ent.sourceId,
                     target: entId,
                     label: 'owns'
                 });
             }
+        });
 
-            // Link relationships (Foreign Keys)
-            if (ent.relationships) {
-                ent.relationships.forEach(rel => {
-                    graphData.links.push({
-                        source: entId,
-                        target: rel.targetEntity,
-                        label: rel.type
-                    });
-                });
-            }
+        // 3. Link Relationships (Foreign Keys)
+        catalog.relationships.forEach(rel => {
+            graphData.links.push({
+                source: rel.sourceEntity,
+                target: rel.targetEntity,
+                label: rel.type
+            });
         });
 
         res.json(graphData);
@@ -207,8 +206,7 @@ app.get('/api/admin/logs', authMiddleware, (req, res) => {
 
 app.get('/api/config/data-sources', authMiddleware, (req, res) => {
     try {
-        const dsPath = path.join(__dirname, '../config/data_sources.json');
-        const config = JSON.parse(fs.readFileSync(dsPath, 'utf8'));
+        const config = storageProvider.get('data_sources');
         res.json(config);
     } catch (error) {
         res.status(500).json({ error: "Failed to load data sources config" });
@@ -228,11 +226,9 @@ app.post('/api/config/data-sources', authMiddleware, (req, res) => {
             return res.status(400).json({ error: `Connection Validation Failed: Schema file not found at ${schemaPath}. Domain mount aborted.` });
         }
 
-        const dsPath = path.join(__dirname, '../config/data_sources.json');
-        let config = { sources: {} };
-        if (fs.existsSync(dsPath)) {
-            config = JSON.parse(fs.readFileSync(dsPath, 'utf8'));
-        }
+        const dsPath = path.join(__dirname, '../config/data_sources.json'); // Still needed for schema checks if local file existence is checked
+        let config = storageProvider.get('data_sources');
+        if (!config.sources) config.sources = {};
 
         config.sources[id] = {
             name,
@@ -240,7 +236,7 @@ app.post('/api/config/data-sources', authMiddleware, (req, res) => {
             schema_file: schemaPath
         };
 
-        fs.writeFileSync(dsPath, JSON.stringify(config, null, 2));
+        storageProvider.set('data_sources', config);
         metadataCatalog.reload(); // Sync in-memory graph with new source
         logger.log('Server', `Data source ${name} validated and added dynamically`, 'INFO');
         res.status(201).json({ message: `Data source ${name} validated and added successfully` });
@@ -250,10 +246,89 @@ app.post('/api/config/data-sources', authMiddleware, (req, res) => {
     }
 });
 
+app.put('/api/config/data-sources/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    const { name, domain, schema_file } = req.body;
+
+    if (!name || !domain) {
+        return res.status(400).json({ error: "Missing required fields: name, domain" });
+    }
+
+    try {
+        let config = storageProvider.get('data_sources');
+        if (!config.sources) config.sources = {};
+
+        if (!config.sources[id]) {
+            return res.status(404).json({ error: `Data source ${id} not found.` });
+        }
+
+        config.sources[id] = {
+            ...config.sources[id],
+            name,
+            domain
+        };
+
+        if (schema_file) {
+            config.sources[id].schema_file = schema_file;
+        }
+
+        storageProvider.set('data_sources', config);
+        metadataCatalog.reload(); // Sync in-memory graph
+        logger.log('Server', `Data source ${id} updated dynamically`, 'INFO');
+        res.json({ message: `Data source ${id} updated successfully` });
+    } catch (error) {
+        logger.log('Server', `Failed to update data source: ${error.message}`, 'ERROR');
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/contracts', authMiddleware, (req, res) => {
+    try {
+        const contractsPath = path.join(__dirname, '../config/data_contracts.json');
+        let contractsData = { contracts: [] };
+        if (fs.existsSync(contractsPath)) {
+            contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+        }
+        res.json(contractsData);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load contracts" });
+    }
+});
+
+app.put('/api/contracts/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    const { status, sla, privacy } = req.body;
+
+    try {
+        const contractsPath = path.join(__dirname, '../config/data_contracts.json');
+        let contractsData = { contracts: [] };
+        if (fs.existsSync(contractsPath)) {
+            contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+        }
+
+        const contractIndex = contractsData.contracts.findIndex(c => c.id === id);
+        if (contractIndex === -1) {
+            return res.status(404).json({ error: `Contract ${id} not found.` });
+        }
+
+        contractsData.contracts[contractIndex] = {
+            ...contractsData.contracts[contractIndex],
+            status: status || contractsData.contracts[contractIndex].status,
+            sla: sla || contractsData.contracts[contractIndex].sla,
+            privacy: privacy || contractsData.contracts[contractIndex].privacy
+        };
+
+        fs.writeFileSync(contractsPath, JSON.stringify(contractsData, null, 2));
+        res.json({ message: `Contract ${id} updated successfully`, data: contractsData.contracts[contractIndex] });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/settings', authMiddleware, (req, res) => {
     try {
-        const dsPath = path.join(__dirname, '../config/data_sources.json');
-        const dsConfig = JSON.parse(fs.readFileSync(dsPath, 'utf8'));
+        const dsConfig = storageProvider.get('data_sources');
+        if (!dsConfig.sources) dsConfig.sources = {};
         
         const dataSources = Object.entries(dsConfig.sources).map(([id, s]) => ({
             id,
@@ -323,14 +398,37 @@ app.get('/api/alloy/crm_data', authMiddleware, (req, res) => {
 });
 
 // Agentic Cross-Domain Inventory running through Orchestrator
+app.get('/api/bigquery/analytics', authMiddleware, (req, res) => {
+    res.json({
+        status: 'success',
+        data: {
+            metrics: {
+                totalConversions: 12540,
+                avgRoi: 24.5
+            },
+            campaigns: [
+                { id: 'CAMP_2026_A', conversions: 4500, roi: 22 },
+                { id: 'CAMP_2026_B', conversions: 3800, roi: 28 },
+                { id: 'CAMP_2026_C', conversions: 2100, roi: 18 },
+                { id: 'CAMP_2026_D', conversions: 2140, roi: 31 }
+            ],
+            segments: [
+                { name: 'Millennials (Tech-Savvy)', value: 'High', growth: 18 },
+                { name: 'Gen-Z (Early Adopters)', value: 'Critical', growth: 35 },
+                { name: 'Baby Boomers (Loyalists)', value: 'Medium', growth: 5 }
+            ]
+        }
+    });
+});
+
 app.get('/api/mesh/cross_inventory', authMiddleware, async (req, res) => {
     try {
-        const result = await askOrchestrator("Synthesize cross-domain inventory linking Oracle ERP and Spanner using Graph RAG.", req.user.username);
-        res.json({
-            status: "success",
-            summary: result.text,
-            steps: result.steps
-        });
+        const catalog = metadataCatalog.getCatalog();
+        const sourcesText = Object.values(catalog.sources).map(s => s.name).join(', ');
+        const prompt = `Synthesize cross-domain inventory and identify data lineage across the following data sources: ${sourcesText}. Use Graph RAG to link relationships.`;
+        
+        const result = await askOrchestrator(prompt, req.user.username);
+        res.json({ status: 'success', summary: result.summary, steps: result.steps });
     } catch (err) {
         res.status(500).json({ status: "error", message: err.message });
     }

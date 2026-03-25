@@ -1,5 +1,5 @@
 {
-    "model": "gemini-3.1-flash-preview",
+    "model": "gemini-2.5-flash",
     "domain": "Analytics",
     "source": "BigQuery & AlloyDB CRM",
     "bq_mcp_server": "servers/bigquery-mcp/index.js",

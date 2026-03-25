@@ -1,5 +1,5 @@
 {
-    "model": "gemini-3.1-flash-preview",
+    "model": "gemini-2.5-flash",
     "domain": "HR",
     "source": "Oracle DB @ GCP (HR Schema)",
     "mcp_server": "servers/oracle-mcp/index.js"

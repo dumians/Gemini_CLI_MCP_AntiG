@@ -1,5 +1,5 @@
 {
-    "model": "gemini-3.1-flash-preview",
+    "model": "gemini-2.5-flash",
     "domain": "Retail",
     "source": "Cloud Spanner (Global)",
     "mcp_server": "servers/spanner-mcp/index.js"

@@ -5,6 +5,7 @@ export const LogsAndStatusView = () => {
   const [logs, setLogs] = React.useState<any[]>([]);
   const [status, setStatus] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [selectedDomain, setSelectedDomain] = React.useState<string>('all');
 
   const fetchLogsAndStatus = async () => {
     try {
@@ -93,23 +94,36 @@ export const LogsAndStatusView = () => {
         {/* Right Column: Full Logs Pane */}
         <div className="lg:col-span-2">
           <section className="glass rounded-2xl border-slate-800 p-6 h-[700px] flex flex-col">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-800 pb-4">
-              <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-500">
-                <Terminal size={20} />
+            <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-500">
+                  <Terminal size={20} />
+                </div>
+                <h3 className="text-lg font-bold text-white">Live Transaction Logs</h3>
               </div>
-              <h3 className="text-lg font-bold text-white">Live Transaction Logs</h3>
+              
+              <select 
+                value={selectedDomain}
+                onChange={(e) => setSelectedDomain(e.target.value)}
+                className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-primary"
+              >
+                <option value="all">All Domains</option>
+                {Array.from(new Set(logs.map(l => l.domain))).filter(Boolean).map((domain, i) => (
+                  <option key={i} value={domain}>{domain}</option>
+                ))}
+              </select>
             </div>
             <div className="flex-1 bg-black/40 p-6 rounded-xl overflow-y-auto font-mono text-xs space-y-2">
-              {logs && logs.length > 0 ? logs.map((log: any, i: number) => (
+              {logs && logs.length > 0 ? logs.filter(l => selectedDomain === 'all' || l.domain === selectedDomain).map((log: any, i: number) => (
                 <div key={i} className="flex flex-col border-b border-slate-800/50 pb-2 last:border-0 hover:bg-white/5 transition-colors">
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-4 items-center">
                     <span className="text-slate-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                    <span className={`font-bold ${
-                      log.level === 'ERROR' ? 'text-red-500' :
-                      log.level === 'WARNING' ? 'text-yellow-500' :
-                      'text-indigo-400'
+                    <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase border ${
+                      log.level === 'ERROR' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
+                      log.level === 'WARNING' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' :
+                      'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
                     }`}>{log.domain}</span>
-                    <span className="text-slate-300">{log.message}</span>
+                    <span className="text-slate-300 flex-1">{log.message}</span>
                   </div>
                   {log.traceId && (
                     <span className="text-[10px] text-slate-600 pl-16">Trace: {log.traceId}</span>

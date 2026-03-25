@@ -6,6 +6,23 @@ export function GraphView({ data: initialData }: { data?: any }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [graphData, setGraphData] = useState<any>(initialData || { nodes: [], links: [] });
     const [loading, setLoading] = useState(!initialData);
+    const [dimensions, setDimensions] = useState({ width: 900, height: 400 });
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                setDimensions({
+                    width: entry.contentRect.width,
+                    height: 400
+                });
+            }
+        });
+
+        resizeObserver.observe(containerRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
 
     useEffect(() => {
         if (initialData) return;
@@ -38,7 +55,7 @@ export function GraphView({ data: initialData }: { data?: any }) {
             </div>
             <ForceGraph2D
                 graphData={graphData}
-                width={containerRef.current?.clientWidth || 900}
+                width={dimensions.width}
                 height={400}
                 nodeLabel="label"
                 nodeRelSize={1}

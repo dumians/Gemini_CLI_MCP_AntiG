@@ -107,7 +107,7 @@ export async function askOrchestrator(query, userId = 'admin') {
     const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext;
 
     const model = ai.getGenerativeModel({
-        model: config.model || "gemini-3.1-flash-preview",
+        model: config.model || "gemini-2.5-flash",
         systemInstruction: enrichedSystemInstruction,
         tools: getDiscoveryTools(), // Dynamically fetch loaded registry items
     });

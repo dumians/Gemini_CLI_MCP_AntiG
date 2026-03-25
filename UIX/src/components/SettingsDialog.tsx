@@ -1,39 +1,60 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { RefreshCw, Settings, X, Database, Bot, Terminal } from 'lucide-react';
+import { api } from '../utils/api';
 
 export const SettingsDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [settings, setSettings] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [newDomain, setNewDomain] = React.useState({ id: '', name: '', domain: '', schema_file: '' });
+  const [initialLoading, setInitialLoading] = React.useState(true); // For initial settings fetch
+  const [formLoading, setFormLoading] = React.useState(false); // For form submission
+  const [editId, setEditId] = React.useState<string | null>(null);
+  const [formData, setFormData] = React.useState({ id: '', name: '', domain: '', schema_file: '' });
 
-  const handleAddDomain = async () => {
-    if (!newDomain.id || !newDomain.name || !newDomain.domain) {
-      alert('Please fill ID, Name, and Domain');
-      return;
-    }
-    const { api } = await import('../utils/api');
+  const fetchSettings = async () => {
+    setInitialLoading(true);
     try {
-      await api.post('/api/config/data-sources', newDomain);
-      alert('Domain added successfully!');
-      setNewDomain({ id: '', name: '', domain: '', schema_file: '' });
-      // Refresh
       const data = await api.get('/api/settings');
       setSettings(data);
     } catch (err) {
-      console.error('Failed to add domain:', err);
-      alert('Error adding domain');
+      console.error("Failed to load settings:", err);
+    } finally {
+      setInitialLoading(false);
     }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.id || !formData.name || !formData.domain) {
+      alert('Please fill ID, Name, and Domain');
+      return;
+    }
+    setFormLoading(true);
+    try {
+      if (editId) {
+        await api.put(`/api/config/data-sources/${editId}`, formData);
+        alert('Data source updated successfully!');
+      } else {
+        await api.post('/api/config/data-sources', formData);
+        alert('Data source added successfully!');
+      }
+      setFormData({ id: '', name: '', domain: '', schema_file: '' });
+      setEditId(null);
+      fetchSettings();
+    } catch (err) {
+      console.error('Failed to submit data source:', err);
+      alert(`Error ${editId ? 'updating' : 'adding'} data source`);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleEdit = (ds: any) => {
+    setEditId(ds.id);
+    setFormData({ id: ds.id, name: ds.name, domain: ds.domain || '', schema_file: ds.schema_file || '' });
   };
 
   React.useEffect(() => {
     if (isOpen) {
-      fetch('/api/settings')
-        .then(res => res.json())
-        .then(data => {
-          setSettings(data);
-          setLoading(false);
-        });
+      fetchSettings();
     }
   }, [isOpen]);
 
@@ -44,23 +65,17 @@ export const SettingsDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: 
     const newSettings = { ...settings, dataSources: newSources };
     setSettings(newSettings);
     
-    fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newSettings)
-    });
+    api.post('/api/settings', newSettings)
+      .catch(err => console.error("Failed to update settings:", err));
   };
 
   const handleAgentAction = async (id: string, action: 'restart' | 'logs') => {
     if (action === 'restart') {
-      await fetch(`/api/agents/${id}/restart`, { method: 'POST' });
-      // Refresh settings
-      const res = await fetch('/api/settings');
-      const data = await res.json();
+      await api.post(`/api/agents/${id}/restart`, {});
+      const data = await api.get('/api/settings');
       setSettings(data);
     } else {
-      const res = await fetch(`/api/agents/${id}/logs`);
-      const data = await res.json();
+      const data = await api.get(`/api/agents/${id}/logs`);
       alert(data.logs.join('\n'));
     }
   };
@@ -87,7 +102,7 @@ export const SettingsDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: 
         </div>
 
         <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-          {loading ? (
+          {initialLoading ? (
             <div className="flex items-center justify-center py-12">
               <RefreshCw className="animate-spin text-primary" size={32} />
             </div>
@@ -114,16 +129,24 @@ export const SettingsDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: 
                           </p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => handleToggleSource(source.id)}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          source.enabled 
-                            ? 'bg-primary text-white' 
-                            : 'bg-slate-700 text-slate-400'
-                        }`}
-                      >
-                        {source.enabled ? 'Enabled' : 'Disabled'}
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => handleEdit(source)}
+                          className="text-xs text-primary hover:text-primary/80 font-bold"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleToggleSource(source.id)}
+                          className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            source.enabled 
+                              ? 'bg-primary text-white' 
+                              : 'bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {source.enabled ? 'Enabled' : 'Disabled'}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -161,6 +184,73 @@ export const SettingsDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: 
                       </div>
                     </div>
                   ))}
+                </div>
+              </section>
+
+              <section className="pt-4 border-t border-slate-800">
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">{editId ? 'Edit Data Source' : 'Add New Data Source'}</h3>
+                <div className="grid grid-cols-2 gap-4 bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">ID (Internal)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. oracle_erp"
+                      value={formData.id}
+                      onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                      disabled={!!editId} // Disable ID field when editing
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Display Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Oracle ERP Transactions"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Domain Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Finance"
+                      value={formData.domain}
+                      onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Schema Path (Optional)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. db-schemas/oracle_schema.sql"
+                      value={formData.schema_file}
+                      onChange={(e) => setFormData({ ...formData, schema_file: e.target.value })}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="col-span-2 flex flex-col gap-2 pt-2">
+                    <button 
+                      onClick={handleSubmit}
+                      type="submit" 
+                      disabled={formLoading}
+                      className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    >
+                      {formLoading && <RefreshCw size={16} className="animate-spin" />}
+                      {editId ? 'Update Data Source' : 'Register Data Source'}
+                    </button>
+                    {editId && (
+                      <button 
+                        type="button" 
+                        onClick={() => { setEditId(null); setFormData({ id: '', name: '', domain: '', schema_file: '' }); }}
+                        className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl mt-2 transition-all"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
                 </div>
               </section>
             </>
