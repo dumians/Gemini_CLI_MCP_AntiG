@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "domain": "HR",
+      "maskFields": ["salary", "employee_id"]
+    },
+    {
+      "domain": "FINANCE",
+      "maskFields": ["card_number", "revenue"]
+    },
+    {
+      "domain": "CRM",
+      "maskFields": ["customer_email", "phone"]
+    }
+  ]
+}

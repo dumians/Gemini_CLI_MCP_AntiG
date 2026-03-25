@@ -19,21 +19,10 @@ import type { View } from './types';
 
 function App() {
   const [activeView, setActiveView] = useState<View>('dashboard');
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<any>(null);
+  const [pendingQuery, setPendingQuery] = useState<string | undefined>(undefined);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => auth.isAuthenticated());
+  const [user, setUser] = useState<any>(() => auth.getUser());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  useEffect(() => {
-    // Check initial auth state
-    const checkAuth = () => {
-      const isAuthed = auth.isAuthenticated();
-      setIsAuthenticated(isAuthed);
-      if (isAuthed) {
-        setUser(auth.getUser());
-      }
-    };
-    checkAuth();
-  }, []);
 
   const handleLoginSuccess = (userData: any) => {
     setUser(userData);
@@ -50,6 +39,13 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
+  const handleNavigate = (view: View, query?: string) => {
+    setActiveView(view);
+    if (query) {
+      setPendingQuery(query);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background-dark text-slate-300 font-sans selection:bg-primary/30 flex overflow-hidden">
       <Sidebar activeView={activeView} onViewChange={setActiveView} onOpenSettings={() => setIsSettingsOpen(true)} onLogout={handleLogout} />
@@ -64,8 +60,14 @@ function App() {
 
         <div className="flex-1 overflow-auto overflow-x-hidden relative scroll-smooth thin-scrollbar">
           <div className="min-h-full pb-12">
-            {activeView === 'dashboard' && <DashboardView onNavigate={setActiveView} />}
-            {activeView === 'query' && <QueryAnalysisView onShowSource={() => {}} />}
+            {activeView === 'dashboard' && <DashboardView onNavigate={handleNavigate} />}
+            {activeView === 'query-analysis' && (
+              <QueryAnalysisView 
+                initialQuery={pendingQuery} 
+                onShowSource={() => {}} 
+                onClearQuery={() => setPendingQuery(undefined)}
+              />
+            )}
             {activeView === 'marketplace' && <MarketplaceView />}
             {activeView === 'governance' && <GovernanceView onNavigate={setActiveView} />}
             {activeView === 'governance-detail' && <GovernanceDetailView />}

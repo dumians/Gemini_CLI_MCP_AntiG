@@ -4,6 +4,8 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, LineChart, Line } from 'recharts';
 
+import { api } from '../utils/api';
+
 const STOCK_THRESHOLD = 50000;
 
 export const SpannerDetailView = () => {
@@ -38,20 +40,17 @@ export const SpannerDetailView = () => {
   React.useEffect(() => {
     const fetchInventory = async () => {
       try {
-         const res = await fetch('/api/spanner/inventory');
-         if (res.ok) {
-           const data = await res.json();
-           if (data.data?.length > 0) {
-             const mapped = data.data.map((item: any) => ({
-                id: item.transaction_id || `TX-${Math.random().toString(36).substr(2, 5)}`,
-                loc: `Store ${item.store_id}`,
-                region: 'Global',
-                stock: item.quantity_sold ? item.quantity_sold * 1000 : Math.floor(Math.random() * 150000),
-                status: 'Synced',
-                trend: '+0%'
-             })).slice(0, 5);
-             setInventory(mapped);
-           }
+         const data = await api.get('/api/spanner/inventory');
+         if (data.data?.length > 0) {
+           const mapped = data.data.map((item: any) => ({
+              id: item.transaction_id || `TX-${Math.random().toString(36).substr(2, 5)}`,
+              loc: `Store ${item.store_id}`,
+              region: 'Global',
+              stock: item.quantity_sold ? item.quantity_sold * 1000 : Math.floor(Math.random() * 150000),
+              status: 'Synced',
+              trend: '+0%'
+           })).slice(0, 5);
+           setInventory(mapped);
          }
       } catch (err) {
          console.error('Failed to fetch Spanner inventory:', err);

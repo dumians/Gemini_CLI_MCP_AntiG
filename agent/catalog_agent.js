@@ -34,7 +34,18 @@ class CatalogAgent {
             search_entities: ({ query }) => metadataCatalog.searchEntities(query),
             get_domain_schema: ({ domain }) => metadataCatalog.getSchemaForDomain(domain),
             get_entity_lineage: ({ entityName }) => metadataCatalog.getEntityLineage(entityName),
-            get_horizontal_insights: () => kgService.getHorizontalContextSummary()
+            get_horizontal_insights: () => kgService.getHorizontalContextSummary(),
+            query_cross_domain_inventory: () => this._queryCrossDomainInventory()
+        };
+    }
+
+    _queryCrossDomainInventory() {
+        const catalog = metadataCatalog.getCatalog();
+        const links = catalog.crossDomainLinks;
+        return {
+            status: "success",
+            graphLinks: links,
+            summary: "Cross-domain inventory links synthesized from Metadata Graph."
         };
     }
 
@@ -75,6 +86,10 @@ class CatalogAgent {
                     {
                         name: "get_horizontal_insights",
                         description: "Retrieves horizontal context and intent history from the mesh Knowledge Graph."
+                    },
+                    {
+                        name: "query_cross_domain_inventory",
+                        description: "Finds cross-domain inventory links between Oracle and Spanner using the metadata graph."
                     }
                 ]
             }]

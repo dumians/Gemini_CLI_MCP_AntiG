@@ -14,7 +14,22 @@ import GenericAgent from "./utils/generic_agent.js";
 
 dotenv.config();
 
-const genericRunnerMap = {}; // Persistent live cached connectors
+class MeshAgentFactory {
+    constructor() {
+        this.cache = {};
+    }
+
+    async runAgent(agentDef, query, context, traceId) {
+        const agentName = agentDef.name;
+        if (!this.cache[agentName]) {
+            logger.log("AgentFactory", `Spawning dynamic ADK agent: ${agentName} [${agentDef.domain}]`, "INFO", null, traceId);
+            this.cache[agentName] = new GenericAgent(agentDef);
+        }
+        return await this.cache[agentName].process(query, context, traceId);
+    }
+}
+
+const meshAgentFactory = new MeshAgentFactory();
 
 const config = configService.getConfig("orchestrator");
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -132,10 +147,7 @@ export async function askOrchestrator(query, userId = 'admin') {
                         rawResult = await catalogAgent.process(subQuery, filteredContext, traceId);
                     } else {
                         // Dynamic ADK dispatching trigger
-                        if (!genericRunnerMap[agentName]) {
-                            genericRunnerMap[agentName] = new GenericAgent(agentDef);
-                        }
-                        rawResult = await genericRunnerMap[agentName].process(subQuery, filteredContext, traceId);
+                        rawResult = await meshAgentFactory.runAgent(agentDef, subQuery, filteredContext, traceId);
                     }
 
                     agentResult = validateDataProduct(rawResult, agentName);

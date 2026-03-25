@@ -67,5 +67,21 @@
       }
     ],
     "groundingDomain": "HR"
+  },
+  {
+    "id": "crm_agent",
+    "name": "CRMAgent",
+    "domain": "CRM",
+    "specialty": "Customer Relationship, Lead Tracking, AlloyDB Profiles",
+    "toolName": "call_crm_agent",
+    "systemInstruction": "You are a Customer Relationship Specialist Agent. You only have access to AlloyDB (Customer Profile DB). Use standard SQL tools provided for AlloyDB PostgreSQL.",
+    "mcpServers": [
+      {
+        "name": "alloydb",
+        "mcpUrl": "process.env.ALLOYDB_MCP_URL",
+        "serverArgs": ["servers/alloydb-mcp/index.js"]
+      }
+    ],
+    "groundingDomain": "Analytics"
   }
 ]

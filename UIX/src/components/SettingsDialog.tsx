@@ -5,6 +5,26 @@ import { RefreshCw, Settings, X, Database, Bot, Terminal } from 'lucide-react';
 export const SettingsDialog = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [settings, setSettings] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [newDomain, setNewDomain] = React.useState({ id: '', name: '', domain: '', schema_file: '' });
+
+  const handleAddDomain = async () => {
+    if (!newDomain.id || !newDomain.name || !newDomain.domain) {
+      alert('Please fill ID, Name, and Domain');
+      return;
+    }
+    const { api } = await import('../utils/api');
+    try {
+      await api.post('/api/config/data-sources', newDomain);
+      alert('Domain added successfully!');
+      setNewDomain({ id: '', name: '', domain: '', schema_file: '' });
+      // Refresh
+      const data = await api.get('/api/settings');
+      setSettings(data);
+    } catch (err) {
+      console.error('Failed to add domain:', err);
+      alert('Error adding domain');
+    }
+  };
 
   React.useEffect(() => {
     if (isOpen) {

@@ -23,7 +23,8 @@ test("Spanner MCP: query_spanner_sql (Simulation)", async () => {
             arguments: { query: "SELECT * FROM Singers LIMIT 1" }
         }
     });
-    assert.ok(result.content[0].text.includes("Simulated Spanner SQL result"));
+    // The simulation yields a JSON string of rows parsed from spanner_transactions.csv
+    assert.ok(result.content[0].text.includes("TR-101"));
 });
 
 test("Spanner MCP: query_spanner_graph (Simulation)", async () => {
@@ -35,5 +36,6 @@ test("Spanner MCP: query_spanner_graph (Simulation)", async () => {
             arguments: { gql_match: "MATCH (n) RETURN n LIMIT 1" }
         }
     });
-    assert.ok(result.content[0].text.includes("Simulated Spanner GQL result"));
+    // The graph simulation yields a JSON object with a 'path' array
+    assert.ok(result.content[0].text.includes("path"));
 });

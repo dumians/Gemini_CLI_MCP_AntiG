@@ -7,8 +7,9 @@ import { motion } from 'motion/react';
 import { api } from '../utils/api';
 import type { View } from '../types';
 
-export const DashboardView = ({ onNavigate }: { onNavigate: (view: View) => void }) => {
+export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?: string) => void }) => {
   const [status, setStatus] = React.useState<any>({ agents: [], steps: [] });
+  const [searchText, setSearchText] = React.useState('');
   
   React.useEffect(() => {
     const fetchStatus = async () => {
@@ -40,17 +41,18 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View) => void
               className="w-full bg-transparent border-none focus:ring-0 text-slate-100 py-4 pl-16 pr-32 text-lg placeholder:text-slate-500" 
               placeholder="Ask the Data Agent anything..." 
               type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => {
-                 if (e.key === 'Enter') {
-                    // Send to local state or navigate
-                    onNavigate('query-analysis');
+                 if (e.key === 'Enter' && searchText.trim()) {
+                    onNavigate('query-analysis', searchText);
                  }
               }}
             />
             <div className="absolute right-3 flex items-center gap-2">
               <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-white/10 rounded text-[10px] text-slate-400">⌘ K</kbd>
               <button 
-                onClick={() => onNavigate('query-analysis')}
+                onClick={() => searchText.trim() && onNavigate('query-analysis', searchText)}
                 className="bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/80 transition-all shadow-lg shadow-primary/20"
               >
                 Ask Agent
@@ -112,11 +114,9 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View) => void
               </div>
               <div className="space-y-4">
                 <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                  <motion.div 
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 0.65 }}
-                    style={{ originX: 0 }}
-                    className="bg-primary h-full rounded-full w-full"
+                  <div 
+                    style={{ width: '65%' }}
+                    className="bg-primary h-full rounded-full"
                   />
                 </div>
                 <div className="flex flex-col gap-2">

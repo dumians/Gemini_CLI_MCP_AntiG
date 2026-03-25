@@ -35,6 +35,13 @@ export function validateDataProduct(product, agentName) {
             errors.push(`Missing or invalid field: ${key}`);
         }
     }
+
+    // Structural Domain Boundary Check
+    const agentDef = AgentRegistry.find(a => a.name === agentName);
+    if (agentDef && product.domain && product.domain !== agentDef.domain) {
+        errors.push(`Domain mismatch: Agent ${agentName} (configured for ${agentDef.domain}) returned domain ${product.domain}`);
+    }
+
     if (errors.length > 0) {
         console.error(`[Data Contract Violation] Agent: ${agentName}`, errors);
         throw new Error(`Data Product from ${agentName} violated the mesh contract: ${errors.join(', ')}`);
@@ -136,14 +143,14 @@ export class MetadataCatalog {
             }
         }
 
-        // Parse schema files
-        const schemaPaths = catalogConfig.schema_sources || [];
-        for (const schemaRelPath of schemaPaths) {
-            const fullPath = path.join(ROOT_DIR, schemaRelPath);
-            if (fs.existsSync(fullPath)) {
-                const sql = fs.readFileSync(fullPath, 'utf8');
-                const sourceId = this._inferSourceId(schemaRelPath);
-                this._parseSchemaDDL(sql, sourceId);
+        // Parse schema files from registered sources
+        for (const source of Object.values(this.sources)) {
+            if (source.schemaFile) {
+                const fullPath = path.join(ROOT_DIR, source.schemaFile);
+                if (fs.existsSync(fullPath)) {
+                    const sql = fs.readFileSync(fullPath, 'utf8');
+                    this._parseSchemaDDL(sql, source.id);
+                }
             }
         }
 
@@ -165,7 +172,7 @@ export class MetadataCatalog {
 
         // Build lineage from agent registry
         for (const agent of AgentRegistry) {
-            if (agent.dataSource === 'all') continue;
+            if (!agent.dataSource || agent.dataSource === 'all') continue;
             const sources = agent.dataSource.split(',');
             for (const src of sources) {
                 this.lineage.push({
@@ -180,6 +187,16 @@ export class MetadataCatalog {
 
         this._initialized = true;
         console.log(`[MetadataCatalog] Initialized: ${Object.keys(this.entities).length} entities, ${this.relationships.length} relationships, ${this.crossDomainLinks.length} cross-domain links`);
+    }
+
+    reload() {
+        this.sources = {};
+        this.entities = {};
+        this.relationships = [];
+        this.crossDomainLinks = [];
+        this.lineage = [];
+        this._initialized = false;
+        this.initialize();
     }
 
     /**

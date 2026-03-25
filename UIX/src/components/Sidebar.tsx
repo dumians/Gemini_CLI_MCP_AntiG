@@ -6,16 +6,25 @@ import {
 import type { View } from '../types';
 
 export const Sidebar = ({ activeView, onViewChange, onOpenSettings, onLogout }: { activeView: View, onViewChange: (view: View) => void, onOpenSettings: () => void, onLogout: () => void }) => {
+  const [openDomains, setOpenDomains] = React.useState(true);
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, status: 'online' },
     { id: 'marketplace', label: 'Data Marketplace', icon: Store, status: 'online' },
     { id: 'governance', label: 'Federated Governance', icon: ShieldCheck, status: 'online' },
-    { id: 'data-domains', label: 'Data Domains', icon: Globe, status: 'online' },
+    { 
+      id: 'data-domains', 
+      label: 'Data Domains', 
+      icon: Globe, 
+      status: 'online',
+      children: [
+        { id: 'oracle-detail', label: 'Oracle ERP', icon: Database, status: 'online' },
+        { id: 'spanner-detail', label: 'Spanner Retail', icon: Store, status: 'error' },
+        { id: 'bigquery-detail', label: 'BigQuery Analytics', icon: BarChart3, status: 'online' },
+        { id: 'alloy-detail', label: 'AlloyDB CRM', icon: Users, status: 'warning' },
+      ]
+    },
     { id: 'cross-domain-inventory', label: 'Cross-Domain Inventory', icon: Package, status: 'online' },
-    { id: 'oracle-detail', label: 'Oracle ERP', icon: Database, status: 'online' },
-    { id: 'spanner-detail', label: 'Spanner Retail', icon: Store, status: 'error' },
-    { id: 'bigquery-detail', label: 'BigQuery Analytics', icon: BarChart3, status: 'online' },
-    { id: 'alloy-detail', label: 'AlloyDB CRM', icon: Users, status: 'warning' },
   ];
 
   return (
@@ -32,40 +41,66 @@ export const Sidebar = ({ activeView, onViewChange, onOpenSettings, onLogout }: 
       
       <nav className="flex-1 px-4 space-y-1 mt-4">
         {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onViewChange(item.id as View)}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${
-              activeView === item.id || (item.id === 'governance' && activeView === 'governance-detail')
-                ? 'bg-primary/10 text-primary font-medium' 
-                : 'text-slate-400 hover:bg-slate-800'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <item.icon size={18} />
-              <span className="text-sm">{item.label}</span>
-            </div>
-            <div className="flex items-center">
-              {item.status === 'online' && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-green-500 font-bold uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">Live</span>
-                  <div className="size-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+          <div key={item.id}>
+            <button
+              onClick={() => item.children ? setOpenDomains(!openDomains) : onViewChange(item.id as View)}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${
+                activeView === item.id || (item.id === 'governance' && activeView === 'governance-detail') || (item.children && item.children.some(c => c.id === activeView))
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-slate-400 hover:bg-slate-800'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon size={18} />
+                <span className="text-sm">{item.label}</span>
+              </div>
+              <div className="flex items-center">
+                {item.children && (
+                  <span className="text-xs transition-transform duration-300 mr-2" style={{ transform: openDomains ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                )}
+                <div className="flex items-center">
+                  {item.status === 'online' && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-green-500 font-bold uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">Live</span>
+                      <div className="size-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                    </div>
+                  )}
+                  {item.status === 'warning' && (
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle size={12} className="text-yellow-500" />
+                      <div className="size-1.5 rounded-full bg-yellow-500" />
+                    </div>
+                  )}
+                  {item.status === 'error' && (
+                    <div className="flex items-center gap-1.5">
+                      <X size={12} className="text-red-500" />
+                      <div className="size-1.5 rounded-full bg-red-500 animate-pulse" />
+                    </div>
+                  )}
                 </div>
-              )}
-              {item.status === 'warning' && (
-                <div className="flex items-center gap-1.5">
-                  <AlertTriangle size={12} className="text-yellow-500" />
-                  <div className="size-1.5 rounded-full bg-yellow-500" />
-                </div>
-              )}
-              {item.status === 'error' && (
-                <div className="flex items-center gap-1.5">
-                  <X size={12} className="text-red-500" />
-                  <div className="size-1.5 rounded-full bg-red-500 animate-pulse" />
-                </div>
-              )}
-            </div>
-          </button>
+              </div>
+            </button>
+            {item.children && openDomains && (
+              <div className="pl-6 mt-1 space-y-1">
+                {item.children.map((subItem) => (
+                  <button
+                    key={subItem.id}
+                    onClick={() => onViewChange(subItem.id as View)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-xs ${
+                      activeView === subItem.id
+                        ? 'bg-primary/5 text-primary font-medium' 
+                        : 'text-slate-400 hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <subItem.icon size={14} />
+                      <span>{subItem.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </nav>
 

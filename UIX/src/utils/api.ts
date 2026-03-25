@@ -1,7 +1,7 @@
 const BASE_URL = 'http://localhost:3001';
 
 async function request(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('mesh_auth_token');
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -14,7 +14,7 @@ async function request(endpoint: string, options: RequestInit = {}) {
   });
 
   if (response.status === 401) {
-    localStorage.removeItem('token');
+    localStorage.removeItem('mesh_auth_token');
     window.location.reload();
     throw new Error('Unauthorized');
   }

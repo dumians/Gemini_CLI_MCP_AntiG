@@ -21,5 +21,6 @@ test("BigQuery MCP: query_bigquery (Simulation)", async () => {
             arguments: { query: "SELECT * FROM dataset.table LIMIT 1" }
         }
     });
-    assert.ok(result.content[0].text.includes("Simulated BigQuery result"));
+    // The simulation yields a JSON string of rows parsed from bigquery_segments.csv
+    assert.ok(result.content[0].text.includes("VIP"));
 });

@@ -27,5 +27,6 @@ test("AlloyDB MCP: query_alloydb_vector (Simulation)", async () => {
             arguments: { query: "SELECT * FROM tickets LIMIT 1" }
         }
     });
-    assert.ok(result.content[0].text.includes("Simulated AlloyDB Vector result"));
+    // The simulation yields a JSON string containing ticket data parsed from alloydb_tickets.csv
+    assert.ok(result.content[0].text.includes("Delayed shipment"));
 });

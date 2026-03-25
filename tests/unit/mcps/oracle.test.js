@@ -23,5 +23,6 @@ test("Oracle MCP: query_oracle_sql (Simulation)", async () => {
             arguments: { query: "SELECT * FROM ERP_INVOICES FETCH FIRST 1 ROWS ONLY" }
         }
     });
-    assert.ok(result.content[0].text.includes("Simulated Oracle SQL result"));
+    // The simulation yields a JSON string of rows parsed from oracle_orders.csv
+    assert.ok(result.content[0].text.includes("PO-9001"));
 });

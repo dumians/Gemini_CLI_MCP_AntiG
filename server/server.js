@@ -215,6 +215,127 @@ app.get('/api/config/data-sources', authMiddleware, (req, res) => {
     }
 });
 
+app.post('/api/config/data-sources', authMiddleware, (req, res) => {
+    const { id, name, domain, schema_file } = req.body;
+    if (!id || !name || !domain) {
+        return res.status(400).json({ error: "Missing required fields: id, name, domain" });
+    }
+
+    try {
+        const schemaPath = schema_file || `db-schemas/${id}_schema.sql`;
+        const fullSchemaPath = path.join(__dirname, '..', schemaPath);
+        if (!fs.existsSync(fullSchemaPath)) {
+            return res.status(400).json({ error: `Connection Validation Failed: Schema file not found at ${schemaPath}. Domain mount aborted.` });
+        }
+
+        const dsPath = path.join(__dirname, '../config/data_sources.json');
+        let config = { sources: {} };
+        if (fs.existsSync(dsPath)) {
+            config = JSON.parse(fs.readFileSync(dsPath, 'utf8'));
+        }
+
+        config.sources[id] = {
+            name,
+            domain,
+            schema_file: schemaPath
+        };
+
+        fs.writeFileSync(dsPath, JSON.stringify(config, null, 2));
+        metadataCatalog.reload(); // Sync in-memory graph with new source
+        logger.log('Server', `Data source ${name} validated and added dynamically`, 'INFO');
+        res.status(201).json({ message: `Data source ${name} validated and added successfully` });
+    } catch (error) {
+        logger.log('Server', `Failed to add data source: ${error.message}`, 'ERROR');
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/settings', authMiddleware, (req, res) => {
+    try {
+        const dsPath = path.join(__dirname, '../config/data_sources.json');
+        const dsConfig = JSON.parse(fs.readFileSync(dsPath, 'utf8'));
+        
+        const dataSources = Object.entries(dsConfig.sources).map(([id, s]) => ({
+            id,
+            name: s.name,
+            status: 'online',
+            enabled: true
+        }));
+
+        const agents = AgentRegistry.map(a => ({
+            id: a.id,
+            name: a.name,
+            status: 'idle'
+        }));
+
+        res.json({ dataSources, agents });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/governance/policies', authMiddleware, (req, res) => {
+    try {
+        const pPath = path.join(__dirname, '../config/policies.json');
+        const policies = JSON.parse(fs.readFileSync(pPath, 'utf8'));
+        res.json(policies);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load policies" });
+    }
+});
+
+app.post('/api/governance/policies', authMiddleware, (req, res) => {
+    try {
+        const pPath = path.join(__dirname, '../config/policies.json');
+        fs.writeFileSync(pPath, JSON.stringify(req.body, null, 2));
+        logger.log('Server', `Governance policies updated`, 'INFO');
+        res.json({ message: "Policies updated successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to save policies" });
+    }
+});
+
+// Mock Spanner Inventory for UI
+app.get('/api/spanner/inventory', authMiddleware, (req, res) => {
+    res.json({
+        status: "success",
+        data: [
+            { transaction_id: "TX-99123", store_id: "NYC-01", quantity_sold: 12 },
+            { transaction_id: "TX-99124", store_id: "LON-02", quantity_sold: 5 },
+            { transaction_id: "TX-99125", store_id: "TKY-03", quantity_sold: 25 },
+            { transaction_id: "TX-99126", store_id: "BLN-04", quantity_sold: 8 },
+            { transaction_id: "TX-99127", store_id: "SGP-05", quantity_sold: 15 },
+        ]
+    });
+});
+
+// Mock Alloy CRM Data for UI
+app.get('/api/alloy/crm_data', authMiddleware, (req, res) => {
+    res.json({
+        status: "success",
+        metrics: {
+            totalLeads: 2580,
+            conversionRate: 21.4,
+            customerSentiment: 92,
+            avgResponseTime: "1.0h"
+        }
+    });
+});
+
+// Agentic Cross-Domain Inventory running through Orchestrator
+app.get('/api/mesh/cross_inventory', authMiddleware, async (req, res) => {
+    try {
+        const result = await askOrchestrator("Synthesize cross-domain inventory linking Oracle ERP and Spanner using Graph RAG.", req.user.username);
+        res.json({
+            status: "success",
+            summary: result.text,
+            steps: result.steps
+        });
+    } catch (err) {
+        res.status(500).json({ status: "error", message: err.message });
+    }
+});
+
 export { app };
 
 if (process.env.NODE_ENV !== 'test') {

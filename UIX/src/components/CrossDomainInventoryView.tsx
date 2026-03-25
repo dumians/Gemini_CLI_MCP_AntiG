@@ -3,19 +3,43 @@ import { RefreshCw, Activity, Bot } from 'lucide-react';
 import { GraphView } from './GraphView';
 
 export const CrossDomainInventoryView = () => {
-  const inventoryData = [
+  const [inventoryData] = React.useState([
+    { id: 'SKU-STORE-7', item: 'Store Linking Node', source: 'Spanner', stock: 1, status: 'Healthy', location: 'Graph-Relational' },
     { id: 'INV-001', item: 'Enterprise Server X1', source: 'Oracle', stock: 45, status: 'In Stock', location: 'Global-West' },
     { id: 'SKU-882', item: 'Retail Display Unit', source: 'Spanner', stock: 1200, status: 'High Demand', location: 'Retail-Hub' },
     { id: 'BQ-DATA-01', item: 'Cold Storage Archive', source: 'BigQuery', stock: 850, status: 'Optimized', location: 'Data-Lake' },
-    { id: 'INV-002', item: 'Network Switch L3', source: 'Oracle', stock: 12, status: 'Low Stock', location: 'Global-East' },
-    { id: 'SKU-441', item: 'POS Terminal V2', source: 'Spanner', stock: 340, status: 'In Stock', location: 'Retail-Hub' },
-    { id: 'BQ-DATA-02', item: 'Real-time Stream Buffer', source: 'BigQuery', stock: 2100, status: 'Active', location: 'Data-Lake' },
-  ];
+    { id: 'CUST-LINK-A', item: 'Cross-Domain Customer Bridge', source: 'AlloyDB', stock: 1, status: 'Active', location: 'Mesh-Internal' },
+  ]);
+
+  const [agentOutput, setAgentOutput] = React.useState<{ summary: string; steps: any[] }>({ summary: '', steps: [] });
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchInventory = async () => {
+      setLoading(true);
+      const { api } = await import('../utils/api');
+      try {
+        const result = await api.get('/api/mesh/cross_inventory');
+        if (result.status === 'success') {
+          setAgentOutput({
+            summary: result.summary || 'No summary returned.',
+            steps: result.steps || []
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch mesh inventory:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventory();
+  }, []);
 
   const adkAgents = [
-    { id: 'ADK-01', type: 'A2A', status: 'Connected', latency: '2ms', load: '14%' },
-    { id: 'ADK-02', type: 'A2UI', status: 'Connected', latency: '5ms', load: '28%' },
-    { id: 'ADK-03', type: 'A2A', status: 'Idle', latency: '1ms', load: '2%' },
+    { id: 'CatalogAgent', type: 'A2A', status: 'Connected', latency: '2ms', load: '14%' },
+    { id: 'RetailAgent', type: 'A2A', status: 'Connected', latency: '5ms', load: '28%' },
+    { id: 'FinancialAgent', type: 'A2A', status: 'Idle', latency: '1ms', load: '2%' },
   ];
 
   return (
@@ -106,22 +130,29 @@ export const CrossDomainInventoryView = () => {
               </div>
             </div>
             <div className="p-6 bg-black/20 font-mono text-[11px] space-y-2 h-64 overflow-y-auto">
-              {[
-                { time: '04:08:12', agent: 'ADK-01', type: 'A2A', msg: 'Handshake initiated with Spanner-Node-7' },
-                { time: '04:08:14', agent: 'ADK-02', type: 'A2UI', msg: 'Rendering inventory delta for Global-West' },
-                { time: '04:08:15', agent: 'ADK-01', type: 'A2A', msg: 'Syncing stock level for SKU-882 [SUCCESS]' },
-                { time: '04:08:18', agent: 'ADK-03', type: 'A2A', msg: 'Heartbeat signal received from Oracle-DB-Core' },
-                { time: '04:08:22', agent: 'ADK-02', type: 'A2UI', msg: 'User session validated via Federated Auth' },
-                { time: '04:08:25', agent: 'ADK-01', type: 'A2A', msg: 'Requesting BigQuery cold storage audit log' },
-                { time: '04:08:28', agent: 'ADK-02', type: 'A2UI', msg: 'Pushing real-time alerts to dashboard UI' },
-              ].map((log, i) => (
-                <div key={i} className="flex gap-4 border-b border-white/5 pb-1 last:border-0">
-                  <span className="text-slate-600">[{log.time}]</span>
-                  <span className={log.type === 'A2A' ? 'text-indigo-400' : 'text-emerald-400'}>{log.agent}</span>
-                  <span className="text-slate-500">[{log.type}]</span>
-                  <span className="text-slate-300">{log.msg}</span>
+              {loading ? (
+                <div className="text-slate-500 animate-pulse">Running Graph RAG Query via Orchestrator...</div>
+              ) : agentOutput.steps && agentOutput.steps.length > 0 ? (
+                agentOutput.steps.map((step, i) => (
+                  <div key={i} className="flex flex-col border-b border-white/5 pb-2 last:border-0">
+                    <div className="flex gap-4">
+                      <span className="text-slate-600">[{new Date().toLocaleTimeString()}]</span>
+                      <span className="text-indigo-400 font-bold">{step.agent}</span>
+                      <span className="text-slate-300">Tool Call: {step.query}</span>
+                    </div>
+                    <div className="mt-1 pl-12 text-slate-400 text-[10px] truncate">
+                      Result: {typeof step.result === 'object' ? JSON.stringify(step.result).substring(0, 100) : step.result}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-slate-500">No agent transactions recorded in this trace. Click 'Deploy' or refresh to trigger.</div>
+              )}
+              {agentOutput.summary && (
+                <div className="mt-4 p-4 bg-primary/10 rounded-lg text-white text-xs">
+                  <span className="font-bold text-primary">Synthesis:</span> {agentOutput.summary}
                 </div>
-              ))}
+              )}
             </div>
           </section>
         </div>
