@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { askOrchestrator } from '../agent/orchestrator.js';
 import { logger } from '../agent/utils/logging_service.js';
-import { metadataCatalog } from '../agent/utils/catalog.js';
+import { metadataCatalog, AgentRegistry } from '../agent/utils/catalog.js';
 import { authMiddleware } from './middleware/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -52,6 +52,46 @@ let currentStatus = {
     steps: []
 };
 
+// --- Agent Factory Endpoint (PROTECTED) ---
+app.post('/api/agents', authMiddleware, async (req, res) => {
+    const { id, name, domain, specialty, systemInstruction, mcpServers } = req.body;
+    if (!id || !name || !domain) {
+        return res.status(400).json({ error: "Missing required fields: id, name, domain" });
+    }
+
+    const toolName = `call_${id}`;
+    const newAgent = {
+        id, name, domain, specialty, toolName,
+        systemInstruction, mcpServers: mcpServers || [],
+        groundingDomain: domain,
+        dataSource: (mcpServers || []).map(s => s.name).join(',')
+    };
+
+    try {
+        const configPath = path.join(__dirname, '../config/agents.json');
+        let agents = [];
+        if (fs.existsSync(configPath)) {
+            agents = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
+
+        if (agents.find(a => a.id === id)) {
+            return res.status(400).json({ error: `Agent with ID ${id} already exists` });
+        }
+
+        agents.push(newAgent);
+        fs.writeFileSync(configPath, JSON.stringify(agents, null, 2));
+
+        // Update local memory registry without restart trigger
+        AgentRegistry.unshift(newAgent);
+        
+        logger.log('Server', `Agent ${name} created dynamically via factory endpoint`, 'INFO');
+        res.status(201).json({ message: `Agent ${name} created successfully`, agent: newAgent });
+    } catch (err) {
+        logger.log('Server', `Failed to create agent: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- Mesh Query Endpoint (PROTECTED) ---
 app.post('/api/query', authMiddleware, async (req, res) => {
     const { query } = req.body;
@@ -65,7 +105,8 @@ app.post('/api/query', authMiddleware, async (req, res) => {
     currentStatus.steps = [];
 
     try {
-        const result = await askOrchestrator(query);
+        const userId = req.user ? req.user.username : 'admin';
+        const result = await askOrchestrator(query, userId);
         currentStatus.state = "completed";
         currentStatus.steps = result.steps;
 

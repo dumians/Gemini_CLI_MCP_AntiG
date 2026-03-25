@@ -27,16 +27,25 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     return client;
 }
 
+let oracleClient = null;
+
+async function getOracleClient() {
+    if (!oracleClient) {
+        const oracleMcpUrl = process.env.ORACLE_MCP_URL;
+        oracleClient = await createMcpClient("node", ["servers/oracle-mcp/index.js"], oracleMcpUrl);
+    }
+    return oracleClient;
+}
+
 export async function handleFinancialRequest(query, context = {}, traceId = null) {
     logger.log("FinancialAgent", `Processing financial query: ${query}`, "INFO", null, traceId);
     if (Object.keys(context).length > 0) {
         logger.log("FinancialAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO", null, traceId);
     }
 
-    // Connect to Oracle MCP (Local or Remote)
-    const oracleMcpUrl = process.env.ORACLE_MCP_URL;
-    const oracleClient = await createMcpClient("node", ["servers/oracle-mcp/index.js"], oracleMcpUrl);
-    const listResponse = await oracleClient.listTools();
+    // Connect to Oracle MCP Token (Cached)
+    const client = await getOracleClient();
+    const listResponse = await client.listTools();
 
     const geminiTools = [
         {
@@ -81,7 +90,7 @@ export async function handleFinancialRequest(query, context = {}, traceId = null
             const startTime = Date.now();
             logger.logToolCall("FinancialAgent", call.name, call.args, traceId);
             
-            const toolResult = await oracleClient.callTool(call.name, call.args);
+            const toolResult = await client.callTool(call.name, call.args);
             const duration = Date.now() - startTime;
             
             // Apply Graph Grounding if it's a graph tool

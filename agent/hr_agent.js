@@ -4,6 +4,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { configService } from "./utils/config_service.js";
 import { groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
+import { logger } from "./utils/logging_service.js";
+import { validateDataProduct } from "./utils/catalog.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -25,6 +27,16 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     return client;
 }
 
+let hrClient = null;
+
+async function getHrClient() {
+    if (!hrClient) {
+        const hrMcpUrl = process.env.HR_MCP_URL || process.env.ORACLE_MCP_URL;
+        hrClient = await createMcpClient("node", ["servers/oracle-mcp/index.js"], hrMcpUrl);
+    }
+    return hrClient;
+}
+
 /**
  * HR Agent specialized in Oracle DB @ GCP HR Schema.
  * Handles employee data, recruitment pipelines, and department structures.
@@ -32,9 +44,8 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
 export async function handleHRTask(query, meshContext = {}, traceId = null) {
     logger.log("HRAgent", `Processing HR task: ${query}`, "INFO", null, traceId);
 
-    // Connect to Oracle HR MCP (Local or Remote)
-    const hrMcpUrl = process.env.HR_MCP_URL || process.env.ORACLE_MCP_URL;
-    const client = await createMcpClient("node", ["servers/oracle-mcp/index.js"], hrMcpUrl);
+    // Connect to Oracle HR MCP (Cached)
+    const client = await getHrClient();
 
     const listResponse = await client.listTools();
 

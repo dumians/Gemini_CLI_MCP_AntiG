@@ -27,15 +27,24 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     return client;
 }
 
+let spannerClient = null;
+
+async function getSpannerClient() {
+    if (!spannerClient) {
+        const spannerMcpUrl = process.env.SPANNER_MCP_URL;
+        spannerClient = await createMcpClient("node", ["servers/spanner-mcp/index.js"], spannerMcpUrl);
+    }
+    return spannerClient;
+}
+
 export async function handleRetailRequest(query, context = {}, traceId = null) {
     logger.log("RetailAgent", `Processing retail query: ${query}`, "INFO", null, traceId);
     if (Object.keys(context).length > 0) {
         logger.log("RetailAgent", `Integrated context from: ${Object.keys(context).join(', ')}`, "INFO", null, traceId);
     }
 
-    // Connect to Spanner MCP (Local or Remote)
-    const spannerMcpUrl = process.env.SPANNER_MCP_URL;
-    const client = await createMcpClient("node", ["servers/spanner-mcp/index.js"], spannerMcpUrl);
+    // Connect to Spanner MCP (Cached)
+    const client = await getSpannerClient();
     const listResponse = await client.listTools();
 
     const geminiTools = [

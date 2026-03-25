@@ -32,21 +32,38 @@ async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
     }
 }
 
+let bqClient = null;
+let alloydbClient = null;
+
+async function getBqClient() {
+    if (!bqClient) {
+        const bqMcpUrl = process.env.BIGQUERY_MCP_URL;
+        bqClient = await createMcpClient("node", [config.bq_mcp_server || "servers/bigquery-mcp/index.js"], bqMcpUrl);
+    }
+    return bqClient;
+}
+
+async function getAlloyDbClient() {
+    if (!alloydbClient) {
+        const alloydbMcpUrl = process.env.ALLOYDB_MCP_URL;
+        alloydbClient = await createMcpClient("node", [config.alloydb_mcp_server || "servers/alloydb-mcp/index.js"], alloydbMcpUrl);
+    }
+    return alloydbClient;
+}
+
 export async function handleAnalyticsRequest(query, meshContext = {}, traceId = null) {
     logger.log("AnalyticsAgent", `Processing analytics request: ${query}`, "INFO", null, traceId);
     if (Object.keys(meshContext).length > 0) {
         logger.log("AnalyticsAgent", `Integrated context from: ${Object.keys(meshContext).join(', ')}`, "INFO", null, traceId);
     }
 
-    // Connect to BigQuery MCP (Local or Remote)
-    const bqMcpUrl = process.env.BIGQUERY_MCP_URL;
-    const bqClient = await createMcpClient("node", [config.bq_mcp_server || "servers/bigquery-mcp/index.js"], bqMcpUrl);
+    // Connect to BigQuery MCP (Cached)
+    const bqClient = await getBqClient();
     const bqTools = await bqClient.listTools();
     logger.log("AnalyticsAgent", `BQ Tools found: ${bqTools?.tools?.length || 0}`, "DEBUG", null, traceId);
 
-    // Connect to AlloyDB MCP (Local or Remote)
-    const alloydbMcpUrl = process.env.ALLOYDB_MCP_URL;
-    const alloydbClient = await createMcpClient("node", [config.alloydb_mcp_server || "servers/alloydb-mcp/index.js"], alloydbMcpUrl);
+    // Connect to AlloyDB MCP (Cached)
+    const alloydbClient = await getAlloyDbClient();
     const alloydbTools = await alloydbClient.listTools();
     logger.log("AnalyticsAgent", `AlloyDB Tools found: ${alloydbTools?.tools?.length || 0}`, "DEBUG", null, traceId);
 

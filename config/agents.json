@@ -1,0 +1,71 @@
+[
+  {
+    "id": "financial_agent",
+    "name": "FinancialAgent",
+    "domain": "Finance",
+    "specialty": "Oracle ERP, Invoices, Suppliers, Graph Grounding",
+    "toolName": "call_financial_agent",
+    "systemInstruction": "You are a Financial Data Specialist Agent. You only have access to Oracle DB@GCP (ERP systems). Use standard SQL, Graph, and Vector tools provided for Oracle.",
+    "mcpServers": [
+      {
+        "name": "oracle",
+        "mcpUrl": "process.env.ORACLE_MCP_URL",
+        "serverArgs": ["servers/oracle-mcp/index.js"]
+      }
+    ],
+    "groundingDomain": "Finance"
+  },
+  {
+    "id": "retail_agent",
+    "name": "RetailAgent",
+    "domain": "Retail",
+    "specialty": "Spanner Global Inventory, Transactions, Supply Chain Grounding",
+    "toolName": "call_retail_agent",
+    "systemInstruction": "You are a Retail and Supply Chain Specialist Agent. You only have access to Spanner (Global Retail DB). Use Spanner SQL and Spanner Graph (GQL) tools provided.",
+    "mcpServers": [
+      {
+        "name": "spanner",
+        "mcpUrl": "process.env.SPANNER_MCP_URL",
+        "serverArgs": ["servers/spanner-mcp/index.js"]
+      }
+    ],
+    "groundingDomain": "Retail"
+  },
+  {
+    "id": "analytics_agent",
+    "name": "AnalyticsAgent",
+    "domain": "Analytics",
+    "specialty": "BigQuery Marketing Segments, AlloyDB CRM Data",
+    "toolName": "call_analytics_agent",
+    "systemInstruction": "You are a Marketing and Customer Analytics Specialist Agent. You have access to BigQuery (EDW) and AlloyDB (CRM). Use the tools provided to answer queries about customer segments.",
+    "mcpServers": [
+      {
+        "name": "bigquery",
+        "mcpUrl": "process.env.BIGQUERY_MCP_URL",
+        "serverArgs": ["servers/bigquery-mcp/index.js"]
+      },
+      {
+        "name": "alloydb",
+        "mcpUrl": "process.env.ALLOYDB_MCP_URL",
+        "serverArgs": ["servers/alloydb-mcp/index.js"]
+      }
+    ],
+    "groundingDomain": "Analytics"
+  },
+  {
+    "id": "hr_agent",
+    "name": "HRAgent",
+    "domain": "HR",
+    "specialty": "Oracle HR, Employee Recruitment, Department Resource Planning",
+    "toolName": "call_hr_agent",
+    "systemInstruction": "You are an HR Data Specialist for the Enterprise Nexus. You have access to the Oracle DB @ GCP HR Schema. Use the provided tools to fetch and analyze HR data.",
+    "mcpServers": [
+      {
+        "name": "oracle_hr",
+        "mcpUrl": "process.env.HR_MCP_URL",
+        "serverArgs": ["servers/oracle-mcp/index.js"]
+      }
+    ],
+    "groundingDomain": "HR"
+  }
+]

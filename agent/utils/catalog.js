@@ -46,39 +46,18 @@ export function validateDataProduct(product, agentName) {
 // Agent Registry
 // --------------------------------------------------------------------------
 
+const configPath = path.join(ROOT_DIR, 'config', 'agents.json');
+let loadedAgents = [];
+try {
+    if (fs.existsSync(configPath)) {
+        loadedAgents = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+} catch (err) {
+    console.error("[Catalog] Failed to load dynamic agents:", err);
+}
+
 export const AgentRegistry = [
-    {
-        id: "financial_agent",
-        name: "FinancialAgent",
-        domain: "Finance",
-        specialty: "Oracle ERP, Invoices, Suppliers, Graph Grounding",
-        toolName: "call_financial_agent",
-        dataSource: "oracle"
-    },
-    {
-        id: "retail_agent",
-        name: "RetailAgent",
-        domain: "Retail",
-        specialty: "Spanner Global Inventory, Transactions, Supply Chain Grounding",
-        toolName: "call_retail_agent",
-        dataSource: "spanner"
-    },
-    {
-        id: "analytics_agent",
-        name: "AnalyticsAgent",
-        domain: "Analytics",
-        specialty: "BigQuery Marketing Segments, AlloyDB CRM Data",
-        toolName: "call_analytics_agent",
-        dataSource: "bigquery,alloydb"
-    },
-    {
-        id: "hr_agent",
-        name: "HRAgent",
-        domain: "HR",
-        specialty: "Oracle HR, Employee Recruitment, Department Resource Planning",
-        toolName: "call_hr_agent",
-        dataSource: "oracle_hr"
-    },
+    ...loadedAgents,
     {
         id: "catalog_agent",
         name: "CatalogAgent",
