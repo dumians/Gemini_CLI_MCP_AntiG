@@ -12,8 +12,7 @@ import { OracleDetailView } from './components/OracleDetailView';
 import { AlloyDetailView } from './components/AlloyDetailView';
 import { DataDomainsView } from './components/DataDomainsView';
 import { CrossDomainInventoryView } from './components/CrossDomainInventoryView';
-import { SettingsDialog } from './components/SettingsDialog';
-import { Login } from './components/Login';
+import { AdminPortalView } from './components/AdminPortalView';
 import { auth } from './utils/auth';
 import type { View } from './types';
 
@@ -77,6 +76,7 @@ function App() {
             {activeView === 'alloy-detail' && <AlloyDetailView />}
             {activeView === 'domains' && <DataDomainsView />}
             {activeView === 'cross-domain-inventory' && <CrossDomainInventoryView />}
+            {activeView === 'admin-portal' && <AdminPortalView />}
           </div>
         </div>
       </main>

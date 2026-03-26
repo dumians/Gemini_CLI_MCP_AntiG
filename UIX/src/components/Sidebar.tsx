@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, Database, Store, BarChart3, Users, 
-  ShieldCheck, Globe, AlertTriangle, X, Package
+  ShieldCheck, Globe, AlertTriangle, X, Package, Settings
 } from 'lucide-react';
 import type { View } from '../types';
 
@@ -25,6 +25,7 @@ export const Sidebar = ({ activeView, onViewChange, onOpenSettings, onLogout }: 
       ]
     },
     { id: 'cross-domain-inventory', label: 'Cross-Domain Inventory', icon: Package, status: 'online' },
+    { id: 'admin-portal', label: 'Admin Portal', icon: Settings, status: 'online' },
   ];
 
   return (
