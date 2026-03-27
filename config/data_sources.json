@@ -3,7 +3,14 @@
     "sources": {
         "oracle": {
             "name": "Oracle ERP",
-            "domain": "Finance",
+            "domain": "Oracle ERP",
+            "connection_type": "JDBC URL",
+            "connection_string": "jdbc:oracle:thin:@//${ORACLE_HOST}:1521/${ORACLE_SERVICE}",
+            "connection": {
+                "user": "${ORACLE_USER}",
+                "password": "${ORACLE_PASSWORD}",
+                "connect_string": "${ORACLE_CONNECT_STRING}"
+            },
             "local": {
                 "command": "node",
                 "args": ["servers/oracle-mcp/index.js"],
@@ -18,7 +25,14 @@
         },
         "spanner": {
             "name": "Spanner Retail",
-            "domain": "Retail",
+            "domain": "Spanner Retail",
+            "connection_type": "Standard URI",
+            "connection_string": "spanner://${GCP_PROJECT_ID}/${SPANNER_INSTANCE_ID}/${SPANNER_DATABASE_ID}",
+            "connection": {
+                "projectId": "${GCP_PROJECT_ID}",
+                "instanceId": "${SPANNER_INSTANCE_ID}",
+                "databaseId": "${SPANNER_DATABASE_ID}"
+            },
             "local": {
                 "command": "node",
                 "args": ["servers/spanner-mcp/index.js"],
@@ -33,7 +47,14 @@
         },
         "bigquery": {
             "name": "BigQuery Analytics",
-            "domain": "Analytics",
+            "domain": "BigQuery Analytics",
+            "connection_type": "Standard URI",
+            "connection_string": "bigquery://${GCP_PROJECT_ID}/${BIGQUERY_DATASET_ID}",
+            "connection": {
+                "projectId": "${GCP_PROJECT_ID}",
+                "datasetId": "${BIGQUERY_DATASET_ID}",
+                "location": "${BIGQUERY_LOCATION}"
+            },
             "local": {
                 "command": "node",
                 "args": ["servers/bigquery-mcp/index.js"],
@@ -48,7 +69,17 @@
         },
         "alloydb": {
             "name": "AlloyDB CRM",
-            "domain": "Analytics",
+            "domain": "AlloyDB CRM",
+            "connection_type": "Standard URI",
+            "connection_string": "postgresql://${ALLOYDB_USER}:${ALLOYDB_PASSWORD}@${ALLOYDB_HOST}:${ALLOYDB_PORT}/${ALLOYDB_DB}",
+            "connection": {
+                "region": "${ALLOYDB_REGION}",
+                "clusterId": "${ALLOYDB_CLUSTER}",
+                "instanceId": "${ALLOYDB_INSTANCE}",
+                "username": "${ALLOYDB_USER}",
+                "password": "${ALLOYDB_PASSWORD}",
+                "database": "${ALLOYDB_DB}"
+            },
             "local": {
                 "command": "node",
                 "args": ["servers/alloydb-mcp/index.js"],
@@ -64,6 +95,13 @@
         "oracle_hr": {
             "name": "Oracle HR",
             "domain": "HR",
+            "connection_type": "JDBC URL",
+            "connection_string": "jdbc:oracle:thin:@//${HR_HOST}:1521/${HR_SERVICE}",
+            "connection": {
+                "user": "${HR_USER}",
+                "password": "${HR_PASSWORD}",
+                "connect_string": "${HR_CONNECT_STRING}"
+            },
             "local": {
                 "command": "node",
                 "args": ["servers/oracle-mcp/index.js"],
@@ -74,6 +112,28 @@
                 "transport": "sse"
             },
             "schema_file": "db-schemas/hr_schema.sql",
+            "health_check": "/health"
+        },
+        "catalog": {
+            "name": "Metadata Catalog",
+            "domain": "Catalog",
+            "connection_type": "Standard URI",
+            "connection_string": "bigquery://${GCP_PROJECT_ID}/${CATALOG_DATASET_ID}",
+            "connection": {
+                "projectId": "${GCP_PROJECT_ID}",
+                "datasetId": "${CATALOG_DATASET_ID}",
+                "location": "${CATALOG_LOCATION}"
+            },
+            "local": {
+                "command": "node",
+                "args": ["servers/catalog-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${CATALOG_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/catalog_metadata.sql",
             "health_check": "/health"
         }
     }

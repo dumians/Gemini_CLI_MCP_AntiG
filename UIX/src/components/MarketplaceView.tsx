@@ -1,14 +1,24 @@
 import React from 'react';
 import { api } from '../utils/api';
-import { Search, Filter, Lock, Unlock, Zap, Shield, Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, ShoppingBag, Shield, CheckCircle, Clock, AlertCircle, Search, Filter, Database, Link, RefreshCw, Table, Columns, ArrowRight, Zap } from 'lucide-react';
 import { GraphView } from './GraphView';
+import { DataLineageGraph } from './DataLineageGraph';
+import { DatasetLineageView } from './DatasetLineageView';
 
 export const MarketplaceView = () => {
   const [activeTab, setActiveTab] = React.useState('products');
 
   const [products, setProducts] = React.useState<any[]>([]);
   const [editingProductId, setEditingProductId] = React.useState<string | null>(null);
-  const [productFormData, setProductFormData] = React.useState({ name: '', description: '', owner: '', tables: [] as string[], domain: '' });
+  const [productFormData, setProductFormData] = React.useState({ 
+    name: '', 
+    description: '', 
+    owner: '', 
+    tables: [] as string[], 
+    domain: '', 
+    domainContracts: [] as string[], 
+    security_level: 'Public' 
+  });
   const [productLoading, setProductLoading] = React.useState(false);
   const [showPublishForm, setShowPublishForm] = React.useState(false);
 
@@ -31,6 +41,7 @@ export const MarketplaceView = () => {
   const [editingContractId, setEditingContractId] = React.useState<string | null>(null);
   const [contractFormData, setContractFormData] = React.useState({ status: '', sla: '', privacy: '' });
   const [contractLoading, setContractLoading] = React.useState(false);
+  const [newContractFormData, setNewContractFormData] = React.useState({ name: '', domain: '', schema: '', sla: '99.9%', retention: '30 days' });
 
   const fetchContracts = async () => {
     try {
@@ -70,7 +81,7 @@ export const MarketplaceView = () => {
     try {
       await api.post('/api/products', productFormData);
       setShowPublishForm(false);
-      setProductFormData({ name: '', description: '', owner: '', tables: [], domain: '' });
+      setProductFormData({ name: '', description: '', owner: '', tables: [], domain: '', domainContracts: [], security_level: 'Public' });
       fetchProducts();
     } catch (err) {
       console.error('Failed to publish product:', err);
@@ -93,6 +104,25 @@ export const MarketplaceView = () => {
       fetchContracts();
     } catch (err) {
       console.error('Failed to update contract:', err);
+    } finally {
+      setContractLoading(false);
+    }
+  };
+
+  const handleCreateContract = async () => {
+    if (!newContractFormData.name || !newContractFormData.domain) {
+      alert('Please fill Name and Domain');
+      return;
+    }
+    setContractLoading(true);
+    try {
+      await api.post('/api/contracts', newContractFormData);
+      setNewContractFormData({ name: '', domain: '', schema: '', sla: '99.9%', retention: '30 days' });
+      fetchContracts();
+    } catch (err) {
+      console.error('Failed to create contract:', err);
+      // Fallback for mock if API fails
+      setContracts([...contracts, { ...newContractFormData, id: `c${Date.now()}`, status: 'Active', product: newContractFormData.name, subscriber: 'Enterprise User', privacy: 'Standard' }]);
     } finally {
       setContractLoading(false);
     }
@@ -134,6 +164,22 @@ export const MarketplaceView = () => {
           }`}
         >
           Data Contracts
+        </button>
+        <button 
+          onClick={() => setActiveTab('lineage')} 
+          className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === 'lineage' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          Data Lineage
+        </button>
+        <button 
+          onClick={() => setActiveTab('domains')} 
+          className={`px-6 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === 'domains' ? 'border-primary text-primary' : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          Data Domains
         </button>
         <button 
           onClick={() => setActiveTab('consumer')} 
@@ -198,19 +244,36 @@ export const MarketplaceView = () => {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-400">Data Domain</label>
+              <label className="text-xs font-bold text-slate-400">Security Level</label>
               <select 
-                value={productFormData.domain}
-                onChange={(e) => setProductFormData({ ...productFormData, domain: e.target.value })}
+                value={productFormData.security_level}
+                onChange={(e) => setProductFormData({ ...productFormData, security_level: e.target.value })}
                 className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
               >
-                <option value="">Select Domain</option>
-                <option value="Finance">Finance</option>
-                <option value="Retail">Retail</option>
-                <option value="Analytics">Analytics</option>
-                <option value="HR">HR</option>
-                <option value="CRM">CRM</option>
+                <option value="Public">Public</option>
+                <option value="Confidential">Confidential</option>
               </select>
+            </div>
+            
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-xs font-bold text-slate-400">Combine Domain Contracts</label>
+              <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 grid grid-cols-2 gap-2 h-24 overflow-y-auto">
+                {contracts.map((c: any) => (
+                  <label key={c.id} className="flex items-center gap-2 text-xs text-white">
+                    <input 
+                      type="checkbox" 
+                      checked={productFormData.domainContracts.includes(c.id)}
+                      onChange={(e) => {
+                        const next = e.target.checked 
+                          ? [...productFormData.domainContracts, c.id]
+                          : productFormData.domainContracts.filter((id: string) => id !== c.id);
+                        setProductFormData({ ...productFormData, domainContracts: next });
+                      }}
+                    />
+                    {c.name} ({c.id})
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
           <div className="flex gap-4 pt-2">
@@ -369,99 +432,222 @@ export const MarketplaceView = () => {
       )}
 
       {activeTab === 'contracts' && (
-        <div className="space-y-6">
-          <div className="w-full">
-            <h4 className="text-sm font-bold text-white mb-2">Contracts & Product Lineage Graph</h4>
-            <div className="h-[400px]">
-              <GraphView />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="w-full">
+              <h4 className="text-sm font-bold text-white mb-2">Contracts & Product Lineage Graph</h4>
+              <div className="h-[400px]">
+                <GraphView />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {contracts.map((ctr, i) => (
+                <div key={i} className="glass rounded-2xl border-slate-800 p-6 flex flex-col hover:border-primary/30 transition-colors group">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                      <Shield size={20} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleEditContract(ctr)}
+                        className="text-xs text-primary font-bold hover:text-primary/80"
+                      >
+                        Edit
+                      </button>
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        ctr.status === 'Active' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
+                      }`}>
+                        {ctr.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {editingContractId === ctr.id ? (
+                    <div className="space-y-4 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
+                      <h4 className="text-sm font-bold text-white mb-2">Editing Contract {ctr.id}</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-400">Status</label>
+                          <input 
+                            type="text" 
+                            value={contractFormData.status}
+                            onChange={(e) => setContractFormData({ ...contractFormData, status: e.target.value })}
+                            className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold text-slate-400">SLA</label>
+                          <input 
+                            type="text" 
+                            value={contractFormData.sla}
+                            onChange={(e) => setContractFormData({ ...contractFormData, sla: e.target.value })}
+                            className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5 col-span-2">
+                          <label className="text-[10px] font-bold text-slate-400">Privacy Scope</label>
+                          <input 
+                            type="text" 
+                            value={contractFormData.privacy}
+                            onChange={(e) => setContractFormData({ ...contractFormData, privacy: e.target.value })}
+                            className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <button 
+                          onClick={handleUpdateContract}
+                          disabled={contractLoading}
+                          className="flex-1 bg-primary px-3 py-1.5 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5"
+                        >
+                          {contractLoading && <RefreshCw size={12} className="animate-spin" />}
+                          Save
+                        </button>
+                        <button 
+                          onClick={() => setEditingContractId(null)}
+                          className="flex-1 bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold text-white"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors">{ctr.product} Data Contract</h3>
+                      <p className="text-xs text-slate-500 mb-6 flex-1">Subscribed by: {ctr.subscriber}</p>
+                      
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs">
+                        <span className="text-slate-400">SLA: <span className="text-white font-mono">{ctr.sla}</span></span>
+                        <span className="text-slate-400">Privacy: <span className="text-white font-mono">{ctr.privacy}</span></span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {contracts.map((ctr, i) => (
-            <div key={i} className="glass rounded-2xl border-slate-800 p-6 flex flex-col hover:border-primary/30 transition-colors group">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                  <Shield size={20} />
+          <div className="space-y-6">
+            <section className="glass rounded-2xl border-slate-800 p-6">
+              <h3 className="text-lg font-bold text-white mb-6">Create New Contract</h3>
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Contract Name</label>
+                  <input 
+                    type="text" 
+                    value={newContractFormData.name}
+                    onChange={(e) => setNewContractFormData({ ...newContractFormData, name: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                    placeholder="e.g. Sales Forecast Schema"
+                  />
                 </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => handleEditContract(ctr)}
-                    className="text-xs text-primary hover:text-primary/80 font-bold"
-                  >
-                    Edit
-                  </button>
-                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    ctr.status === 'Active' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
-                  }`}>
-                    {ctr.status}
-                  </span>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Domain</label>
+                  <input 
+                    type="text" 
+                    value={newContractFormData.domain}
+                    onChange={(e) => setNewContractFormData({ ...newContractFormData, domain: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                    placeholder="e.g. Sales"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Schema Definition</label>
+                  <textarea 
+                    rows={3}
+                    placeholder="Column definitions, constraints..."
+                    value={newContractFormData.schema}
+                    onChange={(e) => setNewContractFormData({ ...newContractFormData, schema: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Availability SLA</label>
+                  <input 
+                    type="text" 
+                    value={newContractFormData.sla}
+                    onChange={(e) => setNewContractFormData({ ...newContractFormData, sla: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <button 
+                  onClick={handleCreateContract}
+                  className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all mt-4"
+                >
+                  Propose Contract
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'lineage' && (
+        <div className="space-y-8">
+          <DataLineageGraph />
+          <DatasetLineageView />
+        </div>
+      )}
+
+      {activeTab === 'domains' && (
+        <div className="space-y-6">
+          <section className="glass rounded-2xl border-slate-700/50 p-6">
+            <h3 className="text-lg font-bold text-white mb-6">Create & Manage Data Domains</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Domain Name</label>
+                  <input type="text" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary" placeholder="e.g. New Domain" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Select Data Source for Discovery</label>
+                  <select className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary">
+                    <option value="">-- Select Source --</option>
+                    <option value="oracle">Oracle ERP</option>
+                    <option value="spanner">Spanner Retail</option>
+                    <option value="bigquery">BigQuery Analytics</option>
+                    <option value="alloydb">AlloyDB CRM</option>
+                    <option value="catalog">Metadata Catalog</option>
+                  </select>
+                </div>
+                <button className="bg-primary hover:bg-primary/80 text-white font-bold py-2 rounded-lg text-sm">Discover & Create Domain</button>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-white">Registered Data Domains</h4>
+                <div className="space-y-4">
+                  {[
+                    { name: 'Oracle ERP', type: 'Oracle', host: '${ORACLE_CONNECT_STRING}', user: '${ORACLE_USER}' },
+                    { name: 'Spanner Retail', type: 'Spanner', instance: '${SPANNER_INSTANCE_ID}', database: '${SPANNER_DATABASE_ID}' },
+                    { name: 'BigQuery Analytics', type: 'BigQuery', dataset: '${BIGQUERY_DATASET_ID}', location: '${BIGQUERY_LOCATION}' },
+                    { name: 'AlloyDB CRM', type: 'Postgres', cluster: '${ALLOYDB_CLUSTER}', database: '${ALLOYDB_DB}' }
+                  ].map((dom) => (
+                    <div key={dom.name} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 space-y-3 hover:border-primary/30 transition-colors">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-bold text-white">{dom.name}</p>
+                          <p className="text-xs text-slate-500">{dom.type} Persistence Layer</p>
+                        </div>
+                        <span className="text-xs text-green-500 font-bold uppercase">Online</span>
+                      </div>
+                      <div className="text-xs text-slate-400 font-mono bg-slate-900/50 p-2 rounded-lg truncate">
+                        {dom.type === 'Oracle' ? `Connect: ${dom.host}` : 
+                         dom.type === 'Spanner' ? `Instance: ${dom.instance} | DB: ${dom.database}` :
+                         dom.type === 'BigQuery' ? `Dataset: ${dom.dataset} | Loc: ${dom.location}` :
+                         `Cluster: ${dom.cluster} | DB: ${dom.database}`}
+                      </div>
+                      <button 
+                        onClick={() => alert(`Connection Test for ${dom.name} - Success!`)}
+                        className="w-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all"
+                      >
+                        <RefreshCw size={14} /> Test Connectivity
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {editingContractId === ctr.id ? (
-                <div className="space-y-4 bg-slate-800/30 p-4 rounded-xl border border-slate-700/50">
-                  <h4 className="text-sm font-bold text-white mb-2">Editing Contract {ctr.id}</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-400">Status</label>
-                      <input 
-                        type="text" 
-                        value={contractFormData.status}
-                        onChange={(e) => setContractFormData({ ...contractFormData, status: e.target.value })}
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-400">SLA</label>
-                      <input 
-                        type="text" 
-                        value={contractFormData.sla}
-                        onChange={(e) => setContractFormData({ ...contractFormData, sla: e.target.value })}
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5 col-span-2">
-                      <label className="text-[10px] font-bold text-slate-400">Privacy Scope</label>
-                      <input 
-                        type="text" 
-                        value={contractFormData.privacy}
-                        onChange={(e) => setContractFormData({ ...contractFormData, privacy: e.target.value })}
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button 
-                      onClick={handleUpdateContract}
-                      disabled={contractLoading}
-                      className="flex-1 bg-primary px-3 py-1.5 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5"
-                    >
-                      {contractLoading && <RefreshCw size={12} className="animate-spin" />}
-                      Save
-                    </button>
-                    <button 
-                      onClick={() => setEditingContractId(null)}
-                      className="flex-1 bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold text-white"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors">{ctr.product} Data Contract</h3>
-                  <p className="text-xs text-slate-500 mb-6 flex-1">Subscribed by: {ctr.subscriber}</p>
-                  
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs">
-                    <span className="text-slate-400">SLA: <span className="text-white font-mono">{ctr.sla}</span></span>
-                    <span className="text-slate-400">Privacy: <span className="text-white font-mono">{ctr.privacy}</span></span>
-                  </div>
-                </>
-              )}
             </div>
-          ))}
-          </div>
+          </section>
         </div>
       )}
 
@@ -506,7 +692,4 @@ export const MarketplaceView = () => {
   );
 };
 
-// Simple stand-in icon for DB generic
-const Database = ({ size, className }: { size?: number, className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-);
+

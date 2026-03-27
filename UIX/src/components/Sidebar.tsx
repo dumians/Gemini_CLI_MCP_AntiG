@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import type { View } from '../types';
 
-export const Sidebar = ({ activeView, onViewChange, onOpenSettings, onLogout }: { activeView: View, onViewChange: (view: View) => void, onOpenSettings: () => void, onLogout: () => void }) => {
+export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: View, onViewChange: (view: View) => void, onLogout: () => void }) => {
   const [openDomains, setOpenDomains] = React.useState(true);
 
   const navItems = [
@@ -123,8 +123,8 @@ export const Sidebar = ({ activeView, onViewChange, onOpenSettings, onLogout }: 
           </div>
           <div className="flex gap-2">
             <button 
-              onClick={onOpenSettings}
-              className="flex-1 py-2 bg-slate-700 text-xs font-medium rounded-lg hover:bg-primary transition-all"
+              onClick={() => onViewChange('admin-portal')}
+              className="flex-1 py-2 bg-slate-700 text-xs font-medium rounded-lg hover:bg-primary transition-all text-center"
             >
               Settings
             </button>

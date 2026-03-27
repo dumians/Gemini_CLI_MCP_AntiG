@@ -13,6 +13,7 @@ import { AlloyDetailView } from './components/AlloyDetailView';
 import { DataDomainsView } from './components/DataDomainsView';
 import { CrossDomainInventoryView } from './components/CrossDomainInventoryView';
 import { AdminPortalView } from './components/AdminPortalView';
+import { Login } from './components/Login';
 import { auth } from './utils/auth';
 import type { View } from './types';
 
@@ -21,7 +22,6 @@ function App() {
   const [pendingQuery, setPendingQuery] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => auth.isAuthenticated());
   const [user, setUser] = useState<any>(() => auth.getUser());
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLoginSuccess = (userData: any) => {
     setUser(userData);
@@ -47,7 +47,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background-dark text-slate-300 font-sans selection:bg-primary/30 flex overflow-hidden">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} onOpenSettings={() => setIsSettingsOpen(true)} onLogout={handleLogout} />
+      <Sidebar activeView={activeView} onViewChange={setActiveView} onLogout={handleLogout} />
       
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative border-l border-white/5">
         <div className="absolute inset-0 pointer-events-none overflow-hidden isolate">
@@ -80,11 +80,6 @@ function App() {
           </div>
         </div>
       </main>
-
-      <SettingsDialog 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
     </div>
   );
 }

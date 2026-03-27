@@ -1,26 +1,23 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Settings, Bot, FileText, Terminal, RefreshCw, Database, Server, Plus, Trash2, Edit, Check, AlertTriangle } from 'lucide-react';
+import { Settings, Bot, FileText, Terminal, RefreshCw, Database, Server, Plus, Trash2, Edit, Check, AlertTriangle, Globe, Cpu, Key, Shield } from 'lucide-react';
 import { api } from '../utils/api';
+import { SourceModal } from './SourceModal';
 
-type TabType = 'general' | 'agents' | 'contracts' | 'logs';
+type TabType = 'general' | 'agents' | 'mcp' | 'api' | 'security' | 'logs';
 
 export const AdminPortalView = () => {
   const [activeTab, setActiveTab] = React.useState<TabType>('general');
   const [loading, setLoading] = React.useState(false);
   const [settings, setSettings] = React.useState<any>(null);
   
-  // Data Source Form State
-  const [dsFormData, setDsFormData] = React.useState({ id: '', name: '', domain: '', schema_file: '' });
   const [editDsId, setEditDsId] = React.useState<string | null>(null);
+  const [isDsModalOpen, setIsDsModalOpen] = React.useState(false);
+  const [dsModalData, setDsModalData] = React.useState<any>(null);
 
   // Agent Config Form State
   const [agFormData, setAgFormData] = React.useState({ id: '', name: '', model: 'gemini-2.5-flash', systemPrompt: '', domain: '' });
   const [editAgId, setEditAgId] = React.useState<string | null>(null);
-
-  // Data Contract Form State
-  const [contractFormData, setContractFormData] = React.useState({ name: '', domain: '', schema: '', sla: '99.9%', retention: '30 days' });
-  const [contracts, setContracts] = React.useState<any[]>([]);
 
   // Logs State
   const [logs, setLogs] = React.useState<any[]>([]);
@@ -31,18 +28,6 @@ export const AdminPortalView = () => {
     try {
       const settingsData = await api.get('/api/settings');
       setSettings(settingsData);
-      
-      // Mock contracts for now, or use real if exists
-      try {
-        const contractsData = await api.get('/api/contracts');
-        setContracts(contractsData);
-      } catch (err) {
-        console.warn("Contracts API failed, using fallback mock.");
-        setContracts([
-          { id: 'c1', name: 'Order Processing Schema', domain: 'Retail', schema: 'Order ID, Item, Status', sla: '99.9%', status: 'active' },
-          { id: 'c2', name: 'Financial Audit Log', domain: 'Finance', schema: 'Tx ID, Amount, Timestamp', sla: '99.5%', status: 'pending' },
-        ]);
-      }
 
       // Fetch logs
       try {
@@ -62,19 +47,16 @@ export const AdminPortalView = () => {
     fetchData();
   }, []);
 
-  const handleDsSubmit = async () => {
-    if (!dsFormData.id || !dsFormData.name || !dsFormData.domain) {
-      alert('Please fill ID, Name, and Domain');
-      return;
-    }
+  const handleDsSubmit = async (data: any) => {
     setLoading(true);
     try {
       if (editDsId) {
-        await api.put(`/api/config/data-sources/${editDsId}`, dsFormData);
+        await api.put(`/api/config/data-sources/${editDsId}`, data);
       } else {
-        await api.post('/api/config/data-sources', dsFormData);
+        await api.post('/api/config/data-sources', data);
       }
-      setDsFormData({ id: '', name: '', domain: '', schema_file: '' });
+      setIsDsModalOpen(false);
+      setDsModalData(null);
       setEditDsId(null);
       fetchData();
     } catch (err) {
@@ -84,29 +66,12 @@ export const AdminPortalView = () => {
     }
   };
 
-  const handleContractSubmit = async () => {
-    if (!contractFormData.name || !contractFormData.domain) {
-      alert('Please fill Name and Domain');
-      return;
-    }
-    setLoading(true);
-    try {
-      await api.post('/api/contracts', contractFormData);
-      setContractFormData({ name: '', domain: '', schema: '', sla: '99.9%', retention: '30 days' });
-      fetchData();
-    } catch (err) {
-      console.error('Failed to submit contract:', err);
-      // Fallback update for mock
-      setContracts([...contracts, { ...contractFormData, id: `c${Date.now()}`, status: 'active' }]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const tabs = [
     { id: 'general', label: 'Data Sources', icon: Database },
     { id: 'agents', label: 'Agent Configuration', icon: Bot },
-    { id: 'contracts', label: 'Data Contracts', icon: FileText },
+    { id: 'mcp', label: 'MCP Toolbox', icon: Cpu },
+    { id: 'api', label: 'API Keys', icon: Key },
+    { id: 'security', label: 'Security', icon: Shield },
     { id: 'logs', label: 'Live Logs', icon: Terminal },
   ];
 
@@ -146,91 +111,48 @@ export const AdminPortalView = () => {
       {/* Tab Content */}
       <div className="space-y-8">
         {activeTab === 'general' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <section className="glass rounded-2xl border-slate-800 p-6">
-                <h3 className="text-lg font-bold text-white mb-6">Registered Data Sources</h3>
-                <div className="space-y-4">
-                  {settings?.dataSources?.map((source: any) => (
-                    <div key={source.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
-                      <div className="flex items-center gap-4">
-                        <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                          <Database size={20} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white">{source.name}</p>
-                          <p className="text-xs text-slate-500">{source.domain}</p>
-                        </div>
+          <div className="space-y-6">
+            <section className="glass rounded-2xl border-slate-700/50 p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Registered Data Sources</h3>
+                  <p className="text-xs text-slate-500">Manage connections to your data ecosystem.</p>
+                </div>
+                <button 
+                  onClick={() => { setDsModalData(null); setEditDsId(null); setIsDsModalOpen(true); }}
+                  className="bg-primary hover:bg-primary/80 text-white font-bold px-4 py-2 rounded-xl text-sm shadow-lg flex items-center gap-2 transition-all"
+                >
+                  <Plus size={16} /> Register Source
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {settings?.dataSources?.map((source: any) => (
+                  <div key={source.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 hover:border-primary/30 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                        <Database size={20} />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => { setEditDsId(source.id); setDsFormData({ ...source }); }}
-                          className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition-colors"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <span className={`text-xs font-bold uppercase ${source.status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
-                          {source.status}
-                        </span>
+                      <div>
+                        <p className="text-sm font-bold text-white">{source.name}</p>
+                        <p className="text-xs text-slate-500">{source.domain}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            <div className="space-y-6">
-              <section className="glass rounded-2xl border-slate-800 p-6">
-                <h3 className="text-lg font-bold text-white mb-6">{editDsId ? 'Edit Data Source' : 'Add Data Source'}</h3>
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400">ID</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. spanner_retail"
-                      value={dsFormData.id}
-                      onChange={(e) => setDsFormData({ ...dsFormData, id: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                      disabled={!!editDsId}
-                    />
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => { setEditDsId(source.id); setDsModalData(source); setIsDsModalOpen(true); }}
+                        className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition-colors"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <span className={`text-xs font-bold uppercase ${source.status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
+                        {source.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400">Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Spanner Retail"
-                      value={dsFormData.name}
-                      onChange={(e) => setDsFormData({ ...dsFormData, name: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400">Domain</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Retail"
-                      value={dsFormData.domain}
-                      onChange={(e) => setDsFormData({ ...dsFormData, domain: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <button 
-                    onClick={handleDsSubmit}
-                    className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all mt-4"
-                  >
-                    {editDsId ? 'Update' : 'Create'} Source
-                  </button>
-                  {editDsId && (
-                    <button 
-                      onClick={() => { setEditDsId(null); setDsFormData({ id: '', name: '', domain: '', schema_file: '' }); }}
-                      className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-lg transition-all"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </section>
-            </div>
+                ))}
+              </div>
+            </section>
           </div>
         )}
 
@@ -249,6 +171,13 @@ export const AdminPortalView = () => {
                         <div>
                           <p className="text-sm font-bold text-white">{agent.name}</p>
                           <p className="text-xs text-slate-500">{agent.domain || 'Global'}</p>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {agent.mcpServers?.map((m: any) => (
+                              <span key={m.name} className="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 border border-slate-700">
+                                {m.name}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -290,6 +219,22 @@ export const AdminPortalView = () => {
                     >
                       <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                       <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                      <option value="gemini-3.1-preview">Gemini 3.1 Preview</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Target Domain</label>
+                    <select 
+                      value={agFormData.domain}
+                      onChange={(e) => setAgFormData({ ...agFormData, domain: e.target.value })}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                    >
+                      <option value="">Global / Shared</option>
+                      <option value="Oracle ERP">Oracle ERP</option>
+                      <option value="Spanner Retail">Spanner Retail</option>
+                      <option value="BigQuery Analytics">BigQuery Analytics</option>
+                      <option value="AlloyDB CRM">AlloyDB CRM</option>
+                      <option value="Oracle HR">Oracle HR</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -313,94 +258,127 @@ export const AdminPortalView = () => {
           </div>
         )}
 
-        {activeTab === 'contracts' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <section className="glass rounded-2xl border-slate-800 p-6">
-                <h3 className="text-lg font-bold text-white mb-6">Active Data Contracts</h3>
+        {activeTab === 'domains' && (
+          <div className="space-y-6">
+            <section className="glass rounded-2xl border-slate-700/50 p-6">
+              <h3 className="text-lg font-bold text-white mb-6">Create & Manage Data Domains</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  {contracts.map((contract) => (
-                    <div key={contract.id} className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="size-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
-                            <FileText size={20} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-white">{contract.name}</p>
-                            <p className="text-xs text-slate-500">{contract.domain}</p>
-                          </div>
-                        </div>
-                        <span className={`text-xs font-bold uppercase ${contract.status === 'active' ? 'text-green-500' : 'text-yellow-500'}`}>
-                          {contract.status}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <p className="text-slate-500">SLA Availability</p>
-                          <p className="text-white font-medium">{contract.sla}</p>
-                        </div>
-                        <div>
-                          <p className="text-slate-500">Retention</p>
-                          <p className="text-white font-medium">{contract.retention || 'N/A'}</p>
-                        </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Domain Name</label>
+                    <input type="text" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary" placeholder="e.g. Finance Domain" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Type</label>
+                    <select className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary">
+                      <option>Postgres/MySQL</option>
+                      <option>Spanner</option>
+                      <option>BigQuery</option>
+                    </select>
+                  </div>
+                  <button className="bg-primary hover:bg-primary/80 text-white font-bold py-2 rounded-lg text-sm">Create Domain</button>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-white">Active Domains</h4>
+                  <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-bold text-white">Retail Domain</p>
+                      <p className="text-xs text-slate-500">Spanner</p>
+                    </div>
+                    <span className="text-xs text-green-500 font-bold uppercase">Online</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'mcp' && (
+          <div className="space-y-6">
+            <section className="glass rounded-2xl border-slate-700/50 p-6">
+              <h3 className="text-lg font-bold text-white mb-6">Model Context Protocol (MCP) Configuration</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-white">Connected Servers</h4>
+                  <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <Cpu size={20} className="text-primary" />
+                      <div>
+                        <p className="text-sm font-bold text-white">Financial MCP Server</p>
+                        <p className="text-xs text-slate-500">v1.2.3</p>
                       </div>
                     </div>
-                  ))}
+                    <span className="text-xs text-green-500 font-bold uppercase">Connected</span>
+                  </div>
                 </div>
-              </section>
-            </div>
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-white">Available Tools</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="p-3 bg-slate-800/50 rounded-lg flex justify-between items-center">
+                      <div>
+                        <p className="text-xs font-bold text-white">queryTransactions</p>
+                        <p className="text-[10px] text-slate-500">Retrieve financial audit logs.</p>
+                      </div>
+                      <span className="text-[10px] text-slate-400">Read</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
 
-            <div className="space-y-6">
-              <section className="glass rounded-2xl border-slate-800 p-6">
-                <h3 className="text-lg font-bold text-white mb-6">Create New Contract</h3>
+        {activeTab === 'api' && (
+          <div className="space-y-6">
+            <section className="glass rounded-2xl border-slate-700/50 p-6">
+              <h3 className="text-lg font-bold text-white mb-6">API Keys Management</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400">Contract Name</label>
-                    <input 
-                      type="text" 
-                      value={contractFormData.name}
-                      onChange={(e) => setContractFormData({ ...contractFormData, name: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    />
+                    <label className="text-xs font-bold text-slate-400">Key Name</label>
+                    <input type="text" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary" placeholder="e.g. Analytics Frontend" />
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400">Domain</label>
-                    <input 
-                      type="text" 
-                      value={contractFormData.domain}
-                      onChange={(e) => setContractFormData({ ...contractFormData, domain: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400">Schema Definition</label>
-                    <textarea 
-                      rows={3}
-                      placeholder="Column definitions, constraints..."
-                      value={contractFormData.schema}
-                      onChange={(e) => setContractFormData({ ...contractFormData, schema: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-slate-400">Availability SLA</label>
-                    <input 
-                      type="text" 
-                      value={contractFormData.sla}
-                      onChange={(e) => setContractFormData({ ...contractFormData, sla: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    />
-                  </div>
-                  <button 
-                    onClick={handleContractSubmit}
-                    className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all mt-4"
-                  >
-                    Propose Contract
-                  </button>
+                  <button className="bg-primary hover:bg-primary/80 text-white font-bold py-2 rounded-lg text-sm">Generate Key</button>
                 </div>
-              </section>
-            </div>
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-white">Active Keys</h4>
+                  <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-bold text-white">Default Internal Key</p>
+                      <p className="text-xs text-slate-500">sk_live_...4a2b</p>
+                    </div>
+                    <button className="p-2 bg-slate-700 hover:bg-red-500/20 rounded-lg text-slate-300 hover:text-red-500 transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div className="space-y-6">
+            <section className="glass rounded-2xl border-slate-700/50 p-6">
+              <h3 className="text-lg font-bold text-white mb-6">Security & Compliance Dashboard</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center gap-2">
+                  <Shield size={32} className="text-green-500" />
+                  <p className="text-sm font-bold text-white">Encryption Active</p>
+                  <p className="text-xs text-slate-500">AES-256-GCM point-to-point</p>
+                </div>
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center gap-2">
+                  <Bot size={32} className="text-primary" />
+                  <p className="text-sm font-bold text-white">Governance Enforced</p>
+                  <p className="text-xs text-slate-500">Domain-scoped data access</p>
+                </div>
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center gap-2">
+                  <AlertTriangle size={32} className="text-yellow-500" />
+                  <p className="text-sm font-bold text-white">Compliance Status</p>
+                  <p className="text-xs text-slate-500">Pre-audit checks passed</p>
+                </div>
+              </div>
+            </section>
           </div>
         )}
 
@@ -445,6 +423,13 @@ export const AdminPortalView = () => {
           </section>
         )}
       </div>
+      <SourceModal 
+        isOpen={isDsModalOpen} 
+        onClose={() => { setIsDsModalOpen(false); setDsModalData(null); setEditDsId(null); }} 
+        onSubmit={handleDsSubmit} 
+        initialData={dsModalData}
+        loading={loading}
+      />
     </div>
   );
 };

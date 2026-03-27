@@ -37,23 +37,38 @@ export const SpannerDetailView = () => {
     { day: 'Sun', Berlin: 124500, SF: 89000, Singapore: 45200, Tokyo: 156000 },
   ];
 
+  const [stockHistory, setStockHistory] = React.useState<any[]>([]);
+
   React.useEffect(() => {
     const fetchInventory = async () => {
       try {
-         const data = await api.get('/api/spanner/inventory');
-         if (data.data?.length > 0) {
-           const mapped = data.data.map((item: any) => ({
-              id: item.transaction_id || `TX-${Math.random().toString(36).substr(2, 5)}`,
-              loc: `Store ${item.store_id}`,
-              region: 'Global',
-              stock: item.quantity_sold ? item.quantity_sold * 1000 : Math.floor(Math.random() * 150000),
-              status: 'Synced',
-              trend: '+0%'
-           })).slice(0, 5);
-           setInventory(mapped);
-         }
+        const data = await api.get('/api/spanner/inventory');
+        if (data.data?.length > 0) {
+          const mapped = data.data.map((item: any) => ({
+            id: item.transaction_id,
+            loc: `Store ${item.store_id}`,
+            region: 'Global',
+            stock: Number(item.quantity_sold) * 100, // Scale for visual
+            status: 'Synced',
+            trend: '+0.5%'
+          }));
+          setInventory(mapped);
+
+          // Aggregate by timestamp for trend chart (simulated days)
+          const trendMap: { [key: string]: any } = {};
+          data.data.forEach((item: any) => {
+            const day = item.timestamp ? item.timestamp.split('T')[0] : 'Unknown';
+            if (!trendMap[day]) trendMap[day] = { day, Berlin: 0, SF: 0, Singapore: 0, Tokyo: 0 };
+            
+            // Map store_id to a city for the chart
+            if (item.store_id === 'NYC-01') trendMap[day].SF += Number(item.quantity_sold) * 50;
+            else if (item.store_id === 'LDN-05') trendMap[day].Berlin += Number(item.quantity_sold) * 80;
+            else trendMap[day].Singapore += Number(item.quantity_sold) * 30;
+          });
+          setStockHistory(Object.values(trendMap));
+        }
       } catch (err) {
-         console.error('Failed to fetch Spanner inventory:', err);
+        console.error('Failed to fetch Spanner inventory:', err);
       }
     };
     
@@ -203,7 +218,7 @@ export const SpannerDetailView = () => {
         </div>
         <div className="p-6 h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={stockHistoryData}>
+            <LineChart data={stockHistory.length > 0 ? stockHistory : stockHistoryData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis 
                 dataKey="day" 

@@ -1,7 +1,7 @@
 {
   "contracts": [
-    { "id": "CTR-001", "product": "Customer Master", "subscriber": "Marketing Dept", "status": "Active", "sla": "99.9%", "privacy": "HIPAA" },
-    { "id": "CTR-002", "product": "Retail Sales", "subscriber": "Reporting App", "status": "Active", "sla": "99.5%", "privacy": "GDPR" },
-    { "id": "CTR-003", "product": "Financial Ledgers", "subscriber": "Audit Team", "status": "Review", "sla": "100%", "privacy": "SEC" }
+    { "id": "CTR-001", "product": "Customer Master", "domain": "Spanner Retail", "schema_file": "db-schemas/spanner_schema.sql", "subscriber": "Marketing Dept", "status": "Active", "sla": "99.9%", "privacy": "HIPAA" },
+    { "id": "CTR-002", "product": "Retail Sales", "domain": "Spanner Retail", "schema_file": "db-schemas/spanner_schema.sql", "subscriber": "Reporting App", "status": "Active", "sla": "99.5%", "privacy": "GDPR" },
+    { "id": "CTR-003", "product": "Financial Ledgers", "domain": "Oracle ERP", "schema_file": "db-schemas/oracle_schema.sql", "subscriber": "Audit Team", "status": "Review", "sla": "100%", "privacy": "SEC" }
   ]
 }

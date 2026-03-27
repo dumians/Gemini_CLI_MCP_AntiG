@@ -18,6 +18,22 @@ dotenv.config({ path: '../.env' });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+function parseCSV(filePath) {
+    if (!fs.existsSync(filePath)) return [];
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content.split('\n').filter(Boolean);
+    if (!lines.length) return [];
+    const headers = lines[0].split(',');
+    return lines.slice(1).map(line => {
+        const values = line.split(',');
+        const obj = {};
+        headers.forEach((h, i) => {
+            if (h) obj[h.trim()] = values[i]?.trim();
+        });
+        return obj;
+    });
+}
+
 app.use(cors());
 app.use(express.json());
 
@@ -202,6 +218,65 @@ app.get('/api/admin/logs', authMiddleware, (req, res) => {
     res.json(logger.getLogs());
 });
 
+// --- Domain Factory Endpoints ---
+
+app.get('/api/domains', authMiddleware, (req, res) => {
+    try {
+        const dsConfig = storageProvider.get('data_sources');
+        const sources = dsConfig.sources ? Object.values(dsConfig.sources) : [];
+        const domainsSet = new Set();
+
+        sources.forEach(s => {
+            if (s.domain) domainsSet.add(s.domain);
+        });
+
+        // Also scan agents for domains
+        const agentsPath = path.join(__dirname, '../config/agents.json');
+        if (fs.existsSync(agentsPath)) {
+            const agents = JSON.parse(fs.readFileSync(agentsPath, 'utf8'));
+            agents.forEach(a => {
+                if (a.domain) domainsSet.add(a.domain);
+            });
+        }
+
+        res.json(Array.from(domainsSet));
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load domains: " + error.message });
+    }
+});
+
+app.post('/api/domains', authMiddleware, (req, res) => {
+    const { name, sourceId, schema_file } = req.body;
+
+    if (!name || !sourceId) {
+        return res.status(400).json({ error: "Missing required fields: name, sourceId" });
+    }
+
+    try {
+        let dsConfig = storageProvider.get('data_sources');
+        if (!dsConfig.sources) dsConfig.sources = {};
+
+        if (!dsConfig.sources[sourceId]) {
+            return res.status(404).json({ error: `Linked Data Source ${sourceId} not found.` });
+        }
+
+        // Orchestration: Update existing data source to the new domain
+        dsConfig.sources[sourceId].domain = name;
+        if (schema_file) {
+            dsConfig.sources[sourceId].schema_file = schema_file;
+        }
+
+        storageProvider.set('data_sources', dsConfig);
+        metadataCatalog.reload(); // Sync graph
+
+        logger.log('Server', `Domain Factory: Domain ${name} associated with source ${sourceId}`, 'INFO');
+        res.status(201).json({ message: `Domain ${name} associated with source ${sourceId} successfully.` });
+    } catch (error) {
+        logger.log('Server', `Domain Factory Failed: ${error.message}`, 'ERROR');
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- Configuration Endpoints ---
 
 app.get('/api/config/data-sources', authMiddleware, (req, res) => {
@@ -339,13 +414,8 @@ app.get('/api/products', authMiddleware, (req, res) => {
 });
 
 app.post('/api/products', authMiddleware, (req, res) => {
-    const { name, description, owner, tables, domain } = req.body;
+    const { name, description, owner, tables, domain, domainContracts, security_level } = req.body;
     if (!name || !owner) return res.status(400).json({ error: "Missing required fields: name, owner" });
-
-    const validDomains = ['Finance', 'Retail', 'Analytics', 'HR', 'CRM'];
-    if (domain && !validDomains.includes(domain)) {
-        return res.status(400).json({ error: `Invalid Data Domain: ${domain}. Allowed domains: ${validDomains.join(', ')}` });
-    }
 
     try {
         const productsPath = path.join(__dirname, '../config/data_products.json');
@@ -360,7 +430,10 @@ app.post('/api/products', authMiddleware, (req, res) => {
             description,
             owner,
             tables: tables || [],
-            domain: domain || 'General'
+            domain: domain || 'General',
+            domainContracts: domainContracts || [],
+            security_level: security_level || 'Public',
+            subscribers: []
         };
 
         productsData.products.push(newProduct);
@@ -385,6 +458,38 @@ app.post('/api/products', authMiddleware, (req, res) => {
         }
 
         res.status(201).json({ message: "Product published successfully", data: newProduct });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/products/:id/subscribe', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    const { user_role, user_id } = req.body; // Simulated RBAC credentials via payload
+
+    try {
+        const productsPath = path.join(__dirname, '../config/data_products.json');
+        if (!fs.existsSync(productsPath)) return res.status(404).json({ error: "No products found" });
+
+        const productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+        const product = productsData.products.find(p => p.id === id);
+
+        if (!product) return res.status(404).json({ error: "Product not found" });
+
+        // RBAC Check for Confidential Products
+        if (product.security_level === 'Confidential' && user_role !== 'Admin' && user_role !== 'Producer') {
+            return res.status(403).json({ error: "Forbidden: Only Admin or Producer can subscribe to Confidential products." });
+        }
+
+        if (!product.subscribers) product.subscribers = [];
+        if (product.subscribers.includes(user_id)) {
+            return res.status(400).json({ error: "User already subscribed" });
+        }
+
+        product.subscribers.push(user_id);
+        fs.writeFileSync(productsPath, JSON.stringify(productsData, null, 2));
+
+        res.json({ message: "Subscribed successfully", subscribers: product.subscribers });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -461,7 +566,9 @@ app.get('/api/settings', authMiddleware, (req, res) => {
         const agents = AgentRegistry.map(a => ({
             id: a.id,
             name: a.name,
-            status: 'idle'
+            status: 'idle',
+            domain: a.domain,
+            mcpServers: a.mcpServers
         }));
 
         res.json({ dataSources, agents });
@@ -491,55 +598,117 @@ app.post('/api/governance/policies', authMiddleware, (req, res) => {
     }
 });
 
-// Mock Spanner Inventory for UI
+// Real Spanner Inventory from Test Data
 app.get('/api/spanner/inventory', authMiddleware, (req, res) => {
-    res.json({
-        status: "success",
-        data: [
-            { transaction_id: "TX-99123", store_id: "NYC-01", quantity_sold: 12 },
-            { transaction_id: "TX-99124", store_id: "LON-02", quantity_sold: 5 },
-            { transaction_id: "TX-99125", store_id: "TKY-03", quantity_sold: 25 },
-            { transaction_id: "TX-99126", store_id: "BLN-04", quantity_sold: 8 },
-            { transaction_id: "TX-99127", store_id: "SGP-05", quantity_sold: 15 },
-        ]
-    });
+    try {
+        const csvPath = path.join(__dirname, '../test-data/spanner_transactions.csv');
+        const transactions = parseCSV(csvPath);
+        
+        // Sum quantities per store or item
+        let totalSold = 0;
+        transactions.forEach(t => totalSold += Number(t.quantity_sold || 0));
+
+        res.json({
+            status: "success",
+            metrics: {
+                totalSold,
+                avgQuantity: totalSold / (transactions.length || 1)
+            },
+            data: transactions.map(t => ({
+                transaction_id: t.transaction_id,
+                store_id: t.store_id,
+                quantity_sold: Number(t.quantity_sold),
+                timestamp: t.timestamp
+            }))
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Mock Alloy CRM Data for UI
+// Alloy CRM Data from Test Data
 app.get('/api/alloy/crm_data', authMiddleware, (req, res) => {
-    res.json({
-        status: "success",
-        metrics: {
-            totalLeads: 2580,
-            conversionRate: 21.4,
-            customerSentiment: 92,
-            avgResponseTime: "1.0h"
-        }
-    });
+    try {
+        const customersCsv = path.join(__dirname, '../test-data/alloydb_crm_customers.csv');
+        const customers = parseCSV(customersCsv);
+        
+        let totalLtv = 0;
+        customers.forEach(c => totalLtv += Number(c.lifetime_value || 0));
+
+        res.json({
+            status: "success",
+            metrics: {
+                totalLeads: customers.length,
+                totalLtv,
+                avgLtv: totalLtv / (customers.length || 1),
+                customerSentiment: 92, // Still static placeholder
+                avgResponseTime: "1.0h" // Still static placeholder
+            },
+            customers: customers
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Agentic Cross-Domain Inventory running through Orchestrator
+// BigQuery Analytics from Test Data
 app.get('/api/bigquery/analytics', authMiddleware, (req, res) => {
-    res.json({
-        status: 'success',
-        data: {
+    try {
+        const segmentsCsv = path.join(__dirname, '../test-data/bigquery_segments.csv');
+        const segments = parseCSV(segmentsCsv);
+        
+        let totalLtv = 0;
+        let vipCount = 0;
+        segments.forEach(s => {
+            totalLtv += Number(s.lifetime_value || 0);
+            if (s.segment_name === 'VIP') vipCount++;
+        });
+
+        res.json({
+            status: 'success',
+            data: {
+                metrics: {
+                    totalConversions: segments.length,
+                    avgLtv: totalLtv / (segments.length || 1),
+                    vipRate: vipCount / (segments.length || 1)
+                },
+                campaigns: [
+                    { id: 'CAMP_2026_GENERIC', conversions: segments.length * 10, roi: 24 }
+                ],
+                segments: segments.map(s => ({
+                    name: s.segment_name,
+                    value: Number(s.lifetime_value) > 100000 ? 'High' : 'Medium',
+                    growth: Math.floor(Math.random() * 20) + 5
+                }))
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Oracle Analytics from Test Data
+app.get('/api/oracle/analytics', authMiddleware, (req, res) => {
+    try {
+        const ordersCsv = path.join(__dirname, '../test-data/oracle_orders.csv');
+        const orders = parseCSV(ordersCsv);
+        
+        let totalAmount = 0;
+        orders.forEach(o => totalAmount += Number(o.total_amount || 0));
+
+        res.json({
+            status: "success",
             metrics: {
-                totalConversions: 12540,
-                avgRoi: 24.5
+                totalOrders: orders.length,
+                totalAmount,
+                avgOrderValue: totalAmount / (orders.length || 1)
             },
-            campaigns: [
-                { id: 'CAMP_2026_A', conversions: 4500, roi: 22 },
-                { id: 'CAMP_2026_B', conversions: 3800, roi: 28 },
-                { id: 'CAMP_2026_C', conversions: 2100, roi: 18 },
-                { id: 'CAMP_2026_D', conversions: 2140, roi: 31 }
-            ],
-            segments: [
-                { name: 'Millennials (Tech-Savvy)', value: 'High', growth: 18 },
-                { name: 'Gen-Z (Early Adopters)', value: 'Critical', growth: 35 },
-                { name: 'Baby Boomers (Loyalists)', value: 'Medium', growth: 5 }
-            ]
-        }
-    });
+            orders: orders
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.get('/api/mesh/cross_inventory', authMiddleware, async (req, res) => {

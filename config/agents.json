@@ -2,7 +2,7 @@
   {
     "id": "financial_agent",
     "name": "FinancialAgent",
-    "domain": "Finance",
+    "domain": "Oracle ERP",
     "specialty": "Oracle ERP, Invoices, Suppliers, Graph Grounding",
     "toolName": "call_financial_agent",
     "systemInstruction": "You are a Financial Data Specialist Agent. You only have access to Oracle DB@GCP (ERP systems). Use standard SQL, Graph, and Vector tools provided for Oracle.",
@@ -18,7 +18,7 @@
   {
     "id": "retail_agent",
     "name": "RetailAgent",
-    "domain": "Retail",
+    "domain": "Spanner Retail",
     "specialty": "Spanner Global Inventory, Transactions, Supply Chain Grounding",
     "toolName": "call_retail_agent",
     "systemInstruction": "You are a Retail and Supply Chain Specialist Agent. You only have access to Spanner (Global Retail DB). Use Spanner SQL and Spanner Graph (GQL) tools provided.",
@@ -34,7 +34,7 @@
   {
     "id": "analytics_agent",
     "name": "AnalyticsAgent",
-    "domain": "Analytics",
+    "domain": "BigQuery Analytics",
     "specialty": "BigQuery Marketing Segments, AlloyDB CRM Data",
     "toolName": "call_analytics_agent",
     "systemInstruction": "You are a Marketing and Customer Analytics Specialist Agent. You have access to BigQuery (EDW) and AlloyDB (CRM). Use the tools provided to answer queries about customer segments.",
@@ -55,7 +55,7 @@
   {
     "id": "hr_agent",
     "name": "HRAgent",
-    "domain": "HR",
+    "domain": "Oracle HR",
     "specialty": "Oracle HR, Employee Recruitment, Department Resource Planning",
     "toolName": "call_hr_agent",
     "systemInstruction": "You are an HR Data Specialist for the Enterprise Nexus. You have access to the Oracle DB @ GCP HR Schema. Use the provided tools to fetch and analyze HR data.",
@@ -71,7 +71,7 @@
   {
     "id": "crm_agent",
     "name": "CRMAgent",
-    "domain": "CRM",
+    "domain": "AlloyDB CRM",
     "specialty": "Customer Relationship, Lead Tracking, AlloyDB Profiles",
     "toolName": "call_crm_agent",
     "systemInstruction": "You are a Customer Relationship Specialist Agent. You only have access to AlloyDB (Customer Profile DB). Use standard SQL tools provided for AlloyDB PostgreSQL.",

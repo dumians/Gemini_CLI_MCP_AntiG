@@ -1,16 +1,39 @@
 import React from 'react';
 import { Download } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
+import { api } from '../utils/api';
 
 export const OracleDetailView = () => {
-  const financialData = [
-    { month: 'Jan', revenue: 450000, expenses: 320000, compliance: 98 },
-    { month: 'Feb', revenue: 520000, expenses: 340000, compliance: 99 },
-    { month: 'Mar', revenue: 480000, expenses: 310000, compliance: 97 },
-    { month: 'Apr', revenue: 610000, expenses: 380000, compliance: 99 },
-    { month: 'May', revenue: 590000, expenses: 360000, compliance: 98 },
-    { month: 'Jun', revenue: 650000, expenses: 400000, compliance: 100 },
-  ];
+  const [financialData, setFinancialData] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const data = await api.get('/api/oracle/analytics');
+        if (data.orders) {
+          // Aggregate total amount by status for a simple bar chart
+          const statusMap: { [key: string]: number } = {};
+          data.orders.forEach((o: any) => {
+            statusMap[o.status] = (statusMap[o.status] || 0) + Number(o.total_amount || 0);
+          });
+          
+          const chartData = Object.entries(statusMap).map(([status, amount]) => ({
+            month: status, // Using status as the category for the bar
+            revenue: amount,
+            expenses: amount * 0.7, // Simulated expenses
+            compliance: 98
+          }));
+          setFinancialData(chartData);
+        }
+      } catch (err) {
+        console.error('Failed to load oracle metrics:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+  }, []);
 
   const agentPerformance = [
     { name: 'Agent Alpha', queries: 1240, success: 99.2, latency: 12 },
