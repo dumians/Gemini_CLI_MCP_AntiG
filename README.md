@@ -1,5 +1,8 @@
+
 Enterprise Data Agents Demo (ADK) - Walkthrough
 This document outlines the finished architecture and usage guidelines for the Multi-Domain Data Agent demo, utilizing Google Cloud databases, MCP, and the Gemini CLI.
+Technology Used - From Desigh to Code - Sticht to AI Studio , from Code to Enterprise - Antigravity , MCP toolbox for databases , Gemini CLI .
+                  ADK, A2UI, 
 
 Architecture Highlights
 The project successfully implements a simulated environment to showcase cross-domain data orchestration:
@@ -26,6 +29,7 @@ oracle_schema.sql: Contains ERP tracking and Oracle Graph nodes/edges mapped to 
 spanner_schema.sql: Shows Spanner Graph definition mapping Inventory to Transactions, with native ARRAY<FLOAT32> Vector indexing for similarity search.
 alloydb_schema.sql: Instantiates pgvector extensions for support ticket similarity search.
 bigquery_schema.sql: EDW marketing schemas.
+
 The scripts/deploy_to_gcp.sh script demonstrates how to quickly stand up the BigQuery datasets and includes gcloud commands for Spanner setup.
 Phase 2: Professional UI, Test Data, and A2A
 Phase 2 has been completed, introducing a professional web client, interconnected test data, and an Agent-to-Agent (A2A) orchestration layer.
