@@ -4,6 +4,7 @@ import * as readline from "readline/promises";
 import { handleFinancialRequest } from "./financial_agent.js";
 import { handleRetailRequest } from "./retail_agent.js";
 import { handleAnalyticsRequest } from "./analytics_agent.js";
+import { askOrchestrator } from "./orchestrator.js";
 
 dotenv.config();
 
@@ -74,35 +75,15 @@ async function startOrchestrator() {
         console.log("\nOrchestrator is delegating...");
 
         try {
-            let result = await chat.sendMessage(query);
-            let response = result.response;
-
-            while (response.functionCalls() && response.functionCalls().length > 0) {
-                const toolCallParts = [];
-                for (const call of response.functionCalls()) {
-                    let agentResult = "";
-                    if (call.name === "call_financial_agent") {
-                        agentResult = await handleFinancialRequest(call.args.query);
-                    } else if (call.name === "call_retail_agent") {
-                        agentResult = await handleRetailRequest(call.args.query);
-                    } else if (call.name === "call_analytics_agent") {
-                        agentResult = await handleAnalyticsRequest(call.args.query);
-                    }
-
-                    toolCallParts.push({
-                        functionResponse: {
-                            name: call.name,
-                            response: { result: agentResult }
-                        }
-                    });
-                }
-                result = await chat.sendMessage(toolCallParts);
-                response = result.response;
-            }
+            const { text, steps, reflection } = await askOrchestrator(query);
 
             console.log("\n--- Master Orchestrator Final Response ---");
-            console.log(response.text());
+            console.log(text);
             console.log("------------------------------------------\n");
+            
+            if (reflection) {
+                console.log("[Reflection Log]:", reflection.substring(0, 100) + "...");
+            }
 
         } catch (err) {
             console.error("Orchestration Error:", err.message);

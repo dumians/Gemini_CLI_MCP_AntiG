@@ -194,6 +194,18 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
             });
         });
 
+        // 4. Link Cross-Domain Correlations
+        if (catalog.crossDomainLinks) {
+            catalog.crossDomainLinks.forEach(link => {
+                graphData.links.push({
+                    source: link.sourceA,
+                    target: link.sourceB,
+                    label: `correlates (${link.key})`,
+                    color: '#f59e0b' // Amber/Orange or another distinct color
+                });
+            });
+        }
+
         res.json(graphData);
     } catch (error) {
         res.status(500).json({ error: error.message });

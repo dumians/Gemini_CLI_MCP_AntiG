@@ -1,0 +1,4 @@
+trn_ref_no,ac_no,drcr_ind,lcy_amount,trn_dt
+TRN-001,ACC-BANK-001,D,100.00,2026-03-31
+TRN-002,ACC-BANK-002,C,500.00,2026-03-31
+TRN-003,ACC-BANK-001,D,50.00,2026-04-01

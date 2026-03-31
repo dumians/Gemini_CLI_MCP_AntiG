@@ -1,0 +1,4 @@
+row_id,name,loc,cust_stat_cd
+1-A1,Acme Corp,New York,Active
+1-A2,Beta Inc,London,Pending
+1-A3,Gamma Ltd,Tokyo,Inactive

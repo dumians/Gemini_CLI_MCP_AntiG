@@ -17,6 +17,11 @@ class MemoryBankService {
      * @returns {string|null}
      */
     getAccessToken() {
+        // Check if token is provided via environment variable first
+        if (process.env.GCP_ACCESS_TOKEN) {
+            return process.env.GCP_ACCESS_TOKEN.trim();
+        }
+
         try {
             // Using execSync as a quick way to fetch token locally
             const token = execSync('gcloud auth application-default print-access-token', { encoding: 'utf8' });

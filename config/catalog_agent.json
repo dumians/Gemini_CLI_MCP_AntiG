@@ -10,7 +10,12 @@
         "db-schemas/spanner_schema.sql",
         "db-schemas/bigquery_schema.sql",
         "db-schemas/alloydb_schema.sql",
-        "db-schemas/hr_schema.sql"
+        "db-schemas/hr_schema.sql",
+        "db-schemas/ebs_schema.sql",
+        "db-schemas/jde_schema.sql",
+        "db-schemas/siebel_schema.sql",
+        "db-schemas/brm_schema.sql",
+        "db-schemas/flexcube_schema.sql"
     ],
     "cross_domain_keys": {
         "customer_id": ["alloydb_schema.customers", "bigquery_schema.customer_segments", "bigquery_schema.web_events"],

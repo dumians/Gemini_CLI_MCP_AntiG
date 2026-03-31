@@ -83,5 +83,55 @@
       }
     ],
     "groundingDomain": "Analytics"
+  },
+  {
+    "id": "ebs_agent",
+    "name": "EBSAgent",
+    "domain": "EBS",
+    "specialty": "Oracle Ebusiness Suite (Payables, General Ledger)",
+    "toolName": "call_ebs_agent",
+    "systemInstruction": "You are an Ebusiness Suite (EBS) Data Specialist Agent. You have access to the EBS schema.",
+    "mcpServers": [],
+    "groundingDomain": "EBS"
+  },
+  {
+    "id": "jde_agent",
+    "name": "JDEAgent",
+    "domain": "JDE",
+    "specialty": "JD Edwards (Address Book, Account Ledger)",
+    "toolName": "call_jde_agent",
+    "systemInstruction": "You are a JD Edwards (JDE) Data Specialist Agent. You have access to the JDE schema.",
+    "mcpServers": [],
+    "groundingDomain": "JDE"
+  },
+  {
+    "id": "siebel_agent",
+    "name": "SiebelAgent",
+    "domain": "Siebel",
+    "specialty": "Siebel CRM (Accounts, Contacts, Opportunities)",
+    "toolName": "call_siebel_agent",
+    "systemInstruction": "You are a Siebel CRM Data Specialist Agent. You have access to the Siebel schema.",
+    "mcpServers": [],
+    "groundingDomain": "Siebel"
+  },
+  {
+    "id": "brm_agent",
+    "name": "BRMAgent",
+    "domain": "BRM",
+    "specialty": "Oracle BRM (Billing and Revenue Management)",
+    "toolName": "call_brm_agent",
+    "systemInstruction": "You are an Oracle BRM Data Specialist Agent. You have access to the BRM schema.",
+    "mcpServers": [],
+    "groundingDomain": "BRM"
+  },
+  {
+    "id": "flexcube_agent",
+    "name": "FlexCubeAgent",
+    "domain": "FlexCube",
+    "specialty": "Oracle FlexCube (Banking)",
+    "toolName": "call_flexcube_agent",
+    "systemInstruction": "You are an Oracle FlexCube Data Specialist Agent. You have access to the FlexCube schema.",
+    "mcpServers": [],
+    "groundingDomain": "FlexCube"
   }
 ]

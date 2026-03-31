@@ -1,0 +1,4 @@
+invoice_id,invoice_num,vendor_id,invoice_amount,invoice_date
+1,INV-001,1,500.00,2026-03-31
+2,INV-002,2,1500.00,2026-03-31
+3,INV-003,1,250.00,2026-03-31

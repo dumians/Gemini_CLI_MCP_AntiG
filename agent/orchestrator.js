@@ -5,6 +5,7 @@ import { handleRetailRequest } from "./retail_agent.js";
 import { handleAnalyticsRequest } from "./analytics_agent.js";
 import { handleHRTask } from "./hr_agent.js";
 import { catalogAgent } from "./catalog_agent.js";
+import { generatePlan } from "./planner_agent.js";
 import { validateDataProduct, getDiscoveryTools, AgentRegistry } from "./utils/catalog.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
@@ -74,6 +75,50 @@ function filterMeshContext(context, targetAgentName) {
 }
 
 /**
+ * Maps business terms in the query to technical schema columns.
+ */
+async function mapBusinessTerms(query, traceId) {
+    logger.log("Orchestrator", `Mapping business terms for: ${query}`, "INFO", null, traceId);
+    
+    const entitiesSummary = [];
+    if (metadataCatalog && metadataCatalog.entities) {
+        for (const [id, entity] of Object.entries(metadataCatalog.entities)) {
+            if (entity.type !== 'TABLE') continue;
+            const attrs = entity.attributes.map(a => `${a.name} (${a.dataType})`).join(', ');
+            entitiesSummary.push(`- Table: ${id}, Columns: [${attrs}]`);
+        }
+    }
+
+    const systemInstruction = `You are a Data Architect analyzing a user query for a data mesh.
+    Your job is to identify business terms in the query and map them to technical schema columns found in the catalog.
+    
+    Output a JSON object mapping the found business term to the technical column name (e.g., 'revenue' -> 'invoice_amount').
+    If no mapping is needed or found, return an empty object.
+    
+    Available Schemas:
+    ${entitiesSummary.join('\n')}
+    
+    Output ONLY the JSON object.`;
+
+    const model = new GoogleGenerativeAI(process.env.GEMINI_API_KEY).getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction,
+        generationConfig: { responseMimeType: "application/json" }
+    });
+
+    try {
+        const result = await model.generateContent(query);
+        const responseText = result.response.text();
+        const mapping = JSON.parse(responseText);
+        logger.log("Orchestrator", `Mapped terms: ${responseText}`, "DEBUG", null, traceId);
+        return mapping;
+    } catch (err) {
+        logger.log("Orchestrator", `Failed to map business terms: ${err.message}`, "WARNING", null, traceId);
+        return {};
+    }
+}
+
+/**
  * Executes a query through the A2A Orchestrator.
  * @param {string} query The user query.
  * @param {string} userId The user ID for scoping memory.
@@ -104,7 +149,15 @@ export async function askOrchestrator(query, userId = 'admin') {
         logger.log("Orchestrator", `Memory Bank step failed: ${err.message}`, "WARNING", null, traceId);
     }
 
-    const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext;
+    const mapping = await mapBusinessTerms(query, traceId);
+    let enrichedQuery = query;
+    if (Object.keys(mapping).length > 0) {
+        enrichedQuery += `\n(Mapped Terms: ${JSON.stringify(mapping)})`;
+    }
+
+    const plan = await generatePlan(enrichedQuery, traceId);
+    const planContext = `\n\n[STRATEGIC PLAN]\n` + JSON.stringify(plan, null, 2);
+    const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext + planContext;
 
     const model = ai.getGenerativeModel({
         model: config.model || "gemini-2.5-flash",
@@ -123,85 +176,99 @@ export async function askOrchestrator(query, userId = 'admin') {
         // Loop while there are function calls
         while (response.functionCalls() && response.functionCalls().length > 0) {
             const toolCallParts = [];
-            for (const call of response.functionCalls()) {
-                const startTime = Date.now();
-                let agentResult = "";
-                let agentName = "";
-                let subQuery = call.args.query;
+            const promises = [];
 
-                // Map tool call to agent
+            for (const call of response.functionCalls()) {
                 const agentDef = AgentRegistry.find(a => a.toolName === call.name);
                 if (!agentDef) {
                     logger.log("Orchestrator", `Unknown tool call: ${call.name}`, "ERROR", null, traceId);
                     continue;
                 }
 
-                agentName = agentDef.name;
+                const agentName = agentDef.name;
+                const subQuery = call.args.query;
+                const filteredContext = filterMeshContext(meshContext, agentName);
+
                 logger.logDispatch("Orchestrator", agentName, subQuery, traceId);
 
-                try {
+                const promise = (async () => {
+                    const startTime = Date.now();
                     let rawResult;
-                    const filteredContext = filterMeshContext(meshContext, agentName);
+                    try {
+                        if (call.name === "call_catalog_agent") {
+                            rawResult = await catalogAgent.process(subQuery, filteredContext, traceId);
+                        } else {
+                            // Dynamic ADK dispatching trigger
+                            rawResult = await meshAgentFactory.runAgent(agentDef, subQuery, filteredContext, traceId);
+                            
+                            try {
+                                const { DataplexAgent } = await import('./dataplex_agent.js');
+                                const dataplex = new DataplexAgent();
+                                await dataplex.trackLineage(agentName, 'MeshLineage', 'processed_query', traceId);
+                            } catch (err) {
+                                logger.log("Orchestrator", `Failed to log lineage: ${err.message}`, "WARNING", null, traceId);
+                            }
+                        }
 
-                    if (call.name === "call_catalog_agent") {
-                        rawResult = await catalogAgent.process(subQuery, filteredContext, traceId);
-                    } else {
-                        // Dynamic ADK dispatching trigger
-                        rawResult = await meshAgentFactory.runAgent(agentDef, subQuery, filteredContext, traceId);
+                        const agentResult = validateDataProduct(rawResult, agentName);
                         
-                        try {
-                            const { DataplexAgent } = await import('./dataplex_agent.js');
-                            const dataplex = new DataplexAgent();
-                            await dataplex.trackLineage(agentName, 'MeshLineage', 'processed_query', traceId);
-                        } catch (err) {
-                            logger.log("Orchestrator", `Failed to log lineage: ${err.message}`, "WARNING", null, traceId);
-                        }
+                        // Log success with latency
+                        logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime, traceId);
+
+                        return { agentName, agentResult, subQuery, callName: call.name, domain: agentDef.domain };
+                    } catch (err) {
+                        logger.log(agentName, `Execution failed: ${err.message}`, "ERROR");
+                        return { agentName, error: err.message, subQuery, callName: call.name };
                     }
-
-                    agentResult = validateDataProduct(rawResult, agentName);
-                    
-                    // Log success with latency
-                    logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime, traceId);
-
-                    // Update Mesh Context with this agent's insights for subsequent calls
-                    meshContext[agentName] = {
-                        insights: agentResult.insights,
-                        summary: typeof agentResult.data === 'string' ? agentResult.data.substring(0, 200) : "Complex Data Product"
-                    };
-
-                    // 3. Link Data Product to the Intent in the KG
-                    const ctxNodeId = kgService.createContextNode('DATA_PRODUCT', {
-                        agent: agentName,
-                        domain: agentDef.domain,
-                        confidence: agentResult.metadata.confidence,
-                        traceId
-                    });
-                    kgService.addEdge(intentId, ctxNodeId, 'SATISFIED_BY', {
-                        subQuery: subQuery
-                    });
-
-                    steps.push({
-                        agent: agentName,
-                        query: subQuery,
-                        result: agentResult
-                    });
-
-                    toolCallParts.push({
-                        functionResponse: {
-                            name: call.name,
-                            response: { result: agentResult }
-                        }
-                    });
-                } catch (err) {
-                    logger.log(agentName, `Execution failed: ${err.message}`, "ERROR");
-                    toolCallParts.push({
-                        functionResponse: {
-                            name: call.name,
-                            response: { error: err.message }
-                        }
-                    });
-                }
+                })();
+                promises.push(promise);
             }
+
+            const results = await Promise.all(promises);
+
+            for (const res of results) {
+                const { agentName, agentResult, subQuery, callName, domain, error } = res;
+                if (error) {
+                    toolCallParts.push({
+                        functionResponse: {
+                            name: callName,
+                            response: { error: error }
+                        }
+                    });
+                    continue;
+                }
+
+                // Update Mesh Context with this agent's insights
+                meshContext[agentName] = {
+                    insights: agentResult.insights,
+                    summary: typeof agentResult.data === 'string' ? agentResult.data.substring(0, 200) : "Complex Data Product"
+                };
+
+                // Link Data Product to the Intent in the KG
+                const ctxNodeId = kgService.createContextNode('DATA_PRODUCT', {
+                    agent: agentName,
+                    domain: domain,
+                    confidence: agentResult.metadata.confidence,
+                    traceId
+                });
+                kgService.addEdge(intentId, ctxNodeId, 'SATISFIED_BY', {
+                    subQuery: subQuery
+                });
+
+                steps.push({
+                    agent: agentName,
+                    query: subQuery,
+                    result: agentResult
+                });
+
+                toolCallParts.push({
+                    functionResponse: {
+                        name: callName,
+                        response: { result: agentResult }
+                    }
+                });
+            }
+
             result = await chat.sendMessage(toolCallParts);
             response = result.response;
         }
@@ -220,9 +287,38 @@ export async function askOrchestrator(query, userId = 'admin') {
             }
         }
 
+        // Phase 3: Reflection / Self-Correction
+        logger.log("Orchestrator", `Reflecting on synthesis...`, "INFO");
+        const reflectionPrompt = `Act as a critic. Reflect on the following answer generated for the original query: "${query}".
+        
+        Answer:
+        ${response.text()}
+        
+        Does this answer fully and accurately address the query based on the steps taken? 
+        If yes, respond with 'APPROVED'.
+        If no, provide a 'REVISED_ANSWER:' followed by the corrected answer.
+        Output ONLY 'APPROVED' or 'REVISED_ANSWER: <content>'.`;
+
+        const reflectionModel = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const reflectionResult = await reflectionModel.generateContent(reflectionPrompt);
+        const reflectionText = reflectionResult.response.text();
+        
+        let finalAnswer = response.text();
+        if (reflectionText.includes('REVISED_ANSWER:')) {
+            logger.log("Orchestrator", `Reflection triggered correction.`, "WARNING");
+            finalAnswer = reflectionText.split('REVISED_ANSWER:')[1].trim();
+        } else {
+            logger.log("Orchestrator", `Reflection approved answer.`, "INFO");
+        }
+
+        // Phase 4: Human-in-the-Loop (Simulation for Demo)
+        logger.log("Orchestrator", `[HUMAN-IN-THE-LOOP] Simulating human approval for synthesis result...`, "INFO");
+        logger.log("Orchestrator", `[HUMAN-IN-THE-LOOP] Action APPROVED. Proceeding to finalize.`, "INFO");
+
         return {
-            text: response.text(),
-            steps: steps
+            text: finalAnswer,
+            steps: steps,
+            reflection: reflectionText
         };
     } catch (err) {
         logger.log("Orchestrator", `Orchestration Error: ${err.message}`, "ERROR");

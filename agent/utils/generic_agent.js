@@ -82,7 +82,42 @@ class GenericAgent {
         }
 
         if (allTools.length === 0) {
-            throw new Error(`No tools available for ${this.name}. Check MCP server connectivity.`);
+            logger.log(this.name, `No remote tools available. Checking for local fallback tools.`, "WARNING");
+            
+            const fallbackDomains = ["Oracle EBS", "JD Edwards", "Siebel CRM", "Oracle BRM", "Oracle FlexCube"];
+            if (fallbackDomains.includes(this.domain)) {
+                logger.log(this.name, `Adding local read_csv tool fallback for domain ${this.domain}`, "INFO");
+                allTools.push({
+                    name: "read_csv",
+                    description: `Reads the content of the ${this.id} CSV test data file.`,
+                    inputSchema: { type: "object", properties: {} },
+                    _client: {
+                        callTool: async (name, args) => {
+                            const fs = await import('fs');
+                            const path = await import('path');
+                            const csvMapping = {
+                                'ebs_agent': 'ebs_orders.csv',
+                                'jde_agent': 'jde_accounts.csv',
+                                'siebel_agent': 'siebel_leads.csv',
+                                'brm_agent': 'brm_invoices.csv',
+                                'flexcube_agent': 'flexcube_transactions.csv'
+                            };
+                            
+                            const fileName = csvMapping[this.id] || `${this.id}.csv`;
+                            const csvPath = path.join(process.cwd(), 'test-data', fileName);
+                            
+                            if (fs.existsSync(csvPath)) {
+                                const content = fs.readFileSync(csvPath, 'utf8');
+                                return { content: [{ text: content }] };
+                            } else {
+                                return { content: [{ text: `File not found: ${csvPath}` }] };
+                            }
+                        }
+                    }
+                });
+            } else {
+                throw new Error(`No tools available for ${this.name}. Check MCP server connectivity.`);
+            }
         }
 
         const geminiTools = [

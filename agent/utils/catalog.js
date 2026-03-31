@@ -6,8 +6,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ROOT_DIR = path.join(__dirname, '../../');
 
 // --------------------------------------------------------------------------
@@ -185,8 +187,67 @@ export class MetadataCatalog {
             }
         }
 
+        // Run correlation inference in background
+        this.inferCorrelations().catch(e => console.error("[MetadataCatalog] Background inference failed:", e));
+
         this._initialized = true;
         console.log(`[MetadataCatalog] Initialized: ${Object.keys(this.entities).length} entities, ${this.relationships.length} relationships, ${this.crossDomainLinks.length} cross-domain links`);
+    }
+
+    async inferCorrelations() {
+        console.log(`[MetadataCatalog] Inferring correlations using LLM...`);
+        
+        const entitiesSummary = [];
+        for (const [id, entity] of Object.entries(this.entities)) {
+            if (entity.type !== 'TABLE') continue;
+            const attrs = entity.attributes.map(a => `${a.name} (${a.dataType})`).join(', ');
+            entitiesSummary.push(`- Table: ${id}, Columns: [${attrs}]`);
+        }
+        
+        const systemInstruction = `You are a Data Architect analyzing a data mesh schema.
+        Your job is to identify potential cross-domain correlations (e.g., entity resolution links, shared identifiers) between tables from different sources.
+        
+        Output a JSON array of objects representing the suggested links.
+        Each object must have:
+        - \`key\`: The name of the correlating concept (e.g., 'customer_id', 'vendor_id').
+        - \`sourceA\`: The entity ID from source A (e.g., 'oracle_schema.suppliers').
+        - \`sourceB\`: The entity ID from source B (e.g., 'ebs_schema.ap_invoices_all').
+        - \`type\`: 'CROSS_DOMAIN'.
+        - \`confidence\`: A float between 0.0 and 1.0 representing your confidence.
+        - \`reason\`: A short explanation of why they correlate.
+        
+        Rules:
+        1. Only suggest links between DIFFERENT sources.
+        2. Focus on matching identifiers or concepts that likely represent the same real-world entity.
+        3. Output ONLY the JSON array.`;
+
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            systemInstruction,
+            generationConfig: { responseMimeType: "application/json" }
+        });
+
+        try {
+            const prompt = `Here are the entities in the mesh:\n${entitiesSummary.join('\n')}\n\nIdentify potential correlations.`;
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
+            
+            const suggestions = JSON.parse(responseText);
+            console.log(`[MetadataCatalog] LLM suggested ${suggestions.length} correlations.`);
+            
+            for (const sug of suggestions) {
+                this.crossDomainLinks.push({
+                    key: sug.key,
+                    sourceA: sug.sourceA,
+                    sourceB: sug.sourceB,
+                    type: sug.type,
+                    confidence: sug.confidence,
+                    reason: sug.reason
+                });
+            }
+        } catch (err) {
+            console.error("[MetadataCatalog] Failed to infer correlations:", err);
+        }
     }
 
     reload() {
