@@ -59,35 +59,38 @@ export function GraphView({ data: initialData }: { data?: any }) {
                 width={dimensions.width}
                 height={400}
                 nodeLabel="label"
-                nodeRelSize={1}
-                linkColor={() => 'rgba(255,255,255,0.08)'}
-                linkDirectionalParticles={1}
-                linkDirectionalParticleSpeed={0.005}
+                nodeRelSize={2}
+                linkColor={() => 'rgba(255,255,255,0.12)'}
+                linkDirectionalParticles={2}
+                linkDirectionalParticleSpeed={0.004}
+                d3AlphaDecay={0.01}
+                d3VelocityDecay={0.2}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                     const label = node.label;
-                    const fontSize = 11 / globalScale;
-                    ctx.font = `${fontSize}px Inter`;
+                    const fontSize = 12 / globalScale;
+                    ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
                     const textWidth = ctx.measureText(label).width;
                     const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4) as [number, number];
 
                     // Node Circle
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, node.val / globalScale + 2, 0, 2 * Math.PI, false);
+                    ctx.arc(node.x, node.y, 8 / globalScale, 0, 2 * Math.PI, false);
                     ctx.fillStyle = node.color || '#4f46e5';
                     ctx.fill();
-                    ctx.shadowColor = node.color || '#4f46e5';
-                    ctx.shadowBlur = 10 / globalScale;
+                    
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1 / globalScale;
+                    ctx.stroke();
 
                     // Label Background
-                    ctx.fillStyle = 'rgba(10, 10, 11, 0.8)';
-                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (node.val / globalScale + 4), ...bckgDimensions);
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), ...bckgDimensions);
 
                     // Label Text
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#ffffff';
-                    ctx.shadowBlur = 0;
-                    ctx.fillText(label, node.x, node.y + (node.val / globalScale + 4) + bckgDimensions[1] / 2);
+                    ctx.fillText(label, node.x, node.y + (12 / globalScale) + bckgDimensions[1] / 2);
                 }}
             />
         </div>

@@ -207,9 +207,22 @@ export { server };
 
 async function run() {
     // Support both STDIO (local) and SSE (hosted)
-    const mode = process.argv[2] === "--sse" ? "sse" : "stdio";
+    let mode = "stdio";
+    let port = process.env.PORT || 8084;
 
-    if (import.meta.url === fileURLToPath(`file:///${process.argv[1].replace(/\\/g, '/')}`)) {
+    for (let i = 2; i < process.argv.length; i++) {
+        if (process.argv[i] === "--transport" && process.argv[i+1] === "sse") {
+            mode = "sse";
+            i++;
+        } else if (process.argv[i] === "--port" && process.argv[i+1]) {
+            port = parseInt(process.argv[i+1], 10);
+            i++;
+        } else if (process.argv[i] === "--sse") {
+            mode = "sse";
+        }
+    }
+
+    if (true) { // Force run when executed
         const requiredVars = ['GCP_PROJECT_ID', 'ALLOYDB_REGION', 'ALLOYDB_CLUSTER', 'ALLOYDB_INSTANCE', 'ALLOYDB_USER', 'ALLOYDB_PASSWORD', 'ALLOYDB_DB'];
         const missingVars = requiredVars.filter(v => !process.env[v]);
         
@@ -236,7 +249,6 @@ async function run() {
                 }
             });
         
-            const port = process.env.PORT || 8084;
             app.listen(port, () => {
                 console.error(`AlloyDB MCP Server running on port ${port} (SSE)`);
             });

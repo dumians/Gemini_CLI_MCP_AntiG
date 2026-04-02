@@ -52,9 +52,21 @@ export const MarketplaceView = () => {
     }
   };
 
+  const [domains, setDomains] = React.useState<string[]>([]);
+
+  const fetchDomains = async () => {
+    try {
+      const data = await api.get('/api/domains');
+      setDomains(data || []);
+    } catch (err) {
+      console.error('Failed to load domains:', err);
+    }
+  };
+
   React.useEffect(() => {
     fetchContracts();
     fetchProducts();
+    fetchDomains();
   }, []);
 
   const handleEditProduct = (prod: any) => {
@@ -616,34 +628,39 @@ export const MarketplaceView = () => {
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-white">Registered Data Domains</h4>
                 <div className="space-y-4">
-                  {[
-                    { name: 'Oracle ERP', type: 'Oracle', host: '${ORACLE_CONNECT_STRING}', user: '${ORACLE_USER}' },
-                    { name: 'Spanner Retail', type: 'Spanner', instance: '${SPANNER_INSTANCE_ID}', database: '${SPANNER_DATABASE_ID}' },
-                    { name: 'BigQuery Analytics', type: 'BigQuery', dataset: '${BIGQUERY_DATASET_ID}', location: '${BIGQUERY_LOCATION}' },
-                    { name: 'AlloyDB CRM', type: 'Postgres', cluster: '${ALLOYDB_CLUSTER}', database: '${ALLOYDB_DB}' }
-                  ].map((dom) => (
-                    <div key={dom.name} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 space-y-3 hover:border-primary/30 transition-colors">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-bold text-white">{dom.name}</p>
-                          <p className="text-xs text-slate-500">{dom.type} Persistence Layer</p>
+                  {domains.map((domName) => {
+                    const knownDomains: Record<string, any> = {
+                      'Oracle ERP': { type: 'Oracle', host: '${ORACLE_CONNECT_STRING}', user: '${ORACLE_USER}' },
+                      'Spanner Retail': { type: 'Spanner', instance: '${SPANNER_INSTANCE_ID}', database: '${SPANNER_DATABASE_ID}' },
+                      'BigQuery Analytics': { type: 'BigQuery', dataset: '${BIGQUERY_DATASET_ID}', location: '${BIGQUERY_LOCATION}' },
+                      'AlloyDB CRM': { type: 'Postgres', cluster: '${ALLOYDB_CLUSTER}', database: '${ALLOYDB_DB}' }
+                    };
+                    const dom = knownDomains[domName] || { type: 'Custom', details: 'Configured in backend' };
+                    return (
+                      <div key={domName} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 space-y-3 hover:border-primary/30 transition-colors">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-bold text-white">{domName}</p>
+                            <p className="text-xs text-slate-500">{dom.type} Persistence Layer</p>
+                          </div>
+                          <span className="text-xs text-green-500 font-bold uppercase">Online</span>
                         </div>
-                        <span className="text-xs text-green-500 font-bold uppercase">Online</span>
+                        <div className="text-xs text-slate-400 font-mono bg-slate-900/50 p-2 rounded-lg truncate">
+                          {dom.type === 'Oracle' ? `Connect: ${dom.host}` : 
+                           dom.type === 'Spanner' ? `Instance: ${dom.instance} | DB: ${dom.database}` :
+                           dom.type === 'BigQuery' ? `Dataset: ${dom.dataset} | Loc: ${dom.location}` :
+                           dom.type === 'Postgres' ? `Cluster: ${dom.cluster} | DB: ${dom.database}` :
+                           dom.details}
+                        </div>
+                        <button 
+                          onClick={() => alert(`Connection Test for ${domName} - Success!`)}
+                          className="w-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all"
+                        >
+                          <RefreshCw size={14} /> Test Connectivity
+                        </button>
                       </div>
-                      <div className="text-xs text-slate-400 font-mono bg-slate-900/50 p-2 rounded-lg truncate">
-                        {dom.type === 'Oracle' ? `Connect: ${dom.host}` : 
-                         dom.type === 'Spanner' ? `Instance: ${dom.instance} | DB: ${dom.database}` :
-                         dom.type === 'BigQuery' ? `Dataset: ${dom.dataset} | Loc: ${dom.location}` :
-                         `Cluster: ${dom.cluster} | DB: ${dom.database}`}
-                      </div>
-                      <button 
-                        onClick={() => alert(`Connection Test for ${dom.name} - Success!`)}
-                        className="w-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all"
-                      >
-                        <RefreshCw size={14} /> Test Connectivity
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

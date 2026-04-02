@@ -2,6 +2,19 @@
   "contracts": [
     { "id": "CTR-001", "product": "Customer Master", "domain": "Spanner Retail", "schema_file": "db-schemas/spanner_schema.sql", "subscriber": "Marketing Dept", "status": "Active", "sla": "99.9%", "privacy": "HIPAA" },
     { "id": "CTR-002", "product": "Retail Sales", "domain": "Spanner Retail", "schema_file": "db-schemas/spanner_schema.sql", "subscriber": "Reporting App", "status": "Active", "sla": "99.5%", "privacy": "GDPR" },
-    { "id": "CTR-003", "product": "Financial Ledgers", "domain": "Oracle ERP", "schema_file": "db-schemas/oracle_schema.sql", "subscriber": "Audit Team", "status": "Review", "sla": "100%", "privacy": "SEC" }
+    { "id": "CTR-003", "product": "Financial Ledgers", "domain": "Oracle ERP", "schema_file": "db-schemas/oracle_schema.sql", "subscriber": "Audit Team", "status": "Review", "sla": "100%", "privacy": "SEC" },
+    { 
+      "id": "CTR-004", 
+      "product": "Customer 360", 
+      "composite": true,
+      "components": [
+        { "domain": "Spanner Retail", "schema_file": "db-schemas/spanner_schema.sql", "attributes": ["customer_id", "email"] },
+        { "domain": "API Domain", "schema_file": "db-schemas/flexcube_schema.sql", "attributes": ["ac_no", "lcy_amount"] }
+      ],
+      "subscriber": "Analytics Portal", 
+      "status": "Draft", 
+      "sla": "99.0%", 
+      "privacy": "Custom" 
+    }
   ]
 }

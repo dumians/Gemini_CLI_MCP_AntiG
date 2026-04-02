@@ -1,11 +1,13 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { Spanner } from "@google-cloud/spanner";
 import dotenv from "dotenv";
+import express from 'express';
 
 dotenv.config();
 
@@ -154,14 +156,50 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 export { server };
 
+const SSE_TRANSPORT_PATH = "/sse";
+
 async function run() {
-    if (import.meta.url === fileURLToPath(`file:///${process.argv[1].replace(/\\/g, '/')}`)) {
+    let mode = "stdio";
+    let port = process.env.PORT || 8084;
+
+    for (let i = 2; i < process.argv.length; i++) {
+        if (process.argv[i] === "--transport" && process.argv[i+1] === "sse") {
+            mode = "sse";
+            i++;
+        } else if (process.argv[i] === "--port" && process.argv[i+1]) {
+            port = parseInt(process.argv[i+1], 10);
+            i++;
+        }
+    }
+
+    if (true) { // Force run when executed
         if (!projectId || !instanceId || !databaseId) {
             console.error("Spanner environment variables not fully set. Running in simulation mode if tools are called.");
         }
-        const transport = new StdioServerTransport();
-        await server.connect(transport);
-        console.error("Spanner MCP Server running in stdio mode");
+        
+        if (mode === "stdio") {
+            const transport = new StdioServerTransport();
+            await server.connect(transport);
+            console.error("Spanner MCP Server running in stdio mode");
+        } else {
+            const app = express();
+            let transport;
+
+            app.get(SSE_TRANSPORT_PATH, async (req, res) => {
+                transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
+                await server.connect(transport);
+            });
+
+            app.post("/messages", async (req, res) => {
+                if (transport) {
+                    await transport.handlePostMessage(req, res);
+                }
+            });
+        
+            app.listen(port, () => {
+                console.error(`Spanner MCP Server running on port ${port} (SSE)`);
+            });
+        }
     }
 }
 

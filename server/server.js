@@ -126,6 +126,7 @@ app.post('/api/query', authMiddleware, async (req, res) => {
         const result = await askOrchestrator(query, userId);
         currentStatus.state = "completed";
         currentStatus.steps = result.steps;
+        currentStatus.context = result.context;
 
         res.json(result);
     } catch (error) {
@@ -330,6 +331,62 @@ app.post('/api/config/data-sources', authMiddleware, (req, res) => {
     } catch (error) {
         logger.log('Server', `Failed to add data source: ${error.message}`, 'ERROR');
         res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/discover', authMiddleware, (req, res) => {
+    const { name, type, uri, domain } = req.body;
+    if (!name || !uri) {
+        return res.status(400).json({ error: "Missing required fields: name, uri" });
+    }
+
+    try {
+        // Simulate discovery
+        let entities = [];
+        let correlations = [];
+
+        if (uri.includes('ebs') || uri.includes('flexcube')) {
+            entities = [
+                {
+                    name: "flexcube_transactions",
+                    attributes: [
+                        { name: "trn_ref_no", type: "VARCHAR2(20)" },
+                        { name: "ac_no", type: "VARCHAR2(20)" },
+                        { name: "drcr_ind", type: "CHAR(1)" },
+                        { name: "lcy_amount", type: "NUMBER(15,2)" },
+                        { name: "trn_dt", type: "DATE" }
+                    ]
+                }
+            ];
+
+            correlations = [
+                {
+                    localEntity: "flexcube_transactions",
+                    localAttr: "ac_no",
+                    targetEntity: "customer_accounts",
+                    targetSource: "crm-alloydb"
+                }
+            ];
+        } else {
+            // Generic fallback
+            entities = [
+                {
+                    name: "generic_entity",
+                    attributes: [
+                        { name: "id", type: "VARCHAR" },
+                        { name: "name", type: "VARCHAR" }
+                    ]
+                }
+            ];
+        }
+
+        res.json({
+            status: "success",
+            entities,
+            correlations
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to perform discovery: " + error.message });
     }
 });
 

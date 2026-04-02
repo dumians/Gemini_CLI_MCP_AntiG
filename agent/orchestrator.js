@@ -6,7 +6,7 @@ import { handleAnalyticsRequest } from "./analytics_agent.js";
 import { handleHRTask } from "./hr_agent.js";
 import { catalogAgent } from "./catalog_agent.js";
 import { generatePlan } from "./planner_agent.js";
-import { validateDataProduct, getDiscoveryTools, AgentRegistry } from "./utils/catalog.js";
+import { validateDataProduct, getDiscoveryTools, AgentRegistry, metadataCatalog } from "./utils/catalog.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { kgService } from "./utils/kg_service.js";
@@ -210,7 +210,7 @@ export async function askOrchestrator(query, userId = 'admin') {
                             }
                         }
 
-                        const agentResult = validateDataProduct(rawResult, agentName);
+                        const agentResult = validateDataProduct(rawResult, agentName, 'MasterOrchestrator');
                         
                         // Log success with latency
                         logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime, traceId);
@@ -318,7 +318,12 @@ export async function askOrchestrator(query, userId = 'admin') {
         return {
             text: finalAnswer,
             steps: steps,
-            reflection: reflectionText
+            reflection: reflectionText,
+            context: {
+                horizontal: horizontalContext,
+                vertexMemories: vertexMemoriesContext,
+                plan: planContext
+            }
         };
     } catch (err) {
         logger.log("Orchestrator", `Orchestration Error: ${err.message}`, "ERROR");

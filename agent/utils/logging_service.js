@@ -17,7 +17,8 @@ export const LogTypes = {
     CATALOG_LOOKUP: 'CATALOG_LOOKUP',   // Catalog metadata query
     GROUNDING: 'GROUNDING',             // GraphRAG grounding event
     DATA_CONTRACT: 'DATA_CONTRACT',     // Data product validation
-    HEALTH_CHECK: 'HEALTH_CHECK'        // Agent / source health
+    HEALTH_CHECK: 'HEALTH_CHECK',       // Agent / source health
+    DATA_SHARING: 'DATA_SHARING'        // Data sharing metrics
 };
 
 class LoggingService {
@@ -101,6 +102,19 @@ class LoggingService {
             direction: 'inbound'
         }, traceId);
         this._updateAgentStatus(agent, 'idle', `Last: ${domain} query (${durationMs}ms)`);
+    }
+
+    /**
+     * Record a data sharing event (rows, size, consumer).
+     */
+    logDataSharing(agent, consumerId, rowCount, dataSize, domain, traceId = null) {
+        this.log(agent, `Shared data with ${consumerId} (Rows: ${rowCount}, Size: ${dataSize} bytes)`, LogTypes.DATA_SHARING, {
+            consumerId,
+            rowCount,
+            dataSize,
+            domain,
+            direction: 'outbound'
+        }, traceId);
     }
 
     /**

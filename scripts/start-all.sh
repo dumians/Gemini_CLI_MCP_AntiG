@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH="/opt/homebrew/bin:$PATH"
+
 # start-all.sh
 # This script starts the entire Agentic Data Mesh locally on Linux/Mac.
 

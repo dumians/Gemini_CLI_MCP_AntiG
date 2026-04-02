@@ -110,6 +110,38 @@ export const QueryAnalysisView = ({ initialQuery, onShowSource, onClearQuery }: 
               ))}
             </div>
           </div>
+
+          {queryState?.context && (
+            <div className="glass rounded-2xl border-slate-800 p-6 flex flex-col gap-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-4">Context Window Analysis</h3>
+              <div className="space-y-4">
+                {queryState.context.horizontal && (
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Global Mesh Context (RAG)</h4>
+                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800/50 font-mono text-xs text-slate-300 overflow-x-auto">
+                      <pre className="whitespace-pre-wrap">{queryState.context.horizontal}</pre>
+                    </div>
+                  </div>
+                )}
+                {queryState.context.vertexMemories && (
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Vertex Long-Term Memories</h4>
+                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800/50 font-mono text-xs text-slate-300 overflow-x-auto">
+                      <pre className="whitespace-pre-wrap">{queryState.context.vertexMemories}</pre>
+                    </div>
+                  </div>
+                )}
+                {queryState.context.plan && (
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Strategic Plan</h4>
+                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800/50 font-mono text-xs text-slate-300 overflow-x-auto">
+                      <pre className="whitespace-pre-wrap">{queryState.context.plan}</pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">

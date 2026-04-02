@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useRef, useState, useEffect } from 'react';
+import ForceGraph2D from 'react-force-graph-2d';
 import { Database, Server, Package, ArrowRight } from 'lucide-react';
 
 interface Node {
@@ -7,107 +7,114 @@ interface Node {
   type: 'source' | 'table' | 'product';
   label: string;
   domain: string;
-  x: number;
-  y: number;
 }
 
 interface Edge {
-  from: string;
-  to: string;
+  source: string;
+  target: string;
 }
 
 export const DataLineageGraph = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 900, height: 400 });
+
   const nodes: Node[] = [
-    { id: 's1', type: 'source', label: 'BigQuery DB', domain: 'Sales', x: 50, y: 100 },
-    { id: 's2', type: 'source', label: 'Spanner CRM', domain: 'Marketing', x: 50, y: 250 },
-    { id: 't1', type: 'table', label: 'Cleaned Transactions', domain: 'Sales', x: 350, y: 100 },
-    { id: 't2', type: 'table', label: 'Customer Profiles', domain: 'Marketing', x: 350, y: 250 },
-    { id: 'p1', type: 'product', label: 'Sales Forecast Product', domain: 'Sales', x: 650, y: 175 },
+    { id: 's1', type: 'source', label: 'BigQuery DB', domain: 'Sales' },
+    { id: 's2', type: 'source', label: 'Spanner CRM', domain: 'Marketing' },
+    { id: 't1', type: 'table', label: 'Cleaned Transactions', domain: 'Sales' },
+    { id: 't2', type: 'table', label: 'Customer Profiles', domain: 'Marketing' },
+    { id: 'p1', type: 'product', label: 'Sales Forecast Product', domain: 'Sales' },
   ];
 
-  const edges: Edge[] = [
-    { from: 's1', to: 't1' },
-    { from: 's2', to: 't2' },
-    { from: 't1', to: 'p1' },
-    { from: 't2', to: 'p1' },
+  const links: Edge[] = [
+    { source: 's1', target: 't1' },
+    { source: 's2', target: 't2' },
+    { source: 't1', target: 'p1' },
+    { source: 't2', target: 'p1' },
   ];
 
-  const getNodeIcon = (type: string) => {
-    switch (type) {
-      case 'source': return <Database size={18} />;
-      case 'table': return <Server size={18} />;
-      case 'product': return <Package size={18} />;
-      default: return <Database size={18} />;
-    }
-  };
+  const graphData = { nodes, links };
+
+  useEffect(() => {
+      if (!containerRef.current) return;
+
+      const resizeObserver = new ResizeObserver((entries) => {
+          for (let entry of entries) {
+              if (entry.contentRect.width === 0) continue; // Ignore 0 width during component mount
+              setDimensions({
+                  width: entry.contentRect.width,
+                  height: 400
+              });
+          }
+      });
+
+      resizeObserver.observe(containerRef.current);
+      return () => resizeObserver.disconnect();
+  }, []);
 
   const getNodeColor = (type: string) => {
     switch (type) {
-      case 'source': return 'from-blue-500/20 to-blue-600/20 border-blue-500/30 text-blue-400';
-      case 'table': return 'from-purple-500/20 to-purple-600/20 border-purple-500/30 text-purple-400';
-      case 'product': return 'from-emerald-500/20 to-emerald-600/20 border-emerald-500/30 text-emerald-400';
-      default: return 'from-slate-500/20 to-slate-600/20 border-slate-500/30 text-slate-400';
+      case 'source': return '#3b82f6'; // blue-500
+      case 'table': return '#a855f7'; // purple-500
+      case 'product': return '#10b981'; // emerald-500
+      default: return '#64748b'; // slate-500
     }
   };
 
   return (
-    <div className="glass rounded-2xl border-slate-700/50 p-6 h-[500px] relative overflow-hidden bg-slate-900/50 w-full">
+    <div ref={containerRef} className="glass rounded-2xl border-slate-700/50 p-6 h-[500px] relative overflow-hidden bg-slate-900/50 w-full">
       <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
         <ArrowRight size={20} className="text-primary" /> Data Lineage Graph
       </h3>
 
       <div className="absolute inset-0 p-6 pt-16">
-        {/* SVG for connections */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-              <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569" />
-            </marker>
-          </defs>
-          {edges.map((edge, i) => {
-            const fromNode = nodes.find(n => n.id === edge.from);
-            const toNode = nodes.find(n => n.id === edge.to);
-            if (!fromNode || !toNode) return null;
-            
-            // Adjust coordinates for center of node (assume node width 200, height 70 approx)
-            const x1 = fromNode.x + 180; // right edge of from node
-            const y1 = fromNode.y + 35;
-            const x2 = toNode.x - 10; // left edge of to node with offset for arrow
-            const y2 = toNode.y + 35;
+        <ForceGraph2D
+            graphData={graphData}
+            width={dimensions.width}
+            height={400}
+            nodeLabel="label"
+            nodeRelSize={4}
+            linkColor={() => 'rgba(255,255,255,0.2)'}
+            linkDirectionalArrowLength={6}
+            linkDirectionalArrowRelPos={1}
+            nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                const label = node.label;
+                const fontSize = 12 / globalScale;
+                ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
+                const textWidth = ctx.measureText(label).width;
+                const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4) as [number, number];
 
-            return (
-              <path 
-                key={i}
-                d={`M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}`}
-                fill="none"
-                stroke="#475569"
-                strokeWidth="2"
-                markerEnd="url(#arrow)"
-              />
-            );
-          })}
-        </svg>
+                // Node Circle
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 8 / globalScale, 0, 2 * Math.PI, false);
+                ctx.fillStyle = getNodeColor(node.type);
+                ctx.fill();
+                
+                // Outer ring for "product"
+                if (node.type === 'product') {
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, 12 / globalScale, 0, 2 * Math.PI, false);
+                    ctx.strokeStyle = '#10b981';
+                    ctx.lineWidth = 1.5 / globalScale;
+                    ctx.stroke();
+                }
 
-        {/* Nodes */}
-        {nodes.map((node) => (
-          <motion.div
-            key={node.id}
-            style={{ left: node.x, top: node.y }}
-            className={`absolute w-[200px] p-4 bg-gradient-to-br border rounded-xl shadow-lg backdrop-blur-sm flex flex-col gap-2 cursor-pointer hover:border-primary/50 transition-colors ${getNodeColor(node.type)}`}
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {getNodeIcon(node.type)}
-                <span className="text-sm font-bold text-white truncate">{node.label}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">Domain</span>
-              <span className="text-slate-300 font-medium">{node.domain}</span>
-            </div>
-          </motion.div>
-        ))}
+                // Label Background
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'; // slate-900
+                ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), ...bckgDimensions);
+
+                // Label Text
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(label, node.x, node.y + (12 / globalScale) + bckgDimensions[1] / 2);
+                
+                // Type Label (Small)
+                ctx.font = `${8 / globalScale}px Inter, system-ui, sans-serif`;
+                ctx.fillStyle = '#94a3b8'; // slate-400
+                ctx.fillText(node.type.toUpperCase(), node.x, node.y + (12 / globalScale) + bckgDimensions[1] + (6 / globalScale));
+            }}
+        />
       </div>
     </div>
   );

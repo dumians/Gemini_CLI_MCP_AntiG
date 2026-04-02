@@ -30,7 +30,7 @@ export const DataProductContract = {
 /**
  * Validates a Data Product against the mesh contract.
  */
-export function validateDataProduct(product, agentName) {
+export function validateDataProduct(product, agentName, consumerId = 'Unknown') {
     const errors = [];
     for (const [key, validator] of Object.entries(DataProductContract)) {
         if (!(key in product) || !validator(product[key])) {
@@ -40,14 +40,57 @@ export function validateDataProduct(product, agentName) {
 
     // Structural Domain Boundary Check
     const agentDef = AgentRegistry.find(a => a.name === agentName);
-    if (agentDef && product.domain && product.domain !== agentDef.domain) {
+    if (agentDef && product.domain && !product.composite && product.domain !== agentDef.domain) {
         errors.push(`Domain mismatch: Agent ${agentName} (configured for ${agentDef.domain}) returned domain ${product.domain}`);
+    } else if (product.composite) {
+        // For composite products, skip strict single-domain check
+        console.log(`[Data Contract] Validating composite product from ${agentName}`);
     }
 
     if (errors.length > 0) {
         console.error(`[Data Contract Violation] Agent: ${agentName}`, errors);
         throw new Error(`Data Product from ${agentName} violated the mesh contract: ${errors.join(', ')}`);
     }
+
+    // --- Data Governance & Lineage Tracking ---
+    try {
+        const data = product.data;
+        let rowCount = 0;
+        let dataSize = 0;
+
+        if (typeof data === 'string') {
+            dataSize = Buffer.byteLength(data, 'utf8');
+            // Infer row count for CSV or JSON string
+            const trimmed = data.trim();
+            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(data);
+                    rowCount = Array.isArray(parsed) ? parsed.length : 1;
+                } catch (e) {
+                    // Not valid JSON, treat as text
+                    rowCount = data.split('\n').filter(line => line.trim()).length;
+                }
+            } else {
+                // Assume CSV or text
+                rowCount = data.split('\n').filter(line => line.trim()).length;
+            }
+        } else if (typeof data === 'object' && data !== null) {
+            const str = JSON.stringify(data);
+            dataSize = Buffer.byteLength(str, 'utf8');
+            rowCount = Array.isArray(data) ? data.length : 1;
+        }
+
+        // Dynamic import to avoid circular dependency
+        import('./logging_service.js').then(({ logger }) => {
+            logger.logDataSharing(agentName, consumerId, rowCount, dataSize, product.domain);
+        }).catch(err => {
+            console.error("[Catalog] Failed to log data sharing:", err);
+        });
+
+    } catch (err) {
+        console.error("[Catalog] Failed to calculate data sharing metrics:", err);
+    }
+
     return product;
 }
 

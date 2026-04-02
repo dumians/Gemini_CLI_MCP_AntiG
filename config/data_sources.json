@@ -135,6 +135,26 @@
             },
             "schema_file": "db-schemas/catalog_metadata.sql",
             "health_check": "/health"
+        },
+        "api_driven": {
+            "name": "API Driven Source",
+            "domain": "API Domain",
+            "connection_type": "REST API",
+            "connection_string": "https://api.oracle.com/ebs",
+            "connection": {
+                "baseUrl": "https://api.oracle.com/ebs"
+            },
+            "local": {
+                "command": "node",
+                "args": ["servers/api-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${API_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/flexcube_schema.sql",
+            "health_check": "/health"
         }
     }
 }
