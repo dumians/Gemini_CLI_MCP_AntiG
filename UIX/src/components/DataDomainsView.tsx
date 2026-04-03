@@ -45,6 +45,21 @@ export const DataDomainsView = () => {
     fetchSettings();
   };
 
+  const handleEditAgent = async (agent: any) => {
+    const specialty = prompt('Enter Specialty (Agent mapping rules):', agent.specialty || '');
+    const owner = prompt('Enter Owner:', agent.metadata?.owner || '');
+    const description = prompt('Enter Description:', agent.metadata?.description || '');
+    
+    if (specialty === null && owner === null && description === null) return;
+    
+    await fetch(`/api/config/agents/${agent.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ specialty, owner, description })
+    });
+    fetchSettings();
+  };
+
   if (loading) return <div className="p-8 text-slate-400">Loading domains...</div>;
   if (!settings) return null;
 
@@ -117,7 +132,10 @@ export const DataDomainsView = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 transition-colors">
+                  <button 
+                    onClick={() => handleEditAgent(agent)}
+                    className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 transition-colors"
+                  >
                     <Settings size={14} />
                   </button>
                 </div>

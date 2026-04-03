@@ -243,7 +243,7 @@ async function run() {
                 await server.connect(transport);
             });
 
-            app.post("/messages", async (req, res) => {
+            app.post(SSE_TRANSPORT_PATH, async (req, res) => {
                 if (transport) {
                     await transport.handlePostMessage(req, res);
                 }

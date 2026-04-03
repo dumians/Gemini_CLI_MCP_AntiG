@@ -5,10 +5,13 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { logger } from "./logging_service.js";
 import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./grounding.js";
 import dotenv from "dotenv";
+import { ModelArmorClient } from "@google-cloud/modelarmor";
 
 dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const modelArmorClient = new ModelArmorClient();
+const MODEL_ARMOR_TEMPLATE = process.env.MODEL_ARMOR_TEMPLATE || "projects/PROJECT_ID/locations/global/templates/default";
 
 class GenericAgent {
     constructor(config) {
@@ -59,6 +62,27 @@ class GenericAgent {
 
     async process(query, meshContext = {}, traceId = null) {
         logger.log(this.name, `Processing query: ${query}`, "INFO", null, traceId);
+
+        // Model Armor - Sanitize Prompt
+        try {
+            const [armorResponse] = await modelArmorClient.sanitizeUserPrompt({
+                template: MODEL_ARMOR_TEMPLATE,
+                text: query
+            });
+            if (armorResponse.blocked) {
+                logger.log(this.name, `Query blocked by Model Armor: ${armorResponse.reason}`, "WARNING", null, traceId);
+                return {
+                    domain: this.domain,
+                    data: "Content blocked by security policy.",
+                    metadata: { confidence: 0, source: this.name },
+                    insights: "Query blocked by security policy."
+                };
+            }
+            query = armorResponse.text || query;
+        } catch (error) {
+            logger.log(this.name, `Model Armor prompt sanitization failed: ${error.message}`, "WARNING", null, traceId);
+            // Permissive mode: continue with original query
+        }
 
         // 1. Connect to all MCP servers and fetch tools
         const allTools = [];
@@ -189,9 +213,31 @@ class GenericAgent {
             response = result.response;
         }
 
+        let resultText = response.text;
+        // Model Armor - Sanitize Response
+        try {
+            const [armorResponse] = await modelArmorClient.sanitizeModelResponse({
+                template: MODEL_ARMOR_TEMPLATE,
+                text: resultText
+            });
+            if (armorResponse.blocked) {
+                logger.log(this.name, `Response blocked by Model Armor: ${armorResponse.reason}`, "WARNING", null, traceId);
+                return {
+                    domain: this.domain,
+                    data: "Content blocked by security policy.",
+                    metadata: { confidence: 0, source: this.name },
+                    insights: "Response blocked by security policy."
+                };
+            }
+            resultText = armorResponse.text || resultText;
+        } catch (error) {
+            logger.log(this.name, `Model Armor response sanitization failed: ${error.message}`, "WARNING", null, traceId);
+            // Permissive mode: continue with original text
+        }
+
         return {
             domain: this.domain,
-            data: response.text,
+            data: resultText,
             metadata: {
                 confidence: 0.95,
                 source: this.name,

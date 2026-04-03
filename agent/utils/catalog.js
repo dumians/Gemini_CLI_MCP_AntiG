@@ -87,6 +87,22 @@ export function validateDataProduct(product, agentName, consumerId = 'Unknown') 
             console.error("[Catalog] Failed to log data sharing:", err);
         });
 
+        // Report Lineage to Dataplex
+        import('./dataplex.js').then(({ dataplex }) => {
+            const processId = `${agentName}-to-${consumerId}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+            const runId = `run-${Date.now()}`;
+            
+            dataplex.createLineageProcess(processId, `Data Transfer from ${agentName} to ${consumerId}`).then(() => {
+                dataplex.createLineageRun(processId, runId).then(() => {
+                    const sourceTable = product.domain || 'unknown-source';
+                    const targetTable = consumerId;
+                    dataplex.createLineageEvent(processId, runId, sourceTable, targetTable);
+                });
+            });
+        }).catch(err => {
+            console.error("[Catalog] Failed to report lineage to Dataplex:", err);
+        });
+
     } catch (err) {
         console.error("[Catalog] Failed to calculate data sharing metrics:", err);
     }

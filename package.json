@@ -14,6 +14,8 @@
     "dependencies": {
         "@google-cloud/alloydb": "^2.4.0",
         "@google-cloud/bigquery": "latest",
+        "@google-cloud/dataplex": "^5.4.0",
+        "@google-cloud/modelarmor": "^0.4.1",
         "@google-cloud/spanner": "latest",
         "@google/generative-ai": "latest",
         "@modelcontextprotocol/sdk": "latest",

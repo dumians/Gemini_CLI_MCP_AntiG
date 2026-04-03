@@ -11,6 +11,7 @@ import { logger } from '../agent/utils/logging_service.js';
 import { metadataCatalog, AgentRegistry } from '../agent/utils/catalog.js';
 import { storageProvider } from '../agent/utils/storage_service.js';
 import { authMiddleware } from './middleware/auth.js';
+import { dataplex } from '../agent/utils/dataplex.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: '../.env' });
@@ -426,6 +427,45 @@ app.put('/api/config/data-sources/:id', authMiddleware, (req, res) => {
     }
 });
 
+app.put('/api/config/agents/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    const { specialty, owner, description, mcpServers } = req.body;
+
+    try {
+        const agentsPath = path.join(__dirname, '../config/agents.json');
+        let agentsData = [];
+        if (fs.existsSync(agentsPath)) {
+            agentsData = JSON.parse(fs.readFileSync(agentsPath, 'utf8'));
+        }
+
+        const agentIndex = agentsData.findIndex(a => a.id === id);
+        if (agentIndex === -1) {
+            return res.status(404).json({ error: `Agent ${id} not found.` });
+        }
+
+        agentsData[agentIndex] = {
+            ...agentsData[agentIndex],
+            specialty: specialty || agentsData[agentIndex].specialty,
+            mcpServers: mcpServers || agentsData[agentIndex].mcpServers
+        };
+
+        if (owner || description) {
+            agentsData[agentIndex].metadata = {
+                ...agentsData[agentIndex].metadata,
+                owner: owner || (agentsData[agentIndex].metadata && agentsData[agentIndex].metadata.owner),
+                description: description || (agentsData[agentIndex].metadata && agentsData[agentIndex].metadata.description)
+            };
+        }
+
+        fs.writeFileSync(agentsPath, JSON.stringify(agentsData, null, 2));
+        logger.log('Server', `Agent ${id} updated dynamically`, 'INFO');
+        res.json({ message: `Agent ${id} updated successfully`, data: agentsData[agentIndex] });
+    } catch (error) {
+        logger.log('Server', `Failed to update agent: ${error.message}`, 'ERROR');
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/contracts', authMiddleware, (req, res) => {
     try {
         const contractsPath = path.join(__dirname, '../config/data_contracts.json');
@@ -463,6 +503,12 @@ app.put('/api/contracts/:id', authMiddleware, (req, res) => {
         };
 
         fs.writeFileSync(contractsPath, JSON.stringify(contractsData, null, 2));
+
+        // Integration with GCP Dataplex
+        dataplex.createDataContract(contractsData.contracts[contractIndex]).catch(err => {
+            console.error("[Server] Failed to update data contract in Dataplex:", err);
+        });
+
         res.json({ message: `Contract ${id} updated successfully`, data: contractsData.contracts[contractIndex] });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -507,6 +553,11 @@ app.post('/api/products', authMiddleware, (req, res) => {
 
         productsData.products.push(newProduct);
         fs.writeFileSync(productsPath, JSON.stringify(productsData, null, 2));
+
+        // Integration with GCP Dataplex
+        dataplex.createDataProduct(newProduct).catch(err => {
+            console.error("[Server] Failed to create data product in Dataplex:", err);
+        });
 
         // Graph RAG linking: Automatically link dependencies
         try {

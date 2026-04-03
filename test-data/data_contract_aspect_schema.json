@@ -1,0 +1,48 @@
+{
+  "metadataTemplate": {
+    "name": "data_contract_metadata",
+    "type": "record",
+    "recordFields": [
+      {
+        "name": "product",
+        "type": "string",
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Product associated with the contract"
+        }
+      },
+      {
+        "name": "schema",
+        "type": "string",
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Schema definition or reference"
+        }
+      },
+      {
+        "name": "sla",
+        "type": "string",
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Service Level Agreement details"
+        }
+      },
+      {
+        "name": "privacy",
+        "type": "string",
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Privacy considerations"
+        }
+      }
+    ]
+  }
+}

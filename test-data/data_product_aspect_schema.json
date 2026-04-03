@@ -1,0 +1,39 @@
+{
+  "metadataTemplate": {
+    "name": "data_product_metadata",
+    "type": "record",
+    "recordFields": [
+      {
+        "name": "name",
+        "type": "string",
+        "searchable": true,
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Name of the data product"
+        }
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Description of the data product"
+        }
+      },
+      {
+        "name": "owner",
+        "type": "string",
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Owner of the data product"
+        }
+      }
+    ]
+  }
+}
