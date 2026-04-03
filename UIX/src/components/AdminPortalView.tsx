@@ -293,40 +293,48 @@ export const AdminPortalView = () => {
           </div>
         )}
 
-        {activeTab === 'mcp' && (
-          <div className="space-y-6">
-            <section className="glass rounded-2xl border-slate-700/50 p-6">
-              <h3 className="text-lg font-bold text-white mb-6">Model Context Protocol (MCP) Configuration</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-white">Connected Servers</h4>
-                  <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <Cpu size={20} className="text-primary" />
-                      <div>
-                        <p className="text-sm font-bold text-white">Financial MCP Server</p>
-                        <p className="text-xs text-slate-500">v1.2.3</p>
+        {activeTab === 'mcp' && (() => {
+          const allMcpServers = settings?.agents?.flatMap((agent: any) => agent.mcpServers || []) || [];
+          const uniqueMcpServers = Array.from(new Map(allMcpServers.map((s: any) => [s.name, s])).values());
+          return (
+            <div className="space-y-6">
+              <section className="glass rounded-2xl border-slate-700/50 p-6">
+                <h3 className="text-lg font-bold text-white mb-6">Model Context Protocol (MCP) Configuration</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-white">Connected Servers</h4>
+                    {uniqueMcpServers.length === 0 ? (
+                      <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                        <p className="text-sm text-slate-500">No MCP servers configured in agent settings.</p>
+                      </div>
+                    ) : (
+                      uniqueMcpServers.map((server: any) => (
+                        <div key={server.name} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <Cpu size={20} className="text-primary" />
+                            <div>
+                              <p className="text-sm font-bold text-white">{server.name}</p>
+                              <p className="text-xs text-slate-500">{server.mcpUrl || 'Local Server'}</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-green-500 font-bold uppercase">Available</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-white">Available Tools</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                        <p className="text-sm text-slate-500">Tools are loaded by agents at runtime. UI integration for tool discovery is not enabled.</p>
                       </div>
                     </div>
-                    <span className="text-xs text-green-500 font-bold uppercase">Connected</span>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-white">Available Tools</h4>
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className="p-3 bg-slate-800/50 rounded-lg flex justify-between items-center">
-                      <div>
-                        <p className="text-xs font-bold text-white">queryTransactions</p>
-                        <p className="text-[10px] text-slate-500">Retrieve financial audit logs.</p>
-                      </div>
-                      <span className="text-[10px] text-slate-400">Read</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
+              </section>
+            </div>
+          );
+        })()}
 
         {activeTab === 'api' && (
           <div className="space-y-6">
