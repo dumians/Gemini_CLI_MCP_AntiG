@@ -22,6 +22,25 @@ function App() {
   const [pendingQuery, setPendingQuery] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => auth.isAuthenticated());
   const [user, setUser] = useState<any>(() => auth.getUser());
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   const handleLoginSuccess = (userData: any) => {
     setUser(userData);
@@ -46,16 +65,20 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background-dark text-slate-300 font-sans selection:bg-primary/30 flex overflow-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-background-dark dark:text-slate-300 font-sans selection:bg-primary/30 flex overflow-hidden">
       <Sidebar activeView={activeView} onViewChange={setActiveView} onLogout={handleLogout} />
       
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative border-l border-white/5">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative border-l border-slate-200 dark:border-white/5">
         <div className="absolute inset-0 pointer-events-none overflow-hidden isolate">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3 transform-gpu" />
           <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[100px] transform-gpu" />
         </div>
 
-        <Header breadcrumbs={['MeshOS', activeView.charAt(0).toUpperCase() + activeView.slice(1).replace('-', ' ')]} />
+        <Header 
+          breadcrumbs={['MeshOS', activeView.charAt(0).toUpperCase() + activeView.slice(1).replace('-', ' ')]} 
+          theme={theme}
+          onThemeChange={toggleTheme}
+        />
 
         <div className="flex-1 overflow-auto overflow-x-hidden relative scroll-smooth thin-scrollbar">
           <div className="min-h-full pb-12">

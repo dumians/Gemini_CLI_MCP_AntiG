@@ -18,7 +18,10 @@ export const LogTypes = {
     GROUNDING: 'GROUNDING',             // GraphRAG grounding event
     DATA_CONTRACT: 'DATA_CONTRACT',     // Data product validation
     HEALTH_CHECK: 'HEALTH_CHECK',       // Agent / source health
-    DATA_SHARING: 'DATA_SHARING'        // Data sharing metrics
+    DATA_SHARING: 'DATA_SHARING',       // Data sharing metrics
+    GOVERNANCE_AUDIT: 'GOVERNANCE_AUDIT', // PEP validation event
+    INTENT_ALIGNMENT: 'INTENT_ALIGNMENT', // Tracking reasoning quality
+    SEMANTIC_CACHE: 'SEMANTIC_CACHE'     // Cache hit/miss events
 };
 
 class LoggingService {
@@ -29,6 +32,40 @@ class LoggingService {
         this.maxLogs = 1000;
         this.maxA2AEvents = 200;
         this._sessionId = Date.now().toString(36);
+    }
+
+    /**
+     * Record a Governance PEP audit event.
+     */
+    logGovernance(agent, resource, action, status, reason = null) {
+        this.log(agent, `Governance [${action}]: ${resource} -> ${status}`, LogTypes.GOVERNANCE_AUDIT, {
+            resource,
+            action,
+            status,
+            reason
+        });
+    }
+
+    /**
+     * Record Intent Alignment / Reasoning Quality.
+     */
+    logIntent(agent, query, score, reasoning) {
+        this.log(agent, `Intent Alignment: ${score * 100}%`, LogTypes.INTENT_ALIGNMENT, {
+            query,
+            score,
+            reasoning
+        });
+    }
+
+    /**
+     * Record Semantic Cache events.
+     */
+    logCache(event, query, hit = false, key = null) {
+        this.log('Orchestrator', `Cache ${event}: ${hit ? 'HIT' : 'MISS'}`, LogTypes.SEMANTIC_CACHE, {
+            query,
+            hit,
+            key
+        });
     }
 
     /**

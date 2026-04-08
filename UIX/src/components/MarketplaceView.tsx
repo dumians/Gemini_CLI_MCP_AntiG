@@ -41,7 +41,7 @@ export const MarketplaceView = () => {
   const [editingContractId, setEditingContractId] = React.useState<string | null>(null);
   const [contractFormData, setContractFormData] = React.useState({ status: '', sla: '', privacy: '' });
   const [contractLoading, setContractLoading] = React.useState(false);
-  const [newContractFormData, setNewContractFormData] = React.useState({ name: '', domain: '', schema: '', sla: '99.9%', retention: '30 days' });
+  const [newContractFormData, setNewContractFormData] = React.useState({ product: '', domain: '', schema_file: '', sla: '99.9%', privacy: 'Standard' });
 
   const fetchContracts = async () => {
     try {
@@ -71,7 +71,7 @@ export const MarketplaceView = () => {
 
   const handleEditProduct = (prod: any) => {
     setEditingProductId(prod.id);
-    setProductFormData({ name: prod.name, description: prod.description || '', owner: prod.owner, tables: prod.tables || [], domain: prod.domain || '' });
+    setProductFormData({ name: prod.name, description: prod.description || '', owner: prod.owner, tables: prod.tables || [], domain: prod.domain || '', domainContracts: prod.domainContracts || [], security_level: prod.security_level || 'Public' });
   };
 
   const handleUpdateProduct = async () => {
@@ -122,19 +122,19 @@ export const MarketplaceView = () => {
   };
 
   const handleCreateContract = async () => {
-    if (!newContractFormData.name || !newContractFormData.domain) {
-      alert('Please fill Name and Domain');
+    if (!newContractFormData.product || !newContractFormData.domain) {
+      alert('Please fill Product and Domain');
       return;
     }
     setContractLoading(true);
     try {
       await api.post('/api/contracts', newContractFormData);
-      setNewContractFormData({ name: '', domain: '', schema: '', sla: '99.9%', retention: '30 days' });
+      setNewContractFormData({ product: '', domain: '', schema_file: '', sla: '99.9%', privacy: 'Standard' });
       fetchContracts();
     } catch (err) {
       console.error('Failed to create contract:', err);
       // Fallback for mock if API fails
-      setContracts([...contracts, { ...newContractFormData, id: `c${Date.now()}`, status: 'Active', product: newContractFormData.name, subscriber: 'Enterprise User', privacy: 'Standard' }]);
+      setContracts([...contracts, { ...newContractFormData, id: `c${Date.now()}`, status: 'Active', subscriber: 'Enterprise User' }]);
     } finally {
       setContractLoading(false);
     }
@@ -368,6 +368,17 @@ export const MarketplaceView = () => {
                         className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
                       />
                     </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-400">Security Level</label>
+                      <select 
+                        value={productFormData.security_level}
+                        onChange={(e) => setProductFormData({ ...productFormData, security_level: e.target.value })}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white"
+                      >
+                        <option value="Public">Public</option>
+                        <option value="Confidential">Confidential</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="flex gap-2 pt-2">
                     <button 
@@ -527,8 +538,10 @@ export const MarketplaceView = () => {
                   ) : (
                     <>
                       <h3 className="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors">{ctr.product} Data Contract</h3>
-                      <p className="text-xs text-slate-500 mb-6 flex-1">Subscribed by: {ctr.subscriber}</p>
+                      <p className="text-xs text-slate-500 mb-2">Subscribed by: {ctr.subscriber}</p>
+                      <p className="text-[10px] text-slate-600 font-mono mb-4 truncate">Schema: {ctr.schema_file || 'Standard'}</p>
                       
+                      <div className="flex-1"></div>
                       <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs">
                         <span className="text-slate-400">SLA: <span className="text-white font-mono">{ctr.sla}</span></span>
                         <span className="text-slate-400">Privacy: <span className="text-white font-mono">{ctr.privacy}</span></span>
@@ -545,13 +558,13 @@ export const MarketplaceView = () => {
               <h3 className="text-lg font-bold text-white mb-6">Create New Contract</h3>
               <div className="space-y-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-400">Contract Name</label>
+                  <label className="text-xs font-bold text-slate-400">Product Name</label>
                   <input 
                     type="text" 
-                    value={newContractFormData.name}
-                    onChange={(e) => setNewContractFormData({ ...newContractFormData, name: e.target.value })}
+                    value={newContractFormData.product}
+                    onChange={(e) => setNewContractFormData({ ...newContractFormData, product: e.target.value })}
                     className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    placeholder="e.g. Sales Forecast Schema"
+                    placeholder="e.g. Sales Forecast Data"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -565,12 +578,12 @@ export const MarketplaceView = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-400">Schema Definition</label>
+                  <label className="text-xs font-bold text-slate-400">Schema File / Definition</label>
                   <textarea 
                     rows={3}
-                    placeholder="Column definitions, constraints..."
-                    value={newContractFormData.schema}
-                    onChange={(e) => setNewContractFormData({ ...newContractFormData, schema: e.target.value })}
+                    placeholder="db-schemas/schema.sql or inline definition"
+                    value={newContractFormData.schema_file}
+                    onChange={(e) => setNewContractFormData({ ...newContractFormData, schema_file: e.target.value })}
                     className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                   />
                 </div>
@@ -581,6 +594,16 @@ export const MarketplaceView = () => {
                     value={newContractFormData.sla}
                     onChange={(e) => setNewContractFormData({ ...newContractFormData, sla: e.target.value })}
                     className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Privacy Scope</label>
+                  <input 
+                    type="text" 
+                    value={newContractFormData.privacy}
+                    onChange={(e) => setNewContractFormData({ ...newContractFormData, privacy: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                    placeholder="e.g. GDPR, PII-Restricted"
                   />
                 </div>
                 <button 

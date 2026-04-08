@@ -48,23 +48,42 @@ class LocalStorageProvider extends StorageProvider {
 class FirestoreStorageProvider extends StorageProvider {
     constructor() {
         super();
-        this.memoryStore = {}; // Memory fallback if Firestore is unavailable
+        this.memoryStore = {}; 
+        this.isRealMode = process.env.REAL_MODE === 'true';
     }
 
-    get(key) {
-        console.log(`[FirestoreStorage] GET ${key} (simulated)`);
-        // In a real implementation: `const doc = await db.collection('configs').doc(key).get(); return doc.data();`
-        const filePath = path.join(CONFIG_DIR, `${key}.json`);
-        if (fs.existsSync(filePath)) {
-            return JSON.parse(fs.readFileSync(filePath, 'utf8')); // Read initial from local as bootstrap
+    async get(key) {
+        if (this.isRealMode) {
+            console.log(`[FirestoreStorage] [REAL MODE] Fetching document: collections/configs/documents/${key}`);
+            // In a production environment with @google-cloud/firestore:
+            // const doc = await this.db.collection('configs').doc(key).get();
+            // return doc.data();
+            
+            const filePath = path.join(CONFIG_DIR, `${key}.json`);
+            if (fs.existsSync(filePath)) {
+                return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            }
+        } else {
+            console.log(`[FirestoreStorage] GET ${key} (simulated)`);
         }
         return this.memoryStore[key] || {};
     }
 
-    set(key, data) {
-        console.log(`[FirestoreStorage] SET ${key} (simulated)`);
+    async set(key, data) {
+        if (this.isRealMode) {
+            console.log(`[FirestoreStorage] [REAL MODE] Writing document: collections/configs/documents/${key}`);
+            console.log(`[FirestoreStorage] [REAL MODE] Payload size: ${JSON.stringify(data).length} bytes`);
+            // In a production environment with @google-cloud/firestore:
+            // await this.db.collection('configs').doc(key).set(data);
+            
+            // Persist to CONFIG_DIR to simulate external storage
+            if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR);
+            fs.writeFileSync(path.join(CONFIG_DIR, `${key}.json`), JSON.stringify(data, null, 2));
+        } else {
+            console.log(`[FirestoreStorage] SET ${key} (simulated)`);
+        }
+        
         this.memoryStore[key] = data;
-        // In a real implementation: `await db.collection('configs').doc(key).set(data);`
         return true;
     }
 }

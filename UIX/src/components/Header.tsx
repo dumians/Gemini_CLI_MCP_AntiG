@@ -1,13 +1,19 @@
 import React from 'react';
-import { ChevronRight, Bell } from 'lucide-react';
+import { ChevronRight, Bell, Sun, Moon } from 'lucide-react';
 
-export const Header = ({ breadcrumbs }: { breadcrumbs: string[] }) => {
+interface HeaderProps {
+  breadcrumbs: string[];
+  theme: 'light' | 'dark';
+  onThemeChange: () => void;
+}
+
+export const Header = ({ breadcrumbs, theme, onThemeChange }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-20 px-8 py-4 flex items-center justify-between glass border-x-0">
       <div className="flex items-center gap-2 text-sm">
         {breadcrumbs.map((crumb, i) => (
           <React.Fragment key={crumb}>
-            <span className={i === breadcrumbs.length - 1 ? "text-slate-100 font-medium" : "text-slate-500"}>
+            <span className={i === breadcrumbs.length - 1 ? "text-slate-900 dark:text-slate-100 font-medium" : "text-slate-500"}>
               {crumb}
             </span>
             {i < breadcrumbs.length - 1 && (
@@ -21,7 +27,14 @@ export const Header = ({ breadcrumbs }: { breadcrumbs: string[] }) => {
           <div className="size-2 rounded-full bg-green-500 animate-pulse"></div>
           <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Live System</span>
         </div>
-        <button className="text-slate-400 hover:text-white transition-colors">
+        <button 
+          onClick={onThemeChange}
+          className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+        <button className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
           <Bell size={18} />
         </button>
       </div>

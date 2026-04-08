@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google-cloud/firestore": "^8.3.0",
     "@google/genai": "^1.44.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "bcryptjs": "^3.0.3",

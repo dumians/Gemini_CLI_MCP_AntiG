@@ -51,6 +51,7 @@ class DataplexIntegration {
         if (this.simulationMode) return;
         
         const parent = `projects/${projectId}/locations/global`;
+        const aspectTypePath = `${parent}/aspectTypes/${aspectTypeId}`;
         
         try {
             console.log(`[Dataplex] Checking/Creating Aspect Type: ${aspectTypeId}`);
@@ -66,7 +67,21 @@ class DataplexIntegration {
             console.log(`[Dataplex] Created Aspect Type: ${aspectTypeId}`);
         } catch (error) {
             if (error.code === 6 || error.message.includes('already exists')) {
-                console.log(`[Dataplex] Aspect Type ${aspectTypeId} already exists.`);
+                console.log(`[Dataplex] Aspect Type ${aspectTypeId} already exists. Attempting update to ensure schema sync.`);
+                try {
+                    const [updateOperation] = await this.client.updateAspectType({
+                        aspectType: {
+                            name: aspectTypePath,
+                            metadataTemplate: metadataTemplate
+                        },
+                        updateMask: { paths: ['metadata_template'] }
+                    });
+                    await updateOperation.promise();
+                    console.log(`[Dataplex] Updated Aspect Type: ${aspectTypeId}`);
+                } catch (updateError) {
+                    console.error(`[Dataplex] Error updating Aspect Type: ${updateError.message}`);
+                    // Don't throw if update fails (might be no changes or immutable field issues)
+                }
             } else {
                 console.error(`[Dataplex] Error creating Aspect Type: ${error.message}`);
                 throw error;
@@ -112,12 +127,12 @@ class DataplexIntegration {
         await this.ensureEntryGroup(entryGroupId);
         
         try {
-            const schemaPath = join(__dirname, '../../test-data/data_product_aspect_schema.json');
+            const schemaPath = join(__dirname, '../../db-schemas/data_product_aspect_schema.json');
             const schemaContent = fs.readFileSync(schemaPath, 'utf8');
             const schema = JSON.parse(schemaContent);
             
-            await this.ensureAspectType('data-product-aspect', schema.metadataTemplate);
-            await this.ensureEntryType('dataProduct', [`projects/${projectId}/locations/global/aspectTypes/data-product-aspect`]);
+            await this.ensureAspectType('data-product-v4', schema.metadataTemplate);
+            await this.ensureEntryType('data-product-v4', [`projects/${projectId}/locations/global/aspectTypes/data-product-v4`]);
         } catch (err) {
             console.error("[Dataplex] Failed to load schema or ensure types for Data Product:", err.message);
             throw err;
@@ -130,9 +145,9 @@ class DataplexIntegration {
                 parent: parent,
                 entryId: product.id,
                 entry: {
-                    entryType: `projects/${projectId}/locations/global/entryTypes/dataProduct`,
+                    entryType: `projects/${projectId}/locations/global/entryTypes/data-product-v4`,
                     aspects: {
-                       [`${projectId}.global.data-product-aspect`]: {
+                       "data-product-v4": {
                            "name": product.name,
                            "description": product.description,
                            "owner": product.owner
@@ -161,12 +176,12 @@ class DataplexIntegration {
             await this.ensureEntryGroup(entryGroupId);
             
             try {
-                const schemaPath = join(__dirname, '../../test-data/data_contract_aspect_schema.json');
+                const schemaPath = join(__dirname, '../../db-schemas/data_contract_aspect_schema.json');
                 const schemaContent = fs.readFileSync(schemaPath, 'utf8');
                 const schema = JSON.parse(schemaContent);
                 
-                await this.ensureAspectType('data-contract-aspect', schema.metadataTemplate);
-                await this.ensureEntryType('dataContract', [`projects/${projectId}/locations/global/aspectTypes/data-contract-aspect`]);
+                await this.ensureAspectType('data-contract-v4', schema.metadataTemplate);
+                await this.ensureEntryType('data-contract-v4', [`projects/${projectId}/locations/global/aspectTypes/data-contract-v4`]);
             } catch (err) {
                 console.error("[Dataplex] Failed to load schema or ensure types for Data Contract:", err.message);
                 throw err;
@@ -178,9 +193,9 @@ class DataplexIntegration {
                 parent: parent,
                 entryId: contract.id,
                 entry: {
-                    entryType: `projects/${projectId}/locations/global/entryTypes/dataContract`,
+                    entryType: `projects/${projectId}/locations/global/entryTypes/data-contract-v4`,
                     aspects: {
-                       [`${projectId}.global.data-contract-aspect`]: {
+                       "data-contract-v4": {
                            "product": contract.product,
                            "schema": contract.schema_file,
                            "sla": contract.sla,

@@ -34,7 +34,7 @@ async function run() {
         try {
             const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
             console.log(`[InitFirestore] Pushing ${key} to StorageProvider...`);
-            provider.set(key, data);
+            await provider.set(key, data);
             console.log(`[InitFirestore] ✓ Successfully initialized ${key}\n`);
         } catch (error) {
             console.error(`[InitFirestore] ✗ Failed to parse or set ${key}: ${error.message}\n`);

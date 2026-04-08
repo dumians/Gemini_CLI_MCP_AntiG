@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Database, Plus, Search, CheckCircle, AlertTriangle } from 'lucide-react';
+import { api } from '../utils/api';
 
 export const SourceDiscoveryView = () => {
   const [sourceData, setSourceData] = useState({
@@ -24,20 +25,7 @@ export const SourceDiscoveryView = () => {
     setDiscoveryResult(null);
 
     try {
-      const response = await fetch('/api/discover', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(sourceData),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Discovery failed');
-      }
-
+      const data = await api.post('/api/discover', sourceData);
       setDiscoveryResult(data);
     } catch (err: any) {
       setError(err.message);

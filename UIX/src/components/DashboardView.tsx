@@ -41,11 +41,11 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
     <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
       {/* Search Header */}
       <div className="flex flex-col items-center pt-4 pb-4">
-        <div className="w-full max-w-3xl glass rounded-2xl p-2 shadow-2xl">
+        <div className="w-full max-w-3xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-xl">
           <div className="relative flex items-center">
             <Search className="absolute left-6 text-slate-400" size={20} />
             <input 
-              className="w-full bg-transparent border-none focus:ring-0 text-slate-100 py-4 pl-16 pr-32 text-lg placeholder:text-slate-500" 
+              className="w-full bg-transparent border-none focus:ring-0 text-slate-900 dark:text-slate-100 py-4 pl-16 pr-32 text-lg placeholder:text-slate-500" 
               placeholder="Ask the Data Agent anything..." 
               type="text"
               value={searchText}
@@ -57,7 +57,7 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
               }}
             />
             <div className="absolute right-3 flex items-center gap-2">
-              <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-white/10 rounded text-[10px] text-slate-400">⌘ K</kbd>
+              <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-slate-200 dark:bg-white/10 rounded text-[10px] text-slate-600 dark:text-slate-400">⌘ K</kbd>
               <button 
                 onClick={() => searchText.trim() && onNavigate('query-analysis', searchText)}
                 className="bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary/80 transition-all shadow-lg shadow-primary/20"
@@ -76,22 +76,22 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
           { name: 'Spanner Retail', status: getAgentStatus('RetailAgent'), uptime: metrics.uptime?.RetailAgent || 'N/A', latency: metrics.latency?.RetailAgent || 'N/A', color: 'blue' },
           { name: 'BigQuery Analytics', status: getAgentStatus('AnalyticsAgent'), uptime: metrics.uptime?.AnalyticsAgent || 'N/A', latency: metrics.latency?.AnalyticsAgent || 'N/A', color: 'purple' },
         ].map((source) => (
-          <div key={source.name} className="glass p-5 rounded-2xl border-slate-800 flex flex-col gap-4">
+          <div key={source.name} className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl flex flex-col gap-4 shadow-sm dark:shadow-none">
             <div className="flex justify-between items-center">
-              <h4 className="text-sm font-bold text-white">{source.name}</h4>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">{source.name}</h4>
               <div className="flex items-center gap-2">
                 <div className={`size-2 rounded-full bg-${source.color === 'orange' ? 'orange' : source.color === 'blue' ? 'blue' : 'purple'}-500`}></div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{source.status}</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{source.status}</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-[10px] text-slate-500 uppercase mb-1">Uptime</p>
-                <p className="text-sm font-mono font-bold text-white">{source.uptime}</p>
+                <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{source.uptime}</p>
               </div>
               <div>
                 <p className="text-[10px] text-slate-500 uppercase mb-1">Latency</p>
-                <p className="text-sm font-mono font-bold text-white">{source.latency}</p>
+                <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{source.latency}</p>
               </div>
             </div>
           </div>
@@ -100,19 +100,19 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
 
       {/* Active Task Card */}
       <section className="w-full">
-        <div className="bg-slate-900/40 border border-primary/20 rounded-2xl overflow-hidden shadow-xl">
+        <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-primary/20 rounded-2xl overflow-hidden shadow-xl">
           <div className="flex flex-col md:flex-row">
-            <div className="w-full md:w-64 bg-primary/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-800">
+            <div className="w-full md:w-64 bg-primary/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800">
               <div className="size-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
                 <RefreshCw size={40} className="text-primary" />
               </div>
-              <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full uppercase tracking-widest">Active Task</span>
+              <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-500 text-[10px] font-bold rounded-full uppercase tracking-widest">Active Task</span>
             </div>
             <div className="flex-1 p-8">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-1">A2A Orchestrator</h2>
-                  <p className="text-slate-400">Processing cross-domain inventory synchronization</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">A2A Orchestrator</h2>
+                  <p className="text-slate-600 dark:text-slate-400">Processing cross-domain inventory synchronization</p>
                 </div>
                 <div className="text-right">
                   <span className="text-2xl font-bold text-primary">65%</span>
@@ -120,22 +120,22 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                   <div 
                     style={{ width: '65%' }}
                     className="bg-primary h-full rounded-full"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-3 text-sm text-green-500">
+                  <div className="flex items-center gap-3 text-sm text-green-600 dark:text-green-500">
                     <CheckCircle2 size={16} />
                     <span>Connecting to Spanner Retail... <span className="font-bold">Complete</span></span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-slate-200">
+                  <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                     <RefreshCw size={16} className="text-primary" />
                     <span className="font-medium">Analyzing Inventory Data...</span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-slate-400">
+                  <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                     <Circle size={16} />
                     <span>Cross-referencing with Oracle ERP... <span className="italic text-xs">Waiting</span></span>
                   </div>
@@ -157,7 +157,7 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
           <div 
             key={card.id}
             onClick={() => onNavigate(card.id as View)}
-            className="group bg-slate-900/40 p-6 rounded-2xl border border-slate-800 hover:border-primary/40 transition-all cursor-pointer"
+            className="group bg-white dark:bg-slate-900/40 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-primary/40 transition-all cursor-pointer shadow-sm dark:shadow-none"
           >
             <div className="flex items-center justify-between mb-6">
               <div className={`size-12 rounded-xl flex items-center justify-center transition-colors ${
@@ -173,20 +173,20 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
                   'text-cyan-500'
                 }`} size={24} />
               </div>
-              <MoreVertical className="text-slate-700 cursor-pointer" size={20} />
+              <MoreVertical className="text-slate-400 dark:text-slate-700 cursor-pointer" size={20} />
             </div>
-            <h3 className="text-lg font-bold mb-1">{card.title}</h3>
-            <p className="text-sm text-slate-400 mb-6">{card.desc}</p>
+            <h3 className="text-lg font-bold mb-1 text-slate-900 dark:text-white">{card.title}</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">{card.desc}</p>
             <div className="space-y-3">
               {card.stats.map((stat, i) => (
                 <div key={i} className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500">{stat.label}</span>
-                  <span className={`font-semibold ${stat.status === 'success' ? 'text-green-500' : stat.status === 'info' ? 'text-blue-400' : stat.status === 'purple' ? 'text-purple-400' : stat.status === 'cyan' ? 'text-cyan-400' : 'text-slate-200'}`}>
+                  <span className="text-slate-600 dark:text-slate-500">{stat.label}</span>
+                  <span className={`font-semibold ${stat.status === 'success' ? 'text-green-600 dark:text-green-500' : stat.status === 'info' ? 'text-blue-600 dark:text-blue-400' : stat.status === 'purple' ? 'text-purple-600 dark:text-purple-400' : stat.status === 'cyan' ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-700 dark:text-slate-200'}`}>
                     {stat.value}
                   </span>
                 </div>
               ))}
-              <div className="pt-4 mt-4 border-t border-slate-800/50">
+              <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800/50">
                 {card.id === 'oracle-detail' && (
                   <div className="h-16 w-full flex items-end gap-1">
                     {[0.5, 0.6, 0.75, 0.5, 0.8, 0.75, 1].map((h, i) => (
@@ -203,7 +203,7 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
                 {card.id === 'bigquery-detail' && (
                   <div className="grid grid-cols-4 gap-2">
                     {[true, true, 'pulse', false].map((state, i) => (
-                      <div key={i} className={`h-10 rounded-lg flex items-center justify-center ${state === false ? 'bg-slate-800' : 'bg-purple-500/10'}`}>
+                      <div key={i} className={`h-10 rounded-lg flex items-center justify-center ${state === false ? 'bg-slate-100 dark:bg-slate-800' : 'bg-purple-500/10'}`}>
                         {state !== false && <div className={`size-2 rounded-full bg-purple-500`} />}
                       </div>
                     ))}
@@ -212,8 +212,8 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
                 {card.id === 'alloy-detail' && (
                   <div className="flex gap-2">
                     {[1, 2].map(i => (
-                      <div key={i} className="size-8 rounded-full bg-slate-800 flex items-center justify-center">
-                        <Users size={14} className="text-slate-500" />
+                      <div key={i} className="size-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                        <Users size={14} className="text-slate-600 dark:text-slate-500" />
                       </div>
                     ))}
                     <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">

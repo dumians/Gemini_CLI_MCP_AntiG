@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Database, Bot, Settings } from 'lucide-react';
 import { GraphView } from './GraphView';
+import { api } from '../utils/api';
 
 export const DataDomainsView = () => {
   const [settings, setSettings] = React.useState<any>(null);
@@ -8,11 +9,8 @@ export const DataDomainsView = () => {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/settings');
-      if (res.ok) {
-        const data = await res.json();
-        setSettings(data);
-      }
+      const data = await api.get('/api/settings');
+      setSettings(data);
     } catch(e) {
       console.error(e);
     }
@@ -26,23 +24,37 @@ export const DataDomainsView = () => {
   const handleAddSource = async () => {
     const name = prompt('Enter Data Source Name:');
     if (!name) return;
-    await fetch('/api/settings/add-source', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: name.toLowerCase().replace(/\s/g, '-'), name })
-    });
-    fetchSettings();
+    const domain = prompt('Enter Domain (e.g., finance):');
+    if (!domain) return;
+    
+    try {
+      await api.post('/api/config/data-sources', {
+        id: name.toLowerCase().replace(/\s/g, '-'),
+        name,
+        domain
+      });
+      fetchSettings();
+    } catch (e: any) {
+      alert(`Failed to add source: ${e.message}`);
+    }
   };
 
   const handleAddAgent = async () => {
     const name = prompt('Enter Agent Name:');
     if (!name) return;
-    await fetch('/api/settings/add-agent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: name.toLowerCase().replace(/\s/g, '-'), name })
-    });
-    fetchSettings();
+    const domain = prompt('Enter Domain (e.g., finance):');
+    if (!domain) return;
+
+    try {
+      await api.post('/api/agents', {
+        id: name.toLowerCase().replace(/\s/g, '-'),
+        name,
+        domain
+      });
+      fetchSettings();
+    } catch (e: any) {
+      alert(`Failed to add agent: ${e.message}`);
+    }
   };
 
   const handleEditAgent = async (agent: any) => {
@@ -52,12 +64,12 @@ export const DataDomainsView = () => {
     
     if (specialty === null && owner === null && description === null) return;
     
-    await fetch(`/api/config/agents/${agent.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ specialty, owner, description })
-    });
-    fetchSettings();
+    try {
+      await api.put(`/api/config/agents/${agent.id}`, { specialty, owner, description });
+      fetchSettings();
+    } catch (e: any) {
+      alert(`Failed to update agent: ${e.message}`);
+    }
   };
 
   if (loading) return <div className="p-8 text-slate-400">Loading domains...</div>;

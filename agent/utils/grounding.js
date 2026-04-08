@@ -29,6 +29,15 @@ function formatGraphResult(result) {
 }
 
 /**
+ * Document Grounding Utility (Multi-Modal)
+ * Anchors insights in unstructured documents (PDFs, Contracts, Scanned Images).
+ */
+export function groundDocumentContext(source, contentSnippet) {
+    if (!contentSnippet) return "";
+    return `\n[DOCUMENT GROUNDING - ${source.toUpperCase()}]\nVerified Content: "${contentSnippet}"\nSource: ${source}\n`;
+}
+
+/**
  * Enriches an agent's system instruction with catalog metadata for its domain.
  * Gives the agent awareness of all available tables, columns, and cross-domain links.
  * @param {string} domain - The domain to get context for (e.g., 'Finance', 'Retail')

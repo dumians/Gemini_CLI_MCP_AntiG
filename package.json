@@ -1,7 +1,7 @@
 {
-    "name": "adk-multi-domain-demo",
-    "version": "1.0.0",
-    "description": "Enterprise Data Agents Demo across multiple DB domains",
+    "name": "agentic-mesh-multi-domain-demo",
+    "version": "1.0.4",
+    "description": "Enterprise Data Agents Demo across multiple  domains, secured and grounded",
     "main": "agent/index.js",
     "type": "module",
     "scripts": {

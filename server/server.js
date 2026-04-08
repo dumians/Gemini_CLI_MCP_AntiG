@@ -515,6 +515,42 @@ app.put('/api/contracts/:id', authMiddleware, (req, res) => {
     }
 });
 
+app.post('/api/contracts', authMiddleware, (req, res) => {
+    const { product, domain, schema_file, sla, privacy, subscriber, status } = req.body;
+    if (!product || !domain) return res.status(400).json({ error: "Missing required fields: product, domain" });
+
+    try {
+        const contractsPath = path.join(__dirname, '../config/data_contracts.json');
+        let contractsData = { contracts: [] };
+        if (fs.existsSync(contractsPath)) {
+            contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+        }
+
+        const newContract = {
+            id: `CTR-${Math.floor(Math.random() * 1000)}`,
+            product,
+            domain,
+            schema_file: schema_file || 'db-schemas/generic_schema.sql',
+            subscriber: subscriber || 'Internal User',
+            status: status || 'Draft',
+            sla: sla || '99.9%',
+            privacy: privacy || 'Standard'
+        };
+
+        contractsData.contracts.push(newContract);
+        fs.writeFileSync(contractsPath, JSON.stringify(contractsData, null, 2));
+
+        // Integration with GCP Dataplex
+        dataplex.createDataContract(newContract).catch(err => {
+            console.error("[Server] Failed to create data contract in Dataplex:", err);
+        });
+
+        res.status(201).json({ message: "Contract proposed successfully", data: newContract });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/products', authMiddleware, (req, res) => {
     try {
         const productsPath = path.join(__dirname, '../config/data_products.json');
@@ -617,7 +653,7 @@ app.post('/api/products/:id/subscribe', authMiddleware, (req, res) => {
 
 app.put('/api/products/:id', authMiddleware, (req, res) => {
     const { id } = req.params;
-    const { name, description, owner, tables, domain } = req.body;
+    const { name, description, owner, tables, domain, domainContracts, security_level } = req.body;
 
     try {
         const productsPath = path.join(__dirname, '../config/data_products.json');
@@ -635,10 +671,18 @@ app.put('/api/products/:id', authMiddleware, (req, res) => {
             description: description || productsData.products[prodIndex].description,
             owner: owner || productsData.products[prodIndex].owner,
             tables: tables || productsData.products[prodIndex].tables,
-            domain: domain || productsData.products[prodIndex].domain
+            domain: domain || productsData.products[prodIndex].domain,
+            domainContracts: domainContracts || productsData.products[prodIndex].domainContracts,
+            security_level: security_level || productsData.products[prodIndex].security_level
         };
 
         fs.writeFileSync(productsPath, JSON.stringify(productsData, null, 2));
+        
+        // Integration with GCP Dataplex
+        dataplex.createDataProduct(productsData.products[prodIndex]).catch(err => {
+            console.error("[Server] Failed to update data product in Dataplex:", err);
+        });
+
         res.json({ message: `Product ${id} updated successfully`, data: productsData.products[prodIndex] });
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -6,6 +6,7 @@
       {
         "name": "product",
         "type": "string",
+        "index": 1,
         "constraints": {
           "required": true
         },
@@ -16,6 +17,7 @@
       {
         "name": "schema",
         "type": "string",
+        "index": 2,
         "constraints": {
           "required": true
         },
@@ -26,6 +28,7 @@
       {
         "name": "sla",
         "type": "string",
+        "index": 3,
         "constraints": {
           "required": true
         },
@@ -36,6 +39,7 @@
       {
         "name": "privacy",
         "type": "string",
+        "index": 4,
         "constraints": {
           "required": true
         },

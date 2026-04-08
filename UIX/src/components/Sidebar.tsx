@@ -29,13 +29,13 @@ export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: Vi
   ];
 
   return (
-    <aside className="w-72 flex-shrink-0 border-r border-slate-800 bg-background-dark flex flex-col h-screen">
+    <aside className="w-72 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-background-light dark:bg-background-dark flex flex-col h-screen transition-colors">
       <div className="p-6 flex items-center gap-3">
         <div className="size-10 rounded-lg bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
           <Database size={24} />
         </div>
         <div className="flex flex-col">
-          <h1 className="text-slate-100 text-base font-bold leading-none">Data Agent</h1>
+          <h1 className="text-slate-900 dark:text-slate-100 text-base font-bold leading-none">Data Agent</h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">v2.4.0-enterprise</p>
         </div>
       </div>
@@ -48,7 +48,7 @@ export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: Vi
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${
                 activeView === item.id || (item.id === 'governance' && activeView === 'governance-detail') || (item.children && item.children.some(c => c.id === activeView))
                   ? 'bg-primary/10 text-primary font-medium' 
-                  : 'text-slate-400 hover:bg-slate-800'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: Vi
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-xs ${
                       activeView === subItem.id
                         ? 'bg-primary/5 text-primary font-medium' 
-                        : 'text-slate-400 hover:bg-slate-800'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -105,10 +105,10 @@ export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: Vi
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-800">
-        <div className="bg-slate-800/50 rounded-xl p-4">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="bg-slate-100 dark:bg-slate-800/50 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="size-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
+            <div className="size-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-300 dark:border-slate-600">
               <img 
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRWM7USIMO4BvNO9bl2IpBrLCNCAAaKCKX_KeZRjwh8xcAWloetSi3lnX3WYNUQvlgZGknXPnCxGCnfJgprzFdO8Tpm8rlUccNINH2qUwxF9JrtmHMyv-KFCABG9hzrTq29iOd74gxp9ge9zRNgmT3TYBDSt2vbByJ6DZa4Jhjx16AammwoXX6Yv4gTOApEeDo9xPGXgZbTGzyQ1SRgeSDduU63hAiWlEai3jgKy1bXxrrfUr76zliot1_OF4PpgufENojPWgm9e0" 
                 alt="Avatar" 
@@ -117,20 +117,20 @@ export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: Vi
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate text-slate-100">Enterprise Admin</p>
+              <p className="text-xs font-semibold truncate text-slate-900 dark:text-slate-100">Enterprise Admin</p>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">Platinum Tier</p>
             </div>
           </div>
           <div className="flex gap-2">
             <button 
               onClick={() => onViewChange('admin-portal')}
-              className="flex-1 py-2 bg-slate-700 text-xs font-medium rounded-lg hover:bg-primary transition-all text-center"
+              className="flex-1 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-100 text-xs font-medium rounded-lg hover:bg-slate-300 dark:hover:bg-primary dark:hover:text-white transition-all text-center"
             >
               Settings
             </button>
             <button 
               onClick={onLogout}
-              className="px-3 py-2 bg-slate-800 text-xs font-medium rounded-lg text-red-400 hover:bg-slate-700 transition-all border border-slate-700 hover:border-red-900/50"
+              className="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-xs font-medium rounded-lg text-red-600 dark:text-red-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all border border-slate-300 dark:border-slate-700 hover:border-red-400 dark:hover:border-red-900/50"
               title="Sign Out"
             >
               Logout

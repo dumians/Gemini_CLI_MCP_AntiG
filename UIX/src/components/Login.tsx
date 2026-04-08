@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Cpu, ShieldCheck, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { auth } from '../utils/auth';
+import { api } from '../utils/api';
 
 interface LoginProps {
     onLoginSuccess: (user: any) => void;
@@ -20,23 +21,13 @@ export function Login({ onLoginSuccess }: LoginProps) {
         try {
             // For UIX, we simulate a successful login if it's admin/admin or just proceed.
             // Replace with actual API call if UIX has its own auth endpoint
-            const res = await fetch(`http://localhost:3001/api/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
-            });
+            const data = await api.post('/api/auth/login', { username, password });
 
-            const data = await res.json();
-
-            if (res.ok) {
-                auth.setToken(data.token);
-                auth.setUser(data.user);
-                onLoginSuccess(data.user);
-            } else {
-                setError(data.error || 'Invalid credentials');
-            }
-        } catch (err) {
-            setError('System link failed. Check mesh status.');
+            auth.setToken(data.token);
+            auth.setUser(data.user);
+            onLoginSuccess(data.user);
+        } catch (err: any) {
+            setError(err.message || 'System link failed. Check mesh status.');
         } finally {
             setIsProcessing(false);
         }

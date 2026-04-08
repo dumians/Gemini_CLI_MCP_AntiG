@@ -11,7 +11,10 @@ import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { kgService } from "./utils/kg_service.js";
 import { memoryBankService } from "./utils/memory_bank_service.js";
+import { semanticCache } from "./utils/semantic_cache.js";
+import { governanceAgent } from "./utils/governance_agent.js";
 import GenericAgent from "./utils/generic_agent.js";
+import { eventBus } from "./utils/event_bus.js";
 
 dotenv.config();
 
@@ -155,7 +158,13 @@ export async function askOrchestrator(query, userId = 'admin') {
         enrichedQuery += `\n(Mapped Terms: ${JSON.stringify(mapping)})`;
     }
 
-    const plan = await generatePlan(enrichedQuery, traceId);
+    // --- STEP 3: Semantic Cache (Performance Improvement) ---
+    let plan = await semanticCache.findReasoningPath(query);
+    if (!plan) {
+        plan = await generatePlan(enrichedQuery, traceId);
+        await semanticCache.storeReasoningPath(query, plan);
+    }
+
     const planContext = `\n\n[STRATEGIC PLAN]\n` + JSON.stringify(plan, null, 2);
     const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext + planContext;
 
@@ -187,6 +196,18 @@ export async function askOrchestrator(query, userId = 'admin') {
 
                 const agentName = agentDef.name;
                 const subQuery = call.args.query;
+
+                // --- STEP 4: Governance PEP (Security Improvement) ---
+                if (!governanceAgent.validateAccess("MasterOrchestrator", agentDef.domain, "DELEGATE", traceId)) {
+                    toolCallParts.push({
+                        functionResponse: {
+                            name: call.name,
+                            response: { error: "Access Denied by Mesh Governance Policy (Zero-Trust)" }
+                        }
+                    });
+                    continue;
+                }
+
                 const filteredContext = filterMeshContext(meshContext, agentName);
 
                 logger.logDispatch("Orchestrator", agentName, subQuery, traceId);
@@ -210,7 +231,9 @@ export async function askOrchestrator(query, userId = 'admin') {
                             }
                         }
 
+                        // --- STEP 5: Automated Masking (Governance Improvement) ---
                         const agentResult = validateDataProduct(rawResult, agentName, 'MasterOrchestrator');
+                        agentResult.data = governanceAgent.maskPayload(agentDef.domain, agentResult.data);
                         
                         // Log success with latency
                         logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime, traceId);
