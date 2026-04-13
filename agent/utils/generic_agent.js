@@ -1,11 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { logger } from "./logging_service.js";
 import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./grounding.js";
 import dotenv from "dotenv";
 import { ModelArmorClient } from "@google-cloud/modelarmor";
+import { gateway } from "./one_mcp_gateway.js";
+import { mcpToolbox } from "./mcp_toolbox.js";
 
 dotenv.config();
 
@@ -19,51 +18,14 @@ class GenericAgent {
         this.name = config.name;
         this.domain = config.domain;
         this.systemInstruction = config.systemInstruction || "";
-        this.mcpServers = config.mcpServers || []; // Array of { name, mcpUrl, serverCmd, serverArgs }
+        this.mcpServers = config.mcpServers || [];
         this.groundingDomain = config.groundingDomain || config.domain;
-        
-        // Transport Singletons cache
-        this.clientInstances = {};
-    }
-
-    async createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
-        const transport = remoteUrl
-            ? new SSEClientTransport(new URL(remoteUrl))
-            : new StdioClientTransport({ command: serverCmd, args: serverArgs });
-
-        const client = new Client(
-            { name: `${this.id}-mcp`, version: "1.0.0" },
-            { capabilities: {} }
-        );
-
-        await client.connect(transport);
-        return client;
-    }
-
-    async getClient(serverConfig) {
-        const key = serverConfig.mcpUrl || serverConfig.serverArgs?.join('-') || serverConfig.name;
-        if (!this.clientInstances[key]) {
-            // Resolve URLs from environment if needed
-            let url = serverConfig.mcpUrl;
-            if (url && url.startsWith("process.env.")) {
-                const envVar = url.replace("process.env.", "");
-                url = process.env[envVar];
-            }
-
-            logger.log(this.name, `Connecting to MCP server ${serverConfig.name}`, "DEBUG");
-            this.clientInstances[key] = await this.createMcpClient(
-                serverConfig.serverCmd || "node",
-                serverConfig.serverArgs || [],
-                url
-            );
-        }
-        return this.clientInstances[key];
     }
 
     async process(query, meshContext = {}, traceId = null) {
-        logger.log(this.name, `Processing query: ${query}`, "INFO", null, traceId);
+        logger.log(this.name, `Processing query via One MCP Gateway: ${query}`, "INFO", null, traceId);
 
-        // Model Armor - Sanitize Prompt
+        // 1. Proactive Security Shielding (Model Armor)
         try {
             const [armorResponse] = await modelArmorClient.sanitizeUserPrompt({
                 template: MODEL_ARMOR_TEMPLATE,
@@ -81,67 +43,16 @@ class GenericAgent {
             query = armorResponse.text || query;
         } catch (error) {
             logger.log(this.name, `Model Armor prompt sanitization failed: ${error.message}`, "WARNING", null, traceId);
-            // Permissive mode: continue with original query
         }
 
-        // 1. Connect to all MCP servers and fetch tools
-        const allTools = [];
-        const clientMappings = []; // Store link to client for execution mapping
-
-        for (const serverConfig of this.mcpServers) {
-            try {
-                const client = await this.getClient(serverConfig);
-                const listResponse = await client.listTools();
-                const tools = listResponse.tools || [];
-                
-                for (const t of tools) {
-                    allTools.push({
-                        ...t,
-                        _client: client // Reference for loop call dispatch
-                    });
-                }
-            } catch (err) {
-                logger.log(this.name, `Failed to fetch tools from server ${serverConfig.name}: ${err.message}`, "WARNING", null, traceId);
-            }
-        }
+        // 2. Retrieve capabilities via One MCP Gateway
+        let allTools = await gateway.listTools(this.domain, this.mcpServers);
+        
+        // 3. Inject standardized fallback tools from MCP Toolbox if needed
+        allTools = mcpToolbox.injectStandardTools(allTools, this.id, this.domain);
 
         if (allTools.length === 0) {
-            logger.log(this.name, `No remote tools available. Checking for local fallback tools.`, "WARNING");
-            
-            const fallbackDomains = ["Oracle EBS", "JD Edwards", "Siebel CRM", "Oracle BRM", "Oracle FlexCube"];
-            if (fallbackDomains.includes(this.domain)) {
-                logger.log(this.name, `Adding local read_csv tool fallback for domain ${this.domain}`, "INFO");
-                allTools.push({
-                    name: "read_csv",
-                    description: `Reads the content of the ${this.id} CSV test data file.`,
-                    inputSchema: { type: "object", properties: {} },
-                    _client: {
-                        callTool: async (name, args) => {
-                            const fs = await import('fs');
-                            const path = await import('path');
-                            const csvMapping = {
-                                'ebs_agent': 'ebs_orders.csv',
-                                'jde_agent': 'jde_accounts.csv',
-                                'siebel_agent': 'siebel_leads.csv',
-                                'brm_agent': 'brm_invoices.csv',
-                                'flexcube_agent': 'flexcube_transactions.csv'
-                            };
-                            
-                            const fileName = csvMapping[this.id] || `${this.id}.csv`;
-                            const csvPath = path.join(process.cwd(), 'test-data', fileName);
-                            
-                            if (fs.existsSync(csvPath)) {
-                                const content = fs.readFileSync(csvPath, 'utf8');
-                                return { content: [{ text: content }] };
-                            } else {
-                                return { content: [{ text: `File not found: ${csvPath}` }] };
-                            }
-                        }
-                    }
-                });
-            } else {
-                throw new Error(`No tools available for ${this.name}. Check MCP server connectivity.`);
-            }
+            throw new Error(`No tools available for ${this.name} within domain ${this.domain}. Check Gateway routing.`);
         }
 
         const geminiTools = [
@@ -168,7 +79,7 @@ class GenericAgent {
         Use this context to enrich your analysis if relevant.`;
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash", // Default mapping fallback
+            model: "gemini-2.5-flash",
             systemInstruction: finalInstruction,
             tools: geminiTools
         });
@@ -179,7 +90,6 @@ class GenericAgent {
 
         let groundingData = [];
 
-        // Tool Call Iteration Dispatch loops
         while (response.functionCalls && response.functionCalls.length > 0) {
             const toolCallParts = [];
             for (const call of response.functionCalls) {
@@ -191,6 +101,7 @@ class GenericAgent {
                      throw new Error(`Gemini called unknown tool: ${call.name}`);
                 }
 
+                // Execute tool via client reference (Gateway or Toolbox)
                 const toolResult = await tool._client.callTool(call.name, call.args);
                 const duration = Date.now() - startTime;
 
@@ -214,7 +125,8 @@ class GenericAgent {
         }
 
         let resultText = response.text;
-        // Model Armor - Sanitize Response
+
+        // 4. Proactive Output Sanitization (Model Armor)
         try {
             const [armorResponse] = await modelArmorClient.sanitizeModelResponse({
                 template: MODEL_ARMOR_TEMPLATE,
@@ -232,7 +144,6 @@ class GenericAgent {
             resultText = armorResponse.text || resultText;
         } catch (error) {
             logger.log(this.name, `Model Armor response sanitization failed: ${error.message}`, "WARNING", null, traceId);
-            // Permissive mode: continue with original text
         }
 
         return {

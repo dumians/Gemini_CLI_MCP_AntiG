@@ -18,22 +18,8 @@ import { eventBus } from "./utils/event_bus.js";
 
 dotenv.config();
 
-class MeshAgentFactory {
-    constructor() {
-        this.cache = {};
-    }
+import { agenticFactory } from "./utils/agentic_factory.js";
 
-    async runAgent(agentDef, query, context, traceId) {
-        const agentName = agentDef.name;
-        if (!this.cache[agentName]) {
-            logger.log("AgentFactory", `Spawning dynamic ADK agent: ${agentName} [${agentDef.domain}]`, "INFO", null, traceId);
-            this.cache[agentName] = new GenericAgent(agentDef);
-        }
-        return await this.cache[agentName].process(query, context, traceId);
-    }
-}
-
-const meshAgentFactory = new MeshAgentFactory();
 
 const config = configService.getConfig("orchestrator");
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -219,8 +205,8 @@ export async function askOrchestrator(query, userId = 'admin') {
                         if (call.name === "call_catalog_agent") {
                             rawResult = await catalogAgent.process(subQuery, filteredContext, traceId);
                         } else {
-                            // Dynamic ADK dispatching trigger
-                            rawResult = await meshAgentFactory.runAgent(agentDef, subQuery, filteredContext, traceId);
+                            // Dynamic ADK dispatching via Agentic Factory
+                            rawResult = await agenticFactory.getAgent(agentName).process(subQuery, filteredContext, traceId);
                             
                             try {
                                 const { DataplexAgent } = await import('./dataplex_agent.js');
