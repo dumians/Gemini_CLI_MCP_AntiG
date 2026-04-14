@@ -466,6 +466,40 @@ app.put('/api/config/agents/:id', authMiddleware, (req, res) => {
     }
 });
 
+function validateDataContractSchema(contract) {
+    const catalog = metadataCatalog.getCatalog();
+    const sources = Object.values(catalog.sources);
+    
+    if (contract.composite && Array.isArray(contract.components)) {
+        for (const comp of contract.components) {
+            const src = sources.find(s => s.domain === comp.domain);
+            if (!src) {
+                throw new Error(`Validation failed: Domain '${comp.domain}' not found in data sources.`);
+            }
+            // Verify attributes exist in entities of this source
+            if (Array.isArray(comp.attributes)) {
+                const sourceEntities = Object.values(catalog.entities).filter(e => e.sourceId === src.id);
+                const allAttributes = new Set();
+                sourceEntities.forEach(e => {
+                    if (Array.isArray(e.attributes)) {
+                        e.attributes.forEach(a => allAttributes.add(a.name));
+                    }
+                });
+                for (const attr of comp.attributes) {
+                    if (!allAttributes.has(attr)) {
+                        throw new Error(`Validation failed: Attribute '${attr}' not found in schema for domain '${comp.domain}'`);
+                    }
+                }
+            }
+        }
+    } else {
+        const src = sources.find(s => s.domain === contract.domain);
+        if (!src) {
+            throw new Error(`Validation failed: Domain '${contract.domain}' not found in data sources.`);
+        }
+    }
+}
+
 app.get('/api/contracts', authMiddleware, (req, res) => {
     try {
         const contractsPath = path.join(__dirname, '../config/data_contracts.json');
@@ -495,29 +529,37 @@ app.put('/api/contracts/:id', authMiddleware, (req, res) => {
             return res.status(404).json({ error: `Contract ${id} not found.` });
         }
 
-        contractsData.contracts[contractIndex] = {
+        const updatedContract = {
             ...contractsData.contracts[contractIndex],
             status: status || contractsData.contracts[contractIndex].status,
             sla: sla || contractsData.contracts[contractIndex].sla,
             privacy: privacy || contractsData.contracts[contractIndex].privacy
         };
 
+        // Validate against domain schemas
+        try {
+            validateDataContractSchema(updatedContract);
+        } catch (valError) {
+            return res.status(400).json({ error: valError.message });
+        }
+
+        contractsData.contracts[contractIndex] = updatedContract;
         fs.writeFileSync(contractsPath, JSON.stringify(contractsData, null, 2));
 
         // Integration with GCP Dataplex
-        dataplex.createDataContract(contractsData.contracts[contractIndex]).catch(err => {
+        dataplex.createDataContract(updatedContract).catch(err => {
             console.error("[Server] Failed to update data contract in Dataplex:", err);
         });
 
-        res.json({ message: `Contract ${id} updated successfully`, data: contractsData.contracts[contractIndex] });
+        res.json({ message: `Contract ${id} updated successfully`, data: updatedContract });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/contracts', authMiddleware, (req, res) => {
-    const { product, domain, schema_file, sla, privacy, subscriber, status } = req.body;
-    if (!product || !domain) return res.status(400).json({ error: "Missing required fields: product, domain" });
+    const { product, domain, schema_file, sla, privacy, subscriber, status, composite, components } = req.body;
+    if (!product || (!domain && !composite)) return res.status(400).json({ error: "Missing required fields: product, domain" });
 
     try {
         const contractsPath = path.join(__dirname, '../config/data_contracts.json');
@@ -529,13 +571,22 @@ app.post('/api/contracts', authMiddleware, (req, res) => {
         const newContract = {
             id: `CTR-${Math.floor(Math.random() * 1000)}`,
             product,
-            domain,
+            domain: domain || 'Composite',
             schema_file: schema_file || 'db-schemas/generic_schema.sql',
             subscriber: subscriber || 'Internal User',
             status: status || 'Draft',
             sla: sla || '99.9%',
-            privacy: privacy || 'Standard'
+            privacy: privacy || 'Standard',
+            composite: composite || false,
+            components: components || []
         };
+
+        // Validate against domain schemas
+        try {
+            validateDataContractSchema(newContract);
+        } catch (valError) {
+            return res.status(400).json({ error: valError.message });
+        }
 
         contractsData.contracts.push(newContract);
         fs.writeFileSync(contractsPath, JSON.stringify(contractsData, null, 2));
@@ -550,6 +601,47 @@ app.post('/api/contracts', authMiddleware, (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.post('/api/contracts/:id/subscribe', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const { subscriber } = req.body;
+
+    if (!subscriber) {
+        return res.status(400).json({ error: "Missing subscriber name" });
+    }
+
+    try {
+        const contractsPath = path.join(__dirname, '../config/data_contracts.json');
+        if (!fs.existsSync(contractsPath)) return res.status(404).json({ error: "No contracts found" });
+
+        const contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+        const contract = contractsData.contracts.find(c => c.id === id);
+
+        if (!contract) return res.status(404).json({ error: "Contract not found" });
+
+        contract.subscriber = subscriber;
+        fs.writeFileSync(contractsPath, JSON.stringify(contractsData, null, 2));
+
+        // Dataplex Lineage subscription simulation
+        const source = contract.product.toLowerCase().replace(/\s/g, '-');
+        const target = subscriber.toLowerCase().replace(/\s/g, '-');
+        const processId = `${source}-to-${target}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        const runId = `run-${Date.now()}`;
+
+        try {
+            await dataplex.createLineageProcess(processId, `Contract Subscription Lineage: ${contract.product} to ${subscriber}`);
+            await dataplex.createLineageRun(processId, runId);
+            await dataplex.createLineageEvent(processId, runId, source, target);
+        } catch (lineageErr) {
+            console.error("[Server] Failed to emit subscription lineage in Dataplex:", lineageErr);
+        }
+
+        res.json({ message: "Subscribed to contract successfully", contract });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 app.get('/api/products', authMiddleware, (req, res) => {
     try {
