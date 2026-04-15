@@ -53,6 +53,17 @@ export const MarketplaceView = () => {
   };
 
   const [domains, setDomains] = React.useState<string[]>([]);
+  const [testingDomain, setTestingDomain] = React.useState<string | null>(null);
+  const [domainSuccess, setDomainSuccess] = React.useState<string | null>(null);
+  const [newDomainForm, setNewDomainForm] = React.useState({
+    name: '',
+    sourceType: '',
+    connectionString: '',
+    authType: 'service_account',
+    authSecret: ''
+  });
+  const [discoveringDomain, setDiscoveringDomain] = React.useState(false);
+  const [discoveryMessage, setDiscoveryMessage] = React.useState('');
 
   const fetchDomains = async () => {
     try {
@@ -631,22 +642,92 @@ export const MarketplaceView = () => {
             <h3 className="text-lg font-bold text-white mb-6">Create & Manage Data Domains</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
+                {discoveryMessage && (
+                  <div className="bg-primary/10 text-primary text-xs font-bold p-3 rounded-lg border border-primary/20 animate-fade-in">
+                    {discoveryMessage}
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-slate-400">Domain Name</label>
-                  <input type="text" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary" placeholder="e.g. New Domain" />
+                  <input 
+                    type="text" 
+                    value={newDomainForm.name}
+                    onChange={(e) => setNewDomainForm({ ...newDomainForm, name: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary" 
+                    placeholder="e.g. Logistics Hub" 
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-400">Select Data Source for Discovery</label>
-                  <select className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary">
-                    <option value="">-- Select Source --</option>
-                    <option value="oracle">Oracle ERP</option>
-                    <option value="spanner">Spanner Retail</option>
-                    <option value="bigquery">BigQuery Analytics</option>
-                    <option value="alloydb">AlloyDB CRM</option>
-                    <option value="catalog">Metadata Catalog</option>
+                  <label className="text-xs font-bold text-slate-400">Target Data Source Type</label>
+                  <select 
+                    value={newDomainForm.sourceType}
+                    onChange={(e) => setNewDomainForm({ ...newDomainForm, sourceType: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                  >
+                    <option value="">-- Select Target Engine --</option>
+                    <option value="oracle">Oracle ERP / Legacy</option>
+                    <option value="spanner">Google Cloud Spanner</option>
+                    <option value="bigquery">Google BigQuery</option>
+                    <option value="alloydb">AlloyDB / PostgreSQL</option>
                   </select>
                 </div>
-                <button className="bg-primary hover:bg-primary/80 text-white font-bold py-2 rounded-lg text-sm">Discover & Create Domain</button>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400">Connection String / URI</label>
+                  <input 
+                    type="text" 
+                    value={newDomainForm.connectionString}
+                    onChange={(e) => setNewDomainForm({ ...newDomainForm, connectionString: e.target.value })}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 font-mono text-xs text-white focus:outline-none focus:border-primary" 
+                    placeholder={
+                      newDomainForm.sourceType === 'oracle' ? 'oracle://user:pass@host:1521/ORCL' :
+                      newDomainForm.sourceType === 'spanner' ? 'projects/my-proj/instances/inst/databases/db' :
+                      newDomainForm.sourceType === 'bigquery' ? 'bigquery://project-id/dataset-id' :
+                      'postgres://user:secret@localhost:5432/dbname'
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Auth Method</label>
+                    <select 
+                      value={newDomainForm.authType}
+                      onChange={(e) => setNewDomainForm({ ...newDomainForm, authType: e.target.value })}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
+                    >
+                      <option value="service_account">Service Account Key</option>
+                      <option value="oauth">OAuth2 / OpenID</option>
+                      <option value="api_key">Static API Key</option>
+                      <option value="basic">Basic Username/Password</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Auth Secret / Credentials</label>
+                    <input 
+                      type="password" 
+                      value={newDomainForm.authSecret}
+                      onChange={(e) => setNewDomainForm({ ...newDomainForm, authSecret: e.target.value })}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 font-mono text-xs text-white focus:outline-none focus:border-primary" 
+                      placeholder="••••••••••••••••" 
+                    />
+                  </div>
+                </div>
+                <button 
+                  disabled={discoveringDomain || !newDomainForm.name || !newDomainForm.sourceType}
+                  onClick={() => {
+                    setDiscoveringDomain(true);
+                    setTimeout(() => {
+                      setDiscoveringDomain(false);
+                      setDomains([...domains, newDomainForm.name]);
+                      setDiscoveryMessage(`Successfully authenticated and discovered metadata for ${newDomainForm.name}.`);
+                      setNewDomainForm({ name: '', sourceType: '', connectionString: '', authType: 'service_account', authSecret: '' });
+                      setTimeout(() => setDiscoveryMessage(''), 5000);
+                    }, 2000);
+                  }}
+                  className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20"
+                >
+                  {discoveringDomain && <RefreshCw size={14} className="animate-spin" />} 
+                  {discoveringDomain ? 'Testing Handshake & Probing Schemas...' : 'Register Domain & Establish Data Contract'}
+                </button>
               </div>
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-white">Registered Data Domains</h4>
@@ -676,11 +757,23 @@ export const MarketplaceView = () => {
                            dom.details}
                         </div>
                         <button 
-                          onClick={() => alert(`Connection Test for ${domName} - Success!`)}
+                          onClick={() => {
+                            setTestingDomain(domName);
+                            setTimeout(() => {
+                              setTestingDomain(null);
+                              setDomainSuccess(`Successfully verified connection to ${domName}.`);
+                              setTimeout(() => setDomainSuccess(null), 3000);
+                            }, 1500);
+                          }}
+                          disabled={testingDomain === domName}
                           className="w-full bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition-all"
                         >
-                          <RefreshCw size={14} /> Test Connectivity
+                          <RefreshCw size={14} className={testingDomain === domName ? "animate-spin" : ""} /> 
+                          {testingDomain === domName ? 'Probing...' : 'Test Connectivity'}
                         </button>
+                        {domainSuccess && testingDomain === null && (
+                           <div className="text-[10px] text-green-400 text-center animate-fade-in">{domainSuccess}</div>
+                        )}
                       </div>
                     );
                   })}

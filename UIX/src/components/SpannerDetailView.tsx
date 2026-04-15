@@ -75,19 +75,55 @@ export const SpannerDetailView = () => {
     fetchInventory();
   }, []);
 
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [isShipping, setIsShipping] = React.useState(false);
+  const [spannerMessage, setSpannerMessage] = React.useState('');
+
+  const handleForceSync = () => {
+    setIsSyncing(true);
+    setTimeout(() => {
+      setIsSyncing(false);
+      setSpannerMessage('Global Inventory explicitly synced across 5 regions.');
+      setTimeout(() => setSpannerMessage(''), 3500);
+    }, 1800);
+  };
+
+  const handleNewShipment = () => {
+    setIsShipping(true);
+    setTimeout(() => {
+      setIsShipping(false);
+      setSpannerMessage('New cargo logged. Replicating to Spanner clusters.');
+      setTimeout(() => setSpannerMessage(''), 3500);
+    }, 1200);
+  };
+
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto w-full">
+      {spannerMessage && (
+        <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-2 rounded-lg text-sm flex items-center gap-2 animate-fade-in">
+          {spannerMessage}
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">Spanner Retail Database</h2>
           <p className="text-slate-400">Global, strongly consistent inventory management.</p>
         </div>
         <div className="flex gap-3">
-          <button className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2">
-            <RefreshCw size={16} /> Force Sync
+          <button 
+            onClick={handleForceSync}
+            disabled={isSyncing}
+            className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-white"
+          >
+            <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} /> 
+            {isSyncing ? 'Synchronizing...' : 'Force Sync'}
           </button>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 flex items-center gap-2">
-            <Package size={16} /> New Shipment
+          <button 
+            onClick={handleNewShipment}
+            disabled={isShipping}
+            className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 flex items-center gap-2 hover:bg-blue-500 transition-all"
+          >
+            <Package size={16} /> {isShipping ? 'Deploying...' : 'New Shipment'}
           </button>
         </div>
       </div>

@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from "./logging_service.js";
 
+import { fileURLToPath } from 'url';
+
 export class MCPToolbox {
     constructor() {
         this.csvMapping = {
@@ -25,7 +27,9 @@ export class MCPToolbox {
             inputSchema: { type: "object", properties: {} },
             _client: {
                 callTool: async () => {
-                    const csvPath = path.join(process.cwd(), 'test-data', fileName);
+                    const __filename = fileURLToPath(import.meta.url);
+                    const __dirname = path.dirname(__filename);
+                    const csvPath = path.resolve(__dirname, '../../test-data', fileName);
                     if (fs.existsSync(csvPath)) {
                         const content = fs.readFileSync(csvPath, 'utf8');
                         return { content: [{ text: content }] };

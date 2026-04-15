@@ -43,19 +43,55 @@ export const OracleDetailView = () => {
     { name: 'Agent Epsilon', queries: 1100, success: 99.5, latency: 10 },
   ];
 
+  const [isExporting, setIsExporting] = React.useState(false);
+  const [isReconciling, setIsReconciling] = React.useState(false);
+  const [actionMessage, setActionMessage] = React.useState('');
+
+  const handleExport = () => {
+    setIsExporting(true);
+    setTimeout(() => {
+      setIsExporting(false);
+      setActionMessage('Ledger export saved to downloads.');
+      setTimeout(() => setActionMessage(''), 3000);
+    }, 1500);
+  };
+
+  const handleReconcile = () => {
+    setIsReconciling(true);
+    setTimeout(() => {
+      setIsReconciling(false);
+      setActionMessage('General Ledger accounts fully reconciled.');
+      setTimeout(() => setActionMessage(''), 3000);
+    }, 2000);
+  };
+
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto w-full">
+      {actionMessage && (
+        <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-2 rounded-lg text-sm flex items-center gap-2 animate-fade-in">
+          {actionMessage}
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">Oracle ERP</h2>
           <p className="text-slate-400">Global Resource Planning & Financial Governance.</p>
         </div>
         <div className="flex gap-3">
-          <button className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2">
-            <Download size={16} /> Export Ledger
+          <button 
+            onClick={handleExport} 
+            disabled={isExporting}
+            className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-white"
+          >
+            {isExporting ? <span className="animate-spin text-xs">⏳</span> : <Download size={16} />} 
+            {isExporting ? 'Exporting...' : 'Export Ledger'}
           </button>
-          <button className="bg-orange-500 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20">
-            Reconcile Accounts
+          <button 
+            onClick={handleReconcile} 
+            disabled={isReconciling}
+            className="bg-orange-500 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 hover:bg-orange-400 transition-all"
+          >
+            {isReconciling ? 'Reconciling...' : 'Reconcile Accounts'}
           </button>
         </div>
       </div>

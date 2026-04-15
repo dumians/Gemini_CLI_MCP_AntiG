@@ -3,6 +3,8 @@ import path from 'path';
 import GenericAgent from './generic_agent.js';
 import { logger } from "./logging_service.js";
 
+import { fileURLToPath } from 'url';
+
 class AgenticFactory {
     constructor() {
         this.agents = {}; // Cached instances
@@ -12,7 +14,9 @@ class AgenticFactory {
 
     loadDefinitions() {
         try {
-            const configPath = path.join(process.cwd(), 'config', 'agents.json');
+            const __filename = fileURLToPath(import.meta.url);
+            const __dirname = path.dirname(__filename);
+            const configPath = path.resolve(__dirname, '../../config/agents.json');
             if (fs.existsSync(configPath)) {
                 const content = fs.readFileSync(configPath, 'utf8');
                 this.agentDefinitions = JSON.parse(content);

@@ -148,13 +148,20 @@ export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => voi
 };
 
 const PolicyModal = ({ isOpen, onClose, policy, onSave }: { isOpen: boolean, onClose: () => void, policy: Policy | null, onSave: (p: Policy) => void }) => {
-  const [formData, setFormData] = React.useState<Partial<Policy>>({ status: 'Draft' });
+  const [formData, setFormData] = React.useState<any>({ 
+    status: 'Draft', 
+    name: '', 
+    domain: '',
+    classification: 'LOW',
+    dataplexAspect: 'default',
+    maskingRule: 'none'
+  });
 
   React.useEffect(() => {
     if (policy) {
-      setFormData(policy);
+      setFormData({ ...policy, classification: 'HIGH', dataplexAspect: 'pii_aspect', maskingRule: 'redact' });
     } else {
-      setFormData({ status: 'Draft', name: '', domain: '' });
+      setFormData({ status: 'Draft', name: '', domain: '', classification: 'LOW', dataplexAspect: 'default', maskingRule: 'none' });
     }
   }, [policy, isOpen]);
 
@@ -165,22 +172,22 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave }: { isOpen: boolean, onC
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl"
+        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl"
       >
         <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-          <h2 className="text-xl font-bold text-white">{policy ? 'Edit Policy' : 'Create New Policy'}</h2>
+          <h2 className="text-xl font-bold text-white">{policy ? 'Edit Federated Policy' : 'Create Dataplex Governance Rule'}</h2>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
-        <div className="p-6 space-y-4">
-          <div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Policy Name</label>
             <input 
               value={formData.name || ''}
               onChange={e => setFormData({...formData, name: e.target.value})}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:ring-primary focus:border-primary outline-none" 
-              placeholder="e.g. GDPR PII Handling"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:ring-primary focus:border-primary outline-none text-sm" 
+              placeholder="e.g. EU General Data Masking"
             />
           </div>
           <div>
@@ -188,19 +195,58 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave }: { isOpen: boolean, onC
             <select 
               value={formData.domain || ''}
               onChange={e => setFormData({...formData, domain: e.target.value})}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:ring-primary focus:border-primary outline-none appearance-none"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:ring-primary focus:border-primary outline-none appearance-none text-sm"
             >
-              <option value="">Select Domain...</option>
-              <option value="Global">Global (All Domains)</option>
-              <option value="Oracle ERP">Oracle ERP</option>
-              <option value="Spanner">Spanner Retail</option>
-              <option value="BigQuery">BigQuery Analytics</option>
-              <option value="AlloyDB">AlloyDB CRM</option>
+              <option value="">Select Target Mesh...</option>
+              <option value="Global">Global Federation</option>
+              <option value="Oracle ERP">Oracle ERP Node</option>
+              <option value="Spanner">Spanner Retail Node</option>
+              <option value="BigQuery">BigQuery Lakehouse</option>
+              <option value="AlloyDB">AlloyDB Vault</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Status</label>
-            <div className="flex gap-4">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Sensitivity Class</label>
+            <select 
+              value={formData.classification}
+              onChange={e => setFormData({...formData, classification: e.target.value})}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:ring-primary focus:border-primary outline-none appearance-none text-sm"
+            >
+              <option value="LOW">Low (Public Analytics)</option>
+              <option value="MEDIUM">Medium (Internal Teams)</option>
+              <option value="HIGH">High (Confidential / PII)</option>
+              <option value="CRITICAL">Critical (Regulatory / Compliance)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Dataplex Tag / Aspect</label>
+            <select 
+              value={formData.dataplexAspect}
+              onChange={e => setFormData({...formData, dataplexAspect: e.target.value})}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:ring-primary focus:border-primary outline-none appearance-none text-sm"
+            >
+              <option value="default">Standard Aspect</option>
+              <option value="pii_aspect">dataplex.pii_aspect_v1</option>
+              <option value="quality_aspect">dataplex.data_quality_v1</option>
+              <option value="lineage_rule">dataplex.lineage_enforce</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Data Masking Rule</label>
+            <select 
+              value={formData.maskingRule}
+              onChange={e => setFormData({...formData, maskingRule: e.target.value})}
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:ring-primary focus:border-primary outline-none appearance-none text-sm"
+            >
+              <option value="none">No Masking (Direct Visibility)</option>
+              <option value="redact">Redact (••••••••)</option>
+              <option value="hash">Hash (SHA-256)</option>
+              <option value="nullify">Nullify (Replace with NULL)</option>
+            </select>
+          </div>
+          <div className="md:col-span-2 mt-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Activation State</label>
+            <div className="flex gap-6 bg-slate-800/30 p-3 rounded-xl border border-slate-800">
               {['Active', 'Draft', 'Restricted'].map(status => (
                 <label key={status} className="flex items-center gap-2 cursor-pointer">
                   <input 
@@ -211,19 +257,19 @@ const PolicyModal = ({ isOpen, onClose, policy, onSave }: { isOpen: boolean, onC
                     onChange={e => setFormData({...formData, status: e.target.value as any})}
                     className="text-primary focus:ring-primary bg-slate-800 border-slate-600" 
                   />
-                  <span className="text-sm text-slate-300">{status}</span>
+                  <span className="text-xs font-bold text-slate-300 uppercase">{status}</span>
                 </label>
               ))}
             </div>
           </div>
         </div>
         <div className="p-6 border-t border-slate-800 bg-slate-900/50 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-bold text-slate-400 hover:text-white transition-colors">Cancel</button>
+          <button onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-400 hover:text-white transition-colors">Cancel</button>
           <button 
             onClick={() => onSave(formData as Policy)}
-            className="px-6 py-2 bg-primary text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/20"
+            className="px-6 py-2.5 bg-primary hover:bg-primary/80 text-white text-sm font-bold rounded-xl shadow-lg shadow-primary/20 transition-all"
           >
-            Save Policy
+            Deploy Aspect Policy
           </button>
         </div>
       </motion.div>
