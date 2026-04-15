@@ -1,8 +1,8 @@
 
 Enterprise Data Agents Demo (ADK) - Walkthrough
 This document outlines the finished architecture and usage guidelines for the Multi-Domain Data Agent demo, utilizing Google Cloud databases, MCP, and the Gemini CLI.
-Technology Used - From Desigh to Code - Sticht to AI Studio , from Code to Enterprise - Antigravity , MCP toolbox for databases , Gemini CLI .
-                  ADK, A2UI, 
+Technology Used - From Design to Code - Sticht to AI Studio , from Code to Enterprise - Antigravity , MCP toolbox for databases , Gemini CLI .
+                  ADK, A2UI, MCP toolbox for databases and Gemini CLI. 
 
 Architecture Highlights
 The project successfully implements a simulated environment to showcase cross-domain data orchestration:
