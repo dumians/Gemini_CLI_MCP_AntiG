@@ -129,7 +129,7 @@ export async function handleRetailRequest(query, context = {}, traceId = null) {
 
     return {
         domain: "Retail",
-        data: response.text,
+        data: response.text(),
         metadata: {
             confidence: 0.92,
             source: "Cloud Spanner (Global)",

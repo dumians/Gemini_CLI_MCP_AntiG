@@ -131,7 +131,7 @@ export async function handleAnalyticsRequest(query, meshContext = {}, traceId = 
 
     return {
         domain: "Analytics",
-        data: response.text,
+        data: response.text(),
         metadata: {
             confidence: 0.98,
             source: "BigQuery / AlloyDB"

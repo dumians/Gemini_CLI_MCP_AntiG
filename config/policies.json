@@ -1,16 +1,59 @@
 {
   "rules": [
     {
-      "domain": "HR",
-      "maskFields": ["salary", "employee_id"]
+      "id": "POL-001",
+      "name": "PII Access Control (EMEA)",
+      "status": "Active",
+      "domain": "Oracle ERP",
+      "lastUpdated": "2h ago",
+      "classification": "HIGH",
+      "dataplexAspect": "pii_aspect",
+      "maskingRule": "redact",
+      "maskFields": [
+        "salary",
+        "employee_id"
+      ]
     },
     {
-      "domain": "FINANCE",
-      "maskFields": ["card_number", "revenue"]
+      "id": "POL-002",
+      "name": "Cross-Border Data Transfer",
+      "status": "Restricted",
+      "domain": "Global",
+      "lastUpdated": "1d ago",
+      "classification": "HIGH",
+      "dataplexAspect": "lineage_rule",
+      "maskingRule": "none",
+      "maskFields": [
+        "customer_email",
+        "phone"
+      ]
     },
     {
-      "domain": "CRM",
-      "maskFields": ["customer_email", "phone"]
+      "id": "POL-003",
+      "name": "Financial Ledger Retention",
+      "status": "Active",
+      "domain": "Spanner",
+      "lastUpdated": "3d ago",
+      "classification": "CRITICAL",
+      "dataplexAspect": "quality_aspect",
+      "maskingRule": "nullify",
+      "maskFields": [
+        "card_number",
+        "revenue"
+      ]
+    },
+    {
+      "id": "POL-004",
+      "name": "Marketing Segment Anonymization",
+      "status": "Draft",
+      "domain": "BigQuery",
+      "lastUpdated": "5h ago",
+      "classification": "MEDIUM",
+      "dataplexAspect": "default",
+      "maskingRule": "hash",
+      "maskFields": [
+        "segment_name"
+      ]
     }
   ]
 }

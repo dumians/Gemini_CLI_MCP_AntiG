@@ -59,9 +59,23 @@ async function main() {
                 console.log(`[Policy] Applying privacy policy '${contract.privacy}' to contract ${contract.id}`);
             }
         }
-    } else {
-        console.log("No data_contracts.json found.");
     }
+
+    // Read Governance Policies
+    const policiesPath = path.resolve('config/policies.json');
+    if (fs.existsSync(policiesPath)) {
+        const policiesData = JSON.parse(fs.readFileSync(policiesPath, 'utf-8'));
+        console.log(`\nFound ${policiesData.rules ? policiesData.rules.length : 0} governance policies.`);
+        if (policiesData.rules) {
+            for (const rule of policiesData.rules) {
+                console.log(`\nProcessing Governance Policy: ${rule.name}`);
+                await dataplex.createGovernancePolicy(rule);
+            }
+        }
+    } else {
+        console.log("No policies.json found.");
+    }
+
 
     console.log("\n=== Population Complete ===");
 }

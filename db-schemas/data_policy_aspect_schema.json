@@ -1,0 +1,78 @@
+{
+  "metadataTemplate": {
+    "name": "data_policy_metadata",
+    "type": "record",
+    "recordFields": [
+      {
+        "name": "id",
+        "type": "string",
+        "index": 1,
+        "searchable": true,
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Unique identifier for the policy"
+        }
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "index": 2,
+        "searchable": true,
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Name of the governance policy"
+        }
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "index": 3,
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Activation state (Active, Draft, Restricted)"
+        }
+      },
+      {
+        "name": "domain",
+        "type": "string",
+        "index": 4,
+        "constraints": {
+          "required": true
+        },
+        "annotations": {
+          "description": "Governed domain"
+        }
+      },
+      {
+        "name": "classification",
+        "type": "string",
+        "index": 5,
+        "annotations": {
+          "description": "Sensitivity classification (LOW, MEDIUM, HIGH, CRITICAL)"
+        }
+      },
+      {
+        "name": "dataplexAspect",
+        "type": "string",
+        "index": 6,
+        "annotations": {
+          "description": "Dataplex Tag / Aspect"
+        }
+      },
+      {
+        "name": "maskingRule",
+        "type": "string",
+        "index": 7,
+        "annotations": {
+          "description": "Data Masking Rule"
+        }
+      }
+    ]
+  }
+}

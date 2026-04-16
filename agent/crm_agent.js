@@ -101,7 +101,7 @@ export async function handleCRMRequest(query, context = {}, traceId = null) {
 
     return {
         domain: "CRM",
-        data: response.text,
+        data: response.text(),
         metadata: {
             confidence: 0.90,
             source: "AlloyDB CRM",

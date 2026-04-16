@@ -213,7 +213,60 @@ class DataplexIntegration {
         }
     }
 
+    async createGovernancePolicy(policy) {
+        console.log(`[Dataplex] Creating Governance Policy: ${policy.name}`);
+        
+        if (this.simulationMode) {
+            return { success: true, id: policy.id || `policy-${Date.now()}`, simulated: true };
+        }
+
+        try {
+            const entryGroupId = 'agentic-mesh-group';
+            await this.ensureEntryGroup(entryGroupId);
+            
+            try {
+                const schemaPath = join(__dirname, '../../db-schemas/data_policy_aspect_schema.json');
+                const schemaContent = fs.readFileSync(schemaPath, 'utf8');
+                const schema = JSON.parse(schemaContent);
+                
+                await this.ensureAspectType('data-policy-v4', schema.metadataTemplate);
+                await this.ensureEntryType('data-policy-v4', [`projects/${projectId}/locations/global/aspectTypes/data-policy-v4`]);
+            } catch (err) {
+                console.error("[Dataplex] Failed to load schema or ensure types for Data Policy:", err.message);
+                throw err;
+            }
+            
+            const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
+            
+            const [response] = await this.client.createEntry({
+                parent: parent,
+                entryId: policy.id,
+                entry: {
+                    entryType: `projects/${projectId}/locations/global/entryTypes/data-policy-v4`,
+                    aspects: {
+                       "data-policy-v4": {
+                           "id": policy.id,
+                           "name": policy.name,
+                           "status": policy.status,
+                           "domain": policy.domain,
+                           "classification": policy.classification || 'LOW',
+                           "dataplexAspect": policy.dataplexAspect || 'default',
+                           "maskingRule": policy.maskingRule || 'none'
+                       }
+                    }
+                }
+            });
+            console.log(`[Dataplex] Successfully created entry: ${response.name}`);
+            return { success: true, id: response.name };
+            
+        } catch (error) {
+            console.error(`Error creating data policy in Dataplex: ${error.message}`);
+            throw error;
+        }
+    }
+
     async createLineageProcess(processId, displayName) {
+
         console.log(`[Dataplex Lineage] Creating Process: ${displayName} (${processId})`);
         if (this.simulationMode) {
             return { success: true, id: processId, simulated: true };

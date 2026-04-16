@@ -17,7 +17,7 @@ export const SpannerDetailView = () => {
     { id: 'WH-EU-02', loc: 'London Gateway', region: 'EMEA', stock: 32000, status: 'Error', trend: '-4.5%' },
   ]);
 
-  const performanceData = [
+  const [performanceData, setPerformanceData] = React.useState<any[]>([
     { day: 'Mon', latency: 12, uptime: 99.9 },
     { day: 'Tue', latency: 15, uptime: 99.8 },
     { day: 'Wed', latency: 8, uptime: 100 },
@@ -25,7 +25,7 @@ export const SpannerDetailView = () => {
     { day: 'Fri', latency: 14, uptime: 99.9 },
     { day: 'Sat', latency: 10, uptime: 100 },
     { day: 'Sun', latency: 11, uptime: 100 },
-  ];
+  ]);
 
   const stockHistoryData = [
     { day: 'Mon', Berlin: 120000, SF: 85000, Singapore: 42000, Tokyo: 150000 },
@@ -66,6 +66,9 @@ export const SpannerDetailView = () => {
             else trendMap[day].Singapore += Number(item.quantity_sold) * 30;
           });
           setStockHistory(Object.values(trendMap));
+        }
+        if (data.performance?.length > 0) {
+          setPerformanceData(data.performance);
         }
       } catch (err) {
         console.error('Failed to fetch Spanner inventory:', err);

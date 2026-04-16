@@ -129,7 +129,7 @@ export async function handleFinancialRequest(query, context = {}, traceId = null
 
     return {
         domain: "Finance",
-        data: response.text,
+        data: response.text(),
         metadata: {
             confidence: 0.95,
             source: "Oracle DB @ GCP (ERP)",

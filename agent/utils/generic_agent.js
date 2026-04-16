@@ -124,7 +124,7 @@ class GenericAgent {
             response = result.response;
         }
 
-        let resultText = response.text;
+        let resultText = response.text();
 
         // 4. Proactive Output Sanitization (Model Armor)
         try {

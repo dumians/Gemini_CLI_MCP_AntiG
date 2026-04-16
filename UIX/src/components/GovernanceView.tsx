@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Filter, Plus, ShieldCheck, AlertTriangle, FileText, CheckCircle2, ChevronRight, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { View, Policy } from '../types';
+import { api } from '../utils/api';
 
 export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => void }) => {
   const [policies, setPolicies] = React.useState<Policy[]>([
@@ -10,6 +11,21 @@ export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => voi
     { id: 'POL-003', name: 'Financial Ledger Retention', status: 'Active', domain: 'Spanner', lastUpdated: '3d ago' },
     { id: 'POL-004', name: 'Marketing Segment Anonymization', status: 'Draft', domain: 'BigQuery', lastUpdated: '5h ago' },
   ]);
+
+  React.useEffect(() => {
+    const fetchPolicies = async () => {
+      try {
+        const data = await api.get('/api/governance/policies');
+        if (data && data.rules) {
+          setPolicies(data.rules);
+        }
+      } catch (err) {
+        console.error('Failed to fetch policies:', err);
+      }
+    };
+    fetchPolicies();
+  }, []);
+
   const [isPolicyModalOpen, setIsPolicyModalOpen] = React.useState(false);
   const [editingPolicy, setEditingPolicy] = React.useState<Policy | null>(null);
 

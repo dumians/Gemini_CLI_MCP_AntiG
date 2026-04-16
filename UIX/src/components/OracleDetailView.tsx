@@ -7,24 +7,51 @@ export const OracleDetailView = () => {
   const [financialData, setFinancialData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
+  const [agentPerformance, setAgentPerformance] = React.useState([
+    { name: 'Agent Alpha', queries: 1240, success: 99.2, latency: 12 },
+    { name: 'Agent Beta', queries: 890, success: 98.5, latency: 15 },
+    { name: 'Agent Gamma', queries: 2100, success: 99.8, latency: 8 },
+    { name: 'Agent Delta', queries: 1560, success: 97.4, latency: 22 },
+    { name: 'Agent Epsilon', queries: 1100, success: 99.5, latency: 10 },
+  ]);
+
+  const [procurementStatus, setProcurementStatus] = React.useState([
+    { label: 'Pending Approvals', value: 12, color: 'orange' },
+    { label: 'Active POs', value: 145, color: 'blue' },
+    { label: 'Vendor Disputes', value: 3, color: 'red' },
+  ]);
+
+  const [complianceAudit, setComplianceAudit] = React.useState(99.8);
+
+  const [ledgerEntries, setLedgerEntries] = React.useState([
+    { id: 'TX-9021', desc: 'Cloud Infrastructure', amount: '-$12,400', status: 'Cleared' },
+    { id: 'TX-9022', desc: 'Vendor Payment: Logistics', amount: '-$45,000', status: 'Pending' },
+    { id: 'TX-9023', desc: 'Service Revenue: EMEA', amount: '+$128,000', status: 'Cleared' },
+    { id: 'TX-9024', desc: 'Payroll: R&D Dept', amount: '-$210,000', status: 'Cleared' },
+  ]);
+
   React.useEffect(() => {
     const fetchMetrics = async () => {
       try {
         const data = await api.get('/api/oracle/analytics');
         if (data.orders) {
-          // Aggregate total amount by status for a simple bar chart
           const statusMap: { [key: string]: number } = {};
           data.orders.forEach((o: any) => {
             statusMap[o.status] = (statusMap[o.status] || 0) + Number(o.total_amount || 0);
           });
           
           const chartData = Object.entries(statusMap).map(([status, amount]) => ({
-            month: status, // Using status as the category for the bar
+            month: status,
             revenue: amount,
-            expenses: amount * 0.7, // Simulated expenses
+            expenses: amount * 0.7,
             compliance: 98
           }));
           setFinancialData(chartData);
+
+          if (data.agentPerformance?.length > 0) setAgentPerformance(data.agentPerformance);
+          if (data.procurementStatus?.length > 0) setProcurementStatus(data.procurementStatus);
+          if (data.complianceAudit) setComplianceAudit(data.complianceAudit);
+          if (data.ledgerEntries?.length > 0) setLedgerEntries(data.ledgerEntries);
         }
       } catch (err) {
         console.error('Failed to load oracle metrics:', err);
@@ -34,14 +61,6 @@ export const OracleDetailView = () => {
     };
     fetchMetrics();
   }, []);
-
-  const agentPerformance = [
-    { name: 'Agent Alpha', queries: 1240, success: 99.2, latency: 12 },
-    { name: 'Agent Beta', queries: 890, success: 98.5, latency: 15 },
-    { name: 'Agent Gamma', queries: 2100, success: 99.8, latency: 8 },
-    { name: 'Agent Delta', queries: 1560, success: 97.4, latency: 22 },
-    { name: 'Agent Epsilon', queries: 1100, success: 99.5, latency: 10 },
-  ];
 
   const [isExporting, setIsExporting] = React.useState(false);
   const [isReconciling, setIsReconciling] = React.useState(false);
@@ -152,11 +171,7 @@ export const OracleDetailView = () => {
             <div className="glass p-6 rounded-2xl border-slate-800">
               <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Procurement Status</h4>
               <div className="space-y-4">
-                {[
-                  { label: 'Pending Approvals', value: 12, color: 'orange' },
-                  { label: 'Active POs', value: 145, color: 'blue' },
-                  { label: 'Vendor Disputes', value: 3, color: 'red' },
-                ].map((item, i) => (
+                {procurementStatus.map((item, i) => (
                   <div key={i} className="flex justify-between items-center">
                     <span className="text-slate-300">{item.label}</span>
                     <span className={`font-mono font-bold text-${item.color}-500`}>{item.value}</span>
@@ -168,7 +183,7 @@ export const OracleDetailView = () => {
               <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Compliance Audit</h4>
               <div className="flex items-center justify-center h-24">
                 <div className="text-center">
-                  <p className="text-4xl font-bold text-green-500">99.8%</p>
+                  <p className="text-4xl font-bold text-green-500">{complianceAudit}%</p>
                   <p className="text-xs text-slate-500 mt-1">Global Compliance Score</p>
                 </div>
               </div>
@@ -180,19 +195,14 @@ export const OracleDetailView = () => {
           <div className="glass p-6 rounded-2xl border-slate-800">
             <h3 className="text-lg font-bold text-white mb-6">Recent Ledger Entries</h3>
             <div className="space-y-4">
-              {[
-                { id: 'TX-9021', desc: 'Cloud Infrastructure', amount: '-$12,400', status: 'Cleared' },
-                { id: 'TX-9022', desc: 'Vendor Payment: Logistics', amount: '-$45,000', status: 'Pending' },
-                { id: 'TX-9023', desc: 'Service Revenue: EMEA', amount: '+$128,000', status: 'Cleared' },
-                { id: 'TX-9024', desc: 'Payroll: R&D Dept', amount: '-$210,000', status: 'Cleared' },
-              ].map((tx, i) => (
+              {ledgerEntries.map((tx, i) => (
                 <div key={i} className="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5">
                   <div>
                     <p className="text-xs font-bold text-white">{tx.id}</p>
                     <p className="text-[10px] text-slate-500">{tx.desc}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-xs font-mono font-bold ${tx.amount.startsWith('+') ? 'text-green-500' : 'text-white'}`}>{tx.amount}</p>
+                    <p className={`text-xs font-mono font-bold ${String(tx.amount).startsWith('+') ? 'text-green-500' : 'text-white'}`}>{tx.amount}</p>
                     <p className="text-[10px] text-slate-500">{tx.status}</p>
                   </div>
                 </div>

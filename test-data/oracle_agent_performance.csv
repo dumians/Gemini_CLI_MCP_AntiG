@@ -1,0 +1,6 @@
+name,queries,success,latency
+Agent Alpha,1240,99.2,12
+Agent Beta,890,98.5,15
+Agent Gamma,2100,99.8,8
+Agent Delta,1560,97.4,22
+Agent Epsilon,1100,99.5,10

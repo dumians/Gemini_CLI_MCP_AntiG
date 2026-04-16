@@ -1,0 +1,5 @@
+id,desc,amount,status
+TX-9021,Cloud Infrastructure,-$12,400,Cleared
+TX-9022,Vendor Payment: Logistics,-$45,000,Pending
+TX-9023,Service Revenue: EMEA,+$128,000,Cleared
+TX-9024,Payroll: R&D Dept,-$210,000,Cleared

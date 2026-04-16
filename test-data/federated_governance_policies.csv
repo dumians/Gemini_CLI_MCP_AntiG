@@ -1,0 +1,5 @@
+id,name,status,domain,lastUpdated,classification,dataplexAspect,maskingRule
+POL-001,PII Access Control (EMEA),Active,Oracle ERP,2h ago,HIGH,pii_aspect,redact
+POL-002,Cross-Border Data Transfer,Restricted,Global,1d ago,HIGH,lineage_rule,none
+POL-003,Financial Ledger Retention,Active,Spanner,3d ago,CRITICAL,quality_aspect,nullify
+POL-004,Marketing Segment Anonymization,Draft,BigQuery,5h ago,MEDIUM,default,hash

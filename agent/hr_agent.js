@@ -110,7 +110,7 @@ export async function handleHRTask(query, meshContext = {}, traceId = null) {
 
     const dataProduct = {
         domain: config.domain || "HR",
-        data: response.text,
+        data: response.text(),
         metadata: {
             confidence: 0.90,
             source: config.source || "Oracle DB @ GCP (HR)"

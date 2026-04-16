@@ -848,17 +848,30 @@ app.post('/api/governance/policies', authMiddleware, (req, res) => {
         const pPath = path.join(__dirname, '../config/policies.json');
         fs.writeFileSync(pPath, JSON.stringify(req.body, null, 2));
         logger.log('Server', `Governance policies updated`, 'INFO');
+
+        // Integration with GCP Dataplex
+        if (req.body.rules && Array.isArray(req.body.rules)) {
+            req.body.rules.forEach(rule => {
+                dataplex.createGovernancePolicy(rule).catch(err => {
+                    console.error("[Server] Failed to create policy in Dataplex:", err);
+                });
+            });
+        }
+
         res.json({ message: "Policies updated successfully" });
     } catch (error) {
         res.status(500).json({ error: "Failed to save policies" });
     }
 });
 
+
 // Real Spanner Inventory from Test Data
 app.get('/api/spanner/inventory', authMiddleware, (req, res) => {
     try {
         const csvPath = path.join(__dirname, '../test-data/spanner_transactions.csv');
+        const perfCsv = path.join(__dirname, '../test-data/spanner_performance.csv');
         const transactions = parseCSV(csvPath);
+        const performance = parseCSV(perfCsv);
         
         // Sum quantities per store or item
         let totalSold = 0;
@@ -875,6 +888,11 @@ app.get('/api/spanner/inventory', authMiddleware, (req, res) => {
                 store_id: t.store_id,
                 quantity_sold: Number(t.quantity_sold),
                 timestamp: t.timestamp
+            })),
+            performance: performance.map(p => ({
+                day: p.day,
+                latency: Number(p.latency),
+                uptime: Number(p.uptime)
             }))
         });
     } catch (err) {
@@ -886,7 +904,14 @@ app.get('/api/spanner/inventory', authMiddleware, (req, res) => {
 app.get('/api/alloy/crm_data', authMiddleware, (req, res) => {
     try {
         const customersCsv = path.join(__dirname, '../test-data/alloydb_crm_customers.csv');
+        const sentimentCsv = path.join(__dirname, '../test-data/alloydb_sentiment_trends.csv');
+        const funnelCsv = path.join(__dirname, '../test-data/alloydb_conversion_funnel.csv');
+        const activeCustCsv = path.join(__dirname, '../test-data/alloydb_active_customers.csv');
+        
         const customers = parseCSV(customersCsv);
+        const sentimentTrends = parseCSV(sentimentCsv);
+        const conversionFunnel = parseCSV(funnelCsv);
+        const activeCustomers = parseCSV(activeCustCsv);
         
         let totalLtv = 0;
         customers.forEach(c => totalLtv += Number(c.lifetime_value || 0));
@@ -897,10 +922,21 @@ app.get('/api/alloy/crm_data', authMiddleware, (req, res) => {
                 totalLeads: customers.length,
                 totalLtv,
                 avgLtv: totalLtv / (customers.length || 1),
-                customerSentiment: 92, // Still static placeholder
-                avgResponseTime: "1.0h" // Still static placeholder
+                customerSentiment: 92, 
+                avgResponseTime: "1.0h" 
             },
-            customers: customers
+            customers: customers,
+            sentimentTrends: sentimentTrends.map(s => ({
+                day: s.day,
+                positive: Number(s.positive),
+                neutral: Number(s.neutral),
+                negative: Number(s.negative)
+            })),
+            conversionFunnel: conversionFunnel.map(f => ({
+                stage: f.stage,
+                value: Number(f.value)
+            })),
+            activeCustomers: activeCustomers
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -948,7 +984,16 @@ app.get('/api/bigquery/analytics', authMiddleware, (req, res) => {
 app.get('/api/oracle/analytics', authMiddleware, (req, res) => {
     try {
         const ordersCsv = path.join(__dirname, '../test-data/oracle_orders.csv');
+        const agentPerfCsv = path.join(__dirname, '../test-data/oracle_agent_performance.csv');
+        const procurementCsv = path.join(__dirname, '../test-data/oracle_procurement_status.csv');
+        const complianceCsv = path.join(__dirname, '../test-data/oracle_compliance_audit.csv');
+        const ledgerCsv = path.join(__dirname, '../test-data/oracle_ledger_entries.csv');
+        
         const orders = parseCSV(ordersCsv);
+        const agentPerformance = parseCSV(agentPerfCsv);
+        const procurementStatus = parseCSV(procurementCsv);
+        const complianceAudit = parseCSV(complianceCsv);
+        const ledgerEntries = parseCSV(ledgerCsv);
         
         let totalAmount = 0;
         orders.forEach(o => totalAmount += Number(o.total_amount || 0));
@@ -960,7 +1005,20 @@ app.get('/api/oracle/analytics', authMiddleware, (req, res) => {
                 totalAmount,
                 avgOrderValue: totalAmount / (orders.length || 1)
             },
-            orders: orders
+            orders: orders,
+            agentPerformance: agentPerformance.map(a => ({
+                name: a.name,
+                queries: Number(a.queries),
+                success: Number(a.success),
+                latency: Number(a.latency)
+            })),
+            procurementStatus: procurementStatus.map(p => ({
+                label: p.label,
+                value: Number(p.value),
+                color: p.color
+            })),
+            complianceAudit: complianceAudit[0] ? Number(complianceAudit[0].score) : 99.8,
+            ledgerEntries: ledgerEntries
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -1,0 +1,6 @@
+id,name,tier,health,val
+CUST-390,Alpha Corp,Enterprise,Healthy,$120K
+CUST-412,Beta Solutions,Mid-Market,At Risk,$45K
+CUST-501,Global Industries,Enterprise,Healthy,$230K
+CUST-223,Tech Start,SMB,Healthy,$12K
+CUST-611,Zeta Finance,Enterprise,Critical,$95K

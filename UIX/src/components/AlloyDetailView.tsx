@@ -13,7 +13,7 @@ export const AlloyDetailView = () => {
     avgResponseTime: "1.2h"
   });
 
-  const [sentimentData] = React.useState([
+  const [sentimentData, setSentimentData] = React.useState([
     { day: 'Mon', positive: 65, neutral: 25, negative: 10 },
     { day: 'Tue', positive: 70, neutral: 20, negative: 10 },
     { day: 'Wed', positive: 68, neutral: 22, negative: 10 },
@@ -23,7 +23,7 @@ export const AlloyDetailView = () => {
     { day: 'Sun', positive: 82, neutral: 13, negative: 5 },
   ]);
 
-  const [leadConversion] = React.useState([
+  const [leadConversion, setLeadConversion] = React.useState([
     { stage: 'Prospects', value: 5000 },
     { stage: 'Qualified', value: 3400 },
     { stage: 'Proposal', value: 1800 },
@@ -31,7 +31,7 @@ export const AlloyDetailView = () => {
     { stage: 'Won', value: 450 },
   ]);
 
-  const [activeCustomers] = React.useState([
+  const [activeCustomers, setActiveCustomers] = React.useState([
     { id: 'CUST-390', name: 'Alpha Corp', tier: 'Enterprise', health: 'Healthy', val: '$120K' },
     { id: 'CUST-412', name: 'Beta Solutions', tier: 'Mid-Market', health: 'At Risk', val: '$45K' },
     { id: 'CUST-501', name: 'Global Industries', tier: 'Enterprise', health: 'Healthy', val: '$230K' },
@@ -44,8 +44,10 @@ export const AlloyDetailView = () => {
       try {
         const data = await api.get('/api/alloy/crm_data');
         if (data.status === 'success') {
-          setCrmMetrics(data.metrics || crmMetrics);
-          // If the mock extends to customers/sentiment, update those too.
+          setCrmMetrics(prev => ({ ...prev, ...data.metrics }));
+          if (data.sentimentTrends?.length > 0) setSentimentData(data.sentimentTrends);
+          if (data.conversionFunnel?.length > 0) setLeadConversion(data.conversionFunnel);
+          if (data.activeCustomers?.length > 0) setActiveCustomers(data.activeCustomers);
         }
       } catch (err) {
         console.error('Failed to fetch Alloy CRM data:', err);
