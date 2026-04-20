@@ -187,8 +187,8 @@ export const AdminPortalView = () => {
                         >
                           <Edit size={16} />
                         </button>
-                        <span className={`text-xs font-bold uppercase ${agent.status === 'online' ? 'text-green-500' : 'text-slate-500'}`}>
-                          {agent.status}
+                        <span className={`px-2 py-0.5 rounded border text-xs font-bold uppercase ${agent.status === 'online' || !agent.status ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+                          {agent.status || 'online'}
                         </span>
                       </div>
                     </div>
