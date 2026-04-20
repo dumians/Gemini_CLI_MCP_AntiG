@@ -1,62 +1,92 @@
 {
-  "domain": "Warehouse Supply Chain",
-  "graph_nodes": [
+  "metadata": {
+    "domain": "Warehouse",
+    "schema_version": "1.0.0",
+    "graph_data_mode": "payload"
+  },
+  "warehouse_master": [
     {
-      "id": "SKU-500",
-      "type": "Product",
-      "properties": {
-        "name": "Sustainable Lithium-Ion Battery Pack",
-        "criticality": "HIGH",
-        "inventory_count": 150,
-        "reorder_threshold": 200
-      }
+      "warehouse_id": "WH-101",
+      "name": "Austin Tech Hub & Warehouse",
+      "location_geo": "POINT(-97.7431 30.2672)",
+      "capacity_utilization": 0.85,
+      "temperature_control": "YES",
+      "sustainability_score": 92.5
     },
     {
-      "id": "WH-101",
-      "type": "Warehouse",
-      "properties": {
-        "location": "Austin, TX",
-        "capacity_utilization": 0.85,
-        "temperature_control": true
-      }
-    },
-    {
-      "id": "SUP-01",
-      "type": "Supplier",
-      "properties": {
-        "name": "EcoMetals Global",
-        "sustainability_rating": "A+",
-        "lead_time_days": 14
-      }
+      "warehouse_id": "WH-202",
+      "name": "Phoenix Desert Fulfillment",
+      "location_geo": "POINT(-112.0740 33.4484)",
+      "capacity_utilization": 0.91,
+      "temperature_control": "YES",
+      "sustainability_score": 88.0
     }
   ],
-  "graph_edges": [
+  "product_master": [
     {
-      "from": "SUP-01",
-      "to": "SKU-500",
-      "relationship": "SUPPLIES",
-      "properties": {
-        "cost_per_unit": 1200.00,
-        "currency": "USD"
-      }
+      "sku_id": "SKU-500",
+      "product_name": "Sustainable Lithium-Ion Battery Pack",
+      "criticality": "CRITICAL",
+      "unit_cost": 1200.00,
+      "carbon_footprint_kg": 45.00
     },
     {
-      "from": "SKU-500",
-      "to": "WH-101",
-      "relationship": "STOCKED_IN",
-      "properties": {
-        "quantity": 150
-      }
+      "sku_id": "SKU-505",
+      "product_name": "Renewable Energy Solar Inverter",
+      "criticality": "HIGH",
+      "unit_cost": 850.00,
+      "carbon_footprint_kg": 22.50
     }
   ],
-  "inventory_risk_hotspots": [
+  "inventory_levels": [
+    {
+      "warehouse_id": "WH-101",
+      "sku_id": "SKU-500",
+      "stock_quantity": 150,
+      "reorder_threshold": 200
+    },
+    {
+      "warehouse_id": "WH-202",
+      "sku_id": "SKU-505",
+      "stock_quantity": 400,
+      "reorder_threshold": 150
+    }
+  ],
+  "supplier_master": [
+    {
+      "supplier_id": "SUP-01",
+      "supplier_name": "EcoMetals Global",
+      "sustainability_rating": "A+",
+      "lead_time_days": 14
+    }
+  ],
+  "supply_network_edges": [
+    {
+      "from_supplier_id": "SUP-01",
+      "to_sku_id": "SKU-500",
+      "cost_per_unit": 1200.00,
+      "currency": "USD"
+    }
+  ],
+  "spatial_risk_hotspots": [
     {
       "hotspot_id": "HS-883",
-      "warehouse": "WH-101",
-      "risk_factor": "Shortage Prediction",
+      "warehouse_id": "WH-101",
+      "risk_factor": "Critical Shortage Prediction - Battery Packs",
       "severity": "CRITICAL",
-      "affected_sku": "SKU-500",
-      "recommended_action": "Expedite supply order from EcoMetals Global."
+      "recommended_action": "Expedite supply order from EcoMetals Global via inventory-action flow."
     }
-  ]
+  ],
+  "multi_agent_dependencies": {
+    "graph_agent": {
+      "mode": "payload",
+      "depends_on": ["oracle_warehouse_agent"],
+      "payload_handoff": "Transfers property graph SKU connectivity directly to graph agent for A2A reasoning."
+    },
+    "spatial_agent": {
+      "mode": "direct_db",
+      "depends_on": ["oracle_warehouse_agent"],
+      "hotspot_routing": "Retrieves SDO_GEOMETRY hotspot intersections for inventory routing."
+    }
+  }
 }
