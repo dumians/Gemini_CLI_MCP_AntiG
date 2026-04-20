@@ -46,7 +46,9 @@ export function GraphView({ data: initialData }: { data?: any }) {
                     { id: 'oracle', label: 'Oracle ERP', properties: { domain: 'Finance' } },
                     { id: 'spanner', label: 'Spanner Retail', properties: { domain: 'Sales' } },
                     { id: 'bigquery', label: 'BigQuery Analytics', properties: { domain: 'Unified' } },
-                    { id: 'alloy', label: 'AlloyDB CRM', properties: { domain: 'Sales' } }
+                    { id: 'alloy', label: 'AlloyDB CRM', properties: { domain: 'Sales' } },
+                    { id: 'warehouse', label: 'Warehouse Spatial (Oracle)', properties: { domain: 'Logistics' } },
+                    { id: 'sku500', label: 'SKU-500 Battery Path', properties: { domain: 'Logistics' } }
                 ];
                 
                 const defaultLinks = [
@@ -55,6 +57,8 @@ export function GraphView({ data: initialData }: { data?: any }) {
                     { source: 'orchestrator', target: 'spanner' },
                     { source: 'orchestrator', target: 'bigquery' },
                     { source: 'orchestrator', target: 'alloy' },
+                    { source: 'orchestrator', target: 'warehouse' },
+                    { source: 'warehouse', target: 'sku500' },
                     { source: 'spanner', target: 'bigquery' }
                 ];
 
