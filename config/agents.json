@@ -133,5 +133,21 @@
     "systemInstruction": "You are an Oracle FlexCube Data Specialist Agent. You have access to the FlexCube schema.",
     "mcpServers": [],
     "groundingDomain": "FlexCube"
+  },
+  {
+    "id": "warehouse_agent",
+    "name": "WarehouseAgent",
+    "domain": "Warehouse",
+    "specialty": "Supply Chain Graph, Inventory Risk Hotspots, Select AI Analytics",
+    "toolName": "call_warehouse_agent",
+    "systemInstruction": "You are a Warehouse and Supply Chain Specialist Agent. You have access to the supply chain graph and inventory risk schemas.",
+    "mcpServers": [
+      {
+        "name": "oracle_warehouse",
+        "mcpUrl": "process.env.WAREHOUSE_MCP_URL",
+        "serverArgs": ["servers/oracle-mcp/index.js"]
+      }
+    ],
+    "groundingDomain": "Warehouse"
   }
 ]

@@ -1,0 +1,62 @@
+{
+  "domain": "Warehouse Supply Chain",
+  "graph_nodes": [
+    {
+      "id": "SKU-500",
+      "type": "Product",
+      "properties": {
+        "name": "Sustainable Lithium-Ion Battery Pack",
+        "criticality": "HIGH",
+        "inventory_count": 150,
+        "reorder_threshold": 200
+      }
+    },
+    {
+      "id": "WH-101",
+      "type": "Warehouse",
+      "properties": {
+        "location": "Austin, TX",
+        "capacity_utilization": 0.85,
+        "temperature_control": true
+      }
+    },
+    {
+      "id": "SUP-01",
+      "type": "Supplier",
+      "properties": {
+        "name": "EcoMetals Global",
+        "sustainability_rating": "A+",
+        "lead_time_days": 14
+      }
+    }
+  ],
+  "graph_edges": [
+    {
+      "from": "SUP-01",
+      "to": "SKU-500",
+      "relationship": "SUPPLIES",
+      "properties": {
+        "cost_per_unit": 1200.00,
+        "currency": "USD"
+      }
+    },
+    {
+      "from": "SKU-500",
+      "to": "WH-101",
+      "relationship": "STOCKED_IN",
+      "properties": {
+        "quantity": 150
+      }
+    }
+  ],
+  "inventory_risk_hotspots": [
+    {
+      "hotspot_id": "HS-883",
+      "warehouse": "WH-101",
+      "risk_factor": "Shortage Prediction",
+      "severity": "CRITICAL",
+      "affected_sku": "SKU-500",
+      "recommended_action": "Expedite supply order from EcoMetals Global."
+    }
+  ]
+}

@@ -155,6 +155,28 @@
             },
             "schema_file": "db-schemas/flexcube_schema.sql",
             "health_check": "/health"
+        },
+        "warehouse": {
+            "name": "Warehouse Supply Chain",
+            "domain": "Warehouse",
+            "connection_type": "JDBC URL",
+            "connection_string": "jdbc:oracle:thin:@//${WAREHOUSE_HOST}:1521/${WAREHOUSE_SERVICE}",
+            "connection": {
+                "user": "${WAREHOUSE_USER}",
+                "password": "${WAREHOUSE_PASSWORD}",
+                "connect_string": "${WAREHOUSE_CONNECT_STRING}"
+            },
+            "local": {
+                "command": "node",
+                "args": ["servers/oracle-mcp/index.js"],
+                "transport": "stdio"
+            },
+            "remote": {
+                "url": "${WAREHOUSE_MCP_URL}",
+                "transport": "sse"
+            },
+            "schema_file": "db-schemas/warehouse_schema.sql",
+            "health_check": "/health"
         }
     }
 }

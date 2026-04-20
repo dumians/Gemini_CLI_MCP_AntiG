@@ -156,6 +156,50 @@ export const DataDomainsView = () => {
           </div>
         </section>
       </div>
+
+      {/* A2UI 0.9 Warehouse / Supply Chain Specialization Panel */}
+      <section className="glass rounded-3xl border-slate-800 p-8 mt-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <Database className="text-primary" /> Supply Chain & Warehouse Operations (A2UI 0.9)
+            </h3>
+            <p className="text-sm text-slate-400 mt-1">Powered by Oracle Agent Java Model & Property Graph Hotspot Analytics</p>
+          </div>
+          <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase border border-primary/20">
+            Live Telemetry
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-5 bg-slate-900/50 rounded-2xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Graph Coverage</span>
+              <p className="text-2xl font-extrabold text-white mt-2">3 Sub-Graphs</p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
+              SKU-500 sustainable battery path active
+            </div>
+          </div>
+          <div className="p-5 bg-slate-900/50 rounded-2xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Hotspot Risk Profiling</span>
+              <p className="text-2xl font-extrabold text-rose-500 mt-2">1 Critical</p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
+              WH-101 shortage predicted (Expedite Supply)
+            </div>
+          </div>
+          <div className="p-5 bg-slate-900/50 rounded-2xl border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Select AI Status</span>
+              <p className="text-2xl font-extrabold text-emerald-400 mt-2">Optimized</p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
+              DBMS_CLOUD_AI profile synced & validated
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
