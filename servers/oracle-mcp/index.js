@@ -6,10 +6,16 @@ import {
     ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import oracledb from "oracledb";
+import express from "express";
 import dotenv from "dotenv";
-import express from 'express';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // Oracle DB@GCP Configuration
 const dbConfig = {
@@ -64,12 +70,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     };
 });
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;

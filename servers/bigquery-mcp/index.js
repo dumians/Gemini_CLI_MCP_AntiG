@@ -8,8 +8,14 @@ import {
 import { BigQuery } from "@google-cloud/bigquery";
 import dotenv from "dotenv";
 import express from 'express';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // GCP BigQuery Configuration
 const projectId = process.env.GCP_PROJECT_ID || process.env.PROJECT_ID;
@@ -50,12 +56,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     };
 });
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;

@@ -1,0 +1,3 @@
+hotspot_id,warehouse_id,risk_factor,severity,affected_sku,recommended_action
+HS-883,WH-101,Shortage Prediction,CRITICAL,SKU-500,Expedite supply order from EcoMetals Global
+HS-912,WH-202,Storage Capacity Warning,MEDIUM,SKU-505,Reroute incoming shipments to Austin Tech Hub

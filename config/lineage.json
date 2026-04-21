@@ -53,6 +53,12 @@
       "target": "MeshLineage",
       "relationship": "processed_query",
       "timestamp": "2026-04-14T12:31:42.717Z"
+    },
+    {
+      "source": "WarehouseAgent",
+      "target": "MeshLineage",
+      "relationship": "processed_query",
+      "timestamp": "2026-04-21T14:53:09.170Z"
     }
   ]
 }

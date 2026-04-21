@@ -32,7 +32,8 @@ class OneMCPGateway {
             const path = await import('path');
             const absoluteArgs = (serverConfig.serverArgs || []).map(arg => {
                 if (arg.startsWith('servers/')) {
-                    return path.resolve(process.cwd(), '..', arg);
+                    const rootDir = process.cwd().endsWith('server') ? path.resolve(process.cwd(), '..') : process.cwd();
+                    return path.resolve(rootDir, arg);
                 }
                 return arg;
             });
@@ -55,6 +56,7 @@ class OneMCPGateway {
                 );
                 await client.connect(transport);
                 this.clients[key] = client;
+                logger.log("OneMCPGateway", `Successfully connected to MCP server: ${key}`, "INFO");
             } catch (error) {
                 logger.log("OneMCPGateway", `Failed to connect to ${key}: ${error.message}`, "ERROR");
                 throw error;
