@@ -1,6 +1,5 @@
 import React from 'react';
-import { Package, MapPin, Shield, RefreshCw, AlertCircle, Navigation, Database } from 'lucide-react';
-import { GraphView } from './GraphView';
+import { Package, MapPin, Shield, RefreshCw, AlertCircle, Navigation, Globe } from 'lucide-react';
 
 export const WarehouseDetailView = () => {
   const [loading, setLoading] = React.useState(false);
@@ -81,10 +80,56 @@ export const WarehouseDetailView = () => {
 
           <section className="glass rounded-3xl border-slate-800 p-8">
             <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-              <Database className="text-primary" /> Cross-Domain Product Lineage (Graph RAG)
+              <Globe className="text-primary" /> Oracle Spatial Supply Route (A2A Gateway Topology)
             </h3>
-            <div className="h-[300px]">
-              <GraphView />
+            <div className="h-[400px] relative bg-slate-950/40 border border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center">
+              <svg width="100%" height="100%" viewBox="0 0 800 400" className="transform-gpu">
+                {/* Background Grid */}
+                <defs>
+                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="1" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+
+                {/* Simulated World Map Vectors (Abstract Continents) */}
+                <path d="M 100,120 Q 180,100 250,140 T 320,180 Q 280,220 200,200 Z" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                <path d="M 450,150 Q 520,100 650,120 T 720,180 Q 600,280 480,220 Z" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                <path d="M 200,280 Q 280,250 320,300 T 400,350 Q 300,380 200,320 Z" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+
+                {/* Route Paths (Curved) */}
+                <path d="M 180,150 Q 350,80 550,180" fill="none" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="2" strokeDasharray="5,5" className="animate-[pulse_2s_infinite]" />
+                <path d="M 550,180 Q 400,260 240,310" fill="none" stroke="rgba(244, 63, 94, 0.4)" strokeWidth="2" strokeDasharray="5,5" />
+
+                {/* Entity Coordinates (Map Pins) */}
+                {/* 1. Austin Tech Hub (Source) */}
+                <g transform="translate(180, 150)">
+                  <circle r="12" fill="rgba(59, 130, 246, 0.2)" />
+                  <circle r="6" fill="#3b82f6" className="animate-pulse" />
+                  <text x="15" y="5" fill="#fff" className="text-[10px] font-bold tracking-wide drop-shadow">Austin (WH-101)</text>
+                </g>
+
+                {/* 2. Phoenix desert fulfillment */}
+                <g transform="translate(240, 310)">
+                  <circle r="12" fill="rgba(16, 185, 129, 0.2)" />
+                  <circle r="6" fill="#10b981" />
+                  <text x="15" y="5" fill="#fff" className="text-[10px] font-bold tracking-wide drop-shadow">Phoenix (WH-202)</text>
+                </g>
+
+                {/* 3. EcoMetals Supplier */}
+                <g transform="translate(550, 180)">
+                  <circle r="16" fill="rgba(244, 63, 94, 0.2)" />
+                  <circle r="8" fill="#f43f5e" className="animate-ping opacity-75 duration-1000" />
+                  <circle r="6" fill="#f43f5e" />
+                  <text x="15" y="5" fill="#fff" className="text-[10px] font-bold tracking-wide drop-shadow">EcoMetals (SUP-01)</text>
+                </g>
+              </svg>
+
+              <div className="absolute bottom-4 left-4 flex gap-4 text-[10px] bg-black/60 px-3 py-2 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-blue-500" /> Warehouse</div>
+                <div className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-500" /> Optimal</div>
+                <div className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-rose-500" /> Supplier</div>
+              </div>
             </div>
           </section>
         </div>
