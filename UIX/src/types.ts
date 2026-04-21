@@ -1,4 +1,4 @@
-export type View = 'dashboard' | 'query-analysis' | 'spanner-detail' | 'bigquery-detail' | 'marketplace' | 'governance' | 'governance-detail' | 'oracle-detail' | 'alloy-detail' | 'cross-domain-inventory' | 'data-domains' | 'admin-portal';
+export type View = 'dashboard' | 'query-analysis' | 'spanner-detail' | 'bigquery-detail' | 'marketplace' | 'governance' | 'governance-detail' | 'oracle-detail' | 'alloy-detail' | 'cross-domain-inventory' | 'data-domains' | 'warehouse-detail' | 'admin-portal';
 
 export interface Policy {
   id: string;

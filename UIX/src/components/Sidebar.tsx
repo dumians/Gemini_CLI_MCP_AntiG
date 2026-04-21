@@ -22,6 +22,7 @@ export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: Vi
         { id: 'spanner-detail', label: 'Spanner Retail', icon: Store, status: 'error' },
         { id: 'bigquery-detail', label: 'BigQuery Analytics', icon: BarChart3, status: 'online' },
         { id: 'alloy-detail', label: 'AlloyDB CRM', icon: Users, status: 'warning' },
+        { id: 'warehouse-detail', label: 'Warehouse Spatial', icon: Package, status: 'online' },
       ]
     },
     { id: 'cross-domain-inventory', label: 'Cross-Domain Inventory', icon: Package, status: 'online' },
