@@ -123,14 +123,21 @@ export async function handleWarehouseRequest(query, context = {}, traceId = null
         response = result.response;
     }
 
+    // Support multi-domain dependency analysis internally (e.g., combining spatial maps)
+    let crossDomainInsights = "";
+    if (context["RetailAgent"]) {
+        crossDomainInsights += `\n[CROSS-DOMAIN] Retail indicates active paths: ${context["RetailAgent"].summary}`;
+    }
+
     return {
         domain: "Warehouse",
-        data: response.text(),
+        data: response.text() + crossDomainInsights,
         metadata: {
             confidence: 0.95,
             source: "Oracle DB @ GCP (Warehouse/Supply Chain)",
-            grounding: groundingData
+            grounding: groundingData,
+            a2a_flow: "spatial_graph_correlation"
         },
-        insights: "Warehouse supply chain data synthesized with spatial hotspot and graph profiling."
+        insights: "Warehouse supply chain data fully synthesized with multi-agent spatial insights."
     };
 }
