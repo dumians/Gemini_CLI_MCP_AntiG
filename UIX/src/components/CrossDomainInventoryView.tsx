@@ -9,52 +9,52 @@ export const CrossDomainInventoryView = () => {
   const [agentOutput, setAgentOutput] = React.useState<{ summary: string; steps: any[] }>({ summary: '', steps: [] });
   const [loading, setLoading] = React.useState(false);
 
-  React.useEffect(() => {
-    const fetchInventory = async () => {
-      setLoading(true);
-      const { api } = await import('../utils/api');
-      try {
-        const [result, graphResult] = await Promise.all([
-          api.get('/api/mesh/cross_inventory'),
-          api.get('/api/catalog/graph')
-        ]);
+  const fetchInventory = async () => {
+    setLoading(true);
+    const { api } = await import('../utils/api');
+    try {
+      const [result, graphResult] = await Promise.all([
+        api.get('/api/mesh/cross_inventory'),
+        api.get('/api/catalog/graph')
+      ]);
 
-        if (result.status === 'success') {
-          setAgentOutput({
-            summary: result.summary || 'No summary returned.',
-            steps: result.steps || []
-          });
-        }
-
-        if (graphResult && graphResult.nodes) {
-          const mappedInventory = graphResult.nodes
-            .filter((n: any) => n.type === 'TABLE' || n.type === 'entity') // Accept TABLE type nodes from catalog
-            .map((n: any) => ({
-              id: n.id,
-              item: n.label,
-              source: n.id.includes('ora') ? 'Oracle' : n.id.includes('span') ? 'Spanner' : n.id.includes('bq') ? 'BigQuery' : 'AlloyDB',
-              stock: Math.floor(Math.random() * 1000), // Simulated stock for visual
-              location: 'Mesh Graph',
-              status: 'Online'
-            }));
-          setInventoryData(mappedInventory.length > 0 ? mappedInventory : [
-            { id: 'INV-001', item: 'User Profile Extension', source: 'Oracle', stock: 540, location: 'Global ERP', status: 'Online' },
-            { id: 'INV-002', item: 'Clickstream Tracking', source: 'Spanner', stock: 120, location: 'Regional POS', status: 'Online' },
-            { id: 'INV-003', item: 'Marketing Segmentation', source: 'BigQuery', stock: 980, location: 'Cloud Storage', status: 'Online' }
-          ]);
-        } else {
-          setInventoryData([
-            { id: 'INV-001', item: 'User Profile Extension (Fallback)', source: 'Oracle', stock: 540, location: 'Global ERP', status: 'Online' },
-            { id: 'INV-002', item: 'Clickstream Tracking (Fallback)', source: 'Spanner', stock: 120, location: 'Regional POS', status: 'Online' },
-          ]);
-        }
-      } catch (err) {
-        console.error('Failed to fetch mesh inventory:', err);
-      } finally {
-        setLoading(false);
+      if (result.status === 'success') {
+        setAgentOutput({
+          summary: result.summary || 'No summary returned.',
+          steps: result.steps || []
+        });
       }
-    };
 
+      if (graphResult && graphResult.nodes) {
+        const mappedInventory = graphResult.nodes
+          .filter((n: any) => n.type === 'TABLE' || n.type === 'entity')
+          .map((n: any) => ({
+            id: n.id,
+            item: n.label,
+            source: n.id.includes('ora') ? 'Oracle' : n.id.includes('span') ? 'Spanner' : n.id.includes('bq') ? 'BigQuery' : 'AlloyDB',
+            stock: Math.floor(Math.random() * 1000),
+            location: 'Mesh Graph',
+            status: 'Online'
+          }));
+        setInventoryData(mappedInventory.length > 0 ? mappedInventory : [
+          { id: 'INV-001', item: 'User Profile Extension', source: 'Oracle', stock: 540, location: 'Global ERP', status: 'Online' },
+          { id: 'INV-002', item: 'Clickstream Tracking', source: 'Spanner', stock: 120, location: 'Regional POS', status: 'Online' },
+          { id: 'INV-003', item: 'Marketing Segmentation', source: 'BigQuery', stock: 980, location: 'Cloud Storage', status: 'Online' }
+        ]);
+      } else {
+        setInventoryData([
+          { id: 'INV-001', item: 'User Profile Extension (Fallback)', source: 'Oracle', stock: 540, location: 'Global ERP', status: 'Online' },
+          { id: 'INV-002', item: 'Clickstream Tracking (Fallback)', source: 'Spanner', stock: 120, location: 'Regional POS', status: 'Online' },
+        ]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch mesh inventory:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
     fetchInventory();
   }, []);
 
@@ -72,8 +72,11 @@ export const CrossDomainInventoryView = () => {
           <p className="text-slate-400">Unified view of assets across Oracle, Spanner, and BigQuery.</p>
         </div>
         <div className="flex gap-3">
-          <button className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2">
-            <RefreshCw size={16} /> Sync All
+          <button 
+            onClick={fetchInventory}
+            className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <RefreshCw size={16} /> Refresh
           </button>
         </div>
       </div>

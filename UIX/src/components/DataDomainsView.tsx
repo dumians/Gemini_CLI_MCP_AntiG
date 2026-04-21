@@ -84,6 +84,12 @@ export const DataDomainsView = () => {
         </div>
         <div className="flex gap-3">
           <button 
+            onClick={fetchSettings}
+            className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
+          <button 
             onClick={handleAddSource}
             className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2"
           >

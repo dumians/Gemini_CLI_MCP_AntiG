@@ -12,21 +12,22 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
   const [metrics, setMetrics] = React.useState<any>({ uptime: {}, latency: {} });
   const [searchText, setSearchText] = React.useState('');
   
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statusData, metricsData] = await Promise.all([
-          api.get('/api/status'),
-          api.get('/api/metrics')
-        ]);
-        setStatus(statusData);
-        if (metricsData.metrics) {
-          setMetrics(metricsData.metrics);
-        }
-      } catch (err) {
-        console.error(err);
+  const fetchData = async () => {
+    try {
+      const [statusData, metricsData] = await Promise.all([
+        api.get('/api/status'),
+        api.get('/api/metrics')
+      ]);
+      setStatus(statusData);
+      if (metricsData.metrics) {
+        setMetrics(metricsData.metrics);
       }
-    };
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  React.useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
@@ -39,6 +40,14 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
+      <div className="flex justify-end mb-4">
+        <button 
+          onClick={fetchData}
+          className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+        >
+          <RefreshCw size={16} /> Refresh
+        </button>
+      </div>
       {/* Search Header */}
       <div className="flex flex-col items-center pt-4 pb-4">
         <div className="w-full max-w-3xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 shadow-xl">

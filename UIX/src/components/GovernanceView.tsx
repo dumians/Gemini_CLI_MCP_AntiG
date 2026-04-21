@@ -12,17 +12,18 @@ export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => voi
     { id: 'POL-004', name: 'Marketing Segment Anonymization', status: 'Draft', domain: 'BigQuery', lastUpdated: '5h ago' },
   ]);
 
-  React.useEffect(() => {
-    const fetchPolicies = async () => {
-      try {
-        const data = await api.get('/api/governance/policies');
-        if (data && data.rules) {
-          setPolicies(data.rules);
-        }
-      } catch (err) {
-        console.error('Failed to fetch policies:', err);
+  const fetchPolicies = async () => {
+    try {
+      const data = await api.get('/api/governance/policies');
+      if (data && data.rules) {
+        setPolicies(data.rules);
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch policies:', err);
+    }
+  };
+
+  React.useEffect(() => {
     fetchPolicies();
   }, []);
 
@@ -46,6 +47,12 @@ export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => voi
           <p className="text-slate-400">Manage access policies, compliance rules, and data residency globally.</p>
         </div>
         <div className="flex gap-3">
+          <button 
+            onClick={fetchPolicies}
+            className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          >
+            <RefreshCw size={16} /> Refresh
+          </button>
           <button 
             onClick={() => onNavigate('governance-detail')}
             className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2"
