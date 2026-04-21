@@ -77,9 +77,7 @@ class MemoryBankService {
      */
     async createSession(userId) {
         const response = await this.makeRequest('sessions', 'POST', {
-            session: {
-                user: userId // Scoping memory to user
-            }
+            user: userId
         });
         return response.name; // e.g., projects/.../locations/.../reasoningEngines/.../sessions/...
     }
