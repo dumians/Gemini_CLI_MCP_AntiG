@@ -35,8 +35,8 @@ export const Sidebar = ({ activeView, onViewChange, onLogout }: { activeView: Vi
           <Database size={24} />
         </div>
         <div className="flex flex-col">
-          <h1 className="text-slate-900 dark:text-slate-100 text-base font-bold leading-none">Data Agent</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">v2.4.0-enterprise</p>
+          <h1 className="text-slate-900 dark:text-slate-100 text-base font-bold leading-none">Agentic Data Mesh platform</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">v0.9.2</p>
         </div>
       </div>
       
