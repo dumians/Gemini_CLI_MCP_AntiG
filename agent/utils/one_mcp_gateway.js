@@ -14,7 +14,8 @@ class OneMCPGateway {
             "Spanner Retail": ["spanner"],
             "BigQuery Analytics": ["bigquery", "alloydb"],
             "Oracle HR": ["oracle_hr"],
-            "AlloyDB CRM": ["alloydb"]
+            "AlloyDB CRM": ["alloydb"],
+            "Warehouse": ["oracle_warehouse"]
         };
     }
 
