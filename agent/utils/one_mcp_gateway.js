@@ -29,9 +29,16 @@ class OneMCPGateway {
         if (url) {
             return new SSEClientTransport(new URL(url));
         } else {
+            const path = await import('path');
+            const absoluteArgs = (serverConfig.serverArgs || []).map(arg => {
+                if (arg.startsWith('servers/')) {
+                    return path.resolve(process.cwd(), '..', arg);
+                }
+                return arg;
+            });
             return new StdioClientTransport({
                 command: serverConfig.serverCmd || "node",
-                args: serverConfig.serverArgs || []
+                args: absoluteArgs
             });
         }
     }
