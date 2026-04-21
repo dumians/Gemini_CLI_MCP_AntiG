@@ -123,7 +123,7 @@ class MemoryBankService {
         };
 
         if (query) {
-            body.query = query; // Similarity search
+            // body.query = query; // Similarity search (Unsupported by Vertex Reasoning payload field restrictions)
         }
 
         try {
