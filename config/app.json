@@ -1,0 +1,9 @@
+{
+  "app_name": "Agentic Data Mesh platform",
+  "version": "0.9.2",
+  "compatibility": {
+    "server_api": ">=1.0.0",
+    "a2ui_standard": "0.9",
+    "adk_version": "2026.Q1"
+  }
+}

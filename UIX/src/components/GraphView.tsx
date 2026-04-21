@@ -63,10 +63,21 @@ export function GraphView({ data: initialData }: { data?: any }) {
                 ];
 
                 if (!res || !res.nodes || res.nodes.length === 0) {
-                    setGraphData({ nodes: defaultNodes, links: defaultLinks });
+                    setGraphData((prev: any) => {
+                        const mergedNodes = defaultNodes.map((node: any) => {
+                            const prevNode = prev.nodes.find((n: any) => n.id === node.id);
+                            return prevNode ? { ...node, x: prevNode.x, y: prevNode.y, vx: prevNode.vx, vy: prevNode.vy, fx: prevNode.fx, fy: prevNode.fy } : node;
+                        });
+                        return { nodes: mergedNodes, links: defaultLinks };
+                    });
                 } else {
-                    // Merge with live metrics to ensure robustness
-                    setGraphData(res);
+                    setGraphData((prev: any) => {
+                        const mergedNodes = res.nodes.map((node: any) => {
+                            const prevNode = prev.nodes.find((n: any) => n.id === node.id);
+                            return prevNode ? { ...node, x: prevNode.x, y: prevNode.y, vx: prevNode.vx, vy: prevNode.vy, fx: prevNode.fx, fy: prevNode.fy } : node;
+                        });
+                        return { nodes: mergedNodes, links: res.links };
+                    });
                 }
             } catch (e) {
                 console.error("Failed to fetch graph data", e);
