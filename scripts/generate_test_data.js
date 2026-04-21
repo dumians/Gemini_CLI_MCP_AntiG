@@ -213,6 +213,22 @@ const policiesJson = {
 };
 fs.writeFileSync(path.resolve('config/policies.json'), JSON.stringify(policiesJson, null, 2));
 
+// 15. Warehouse Supply Chain Spatial Hotspots (warehouse_hotspots.csv)
+const warehouseHotspotsData = [
+    'hotspot_id,warehouse_id,risk_factor,severity,affected_sku,recommended_action',
+    'HS-883,WH-101,Shortage Prediction,CRITICAL,SKU-500,Expedite supply order from EcoMetals Global',
+    'HS-912,WH-202,Storage Capacity Warning,MEDIUM,SKU-505,Reroute incoming shipments to Austin Tech Hub'
+].join('\n');
+fs.writeFileSync(path.join(TEST_DATA_DIR, 'warehouse_hotspots.csv'), warehouseHotspotsData);
+
+// 16. Warehouse Graph Vector Embeddings (warehouse_vector_embeddings.csv)
+const warehouseVectorsData = [
+    'id,embedding_vector,context_summary',
+    'SKU-500,"[0.12, 0.85, -0.34, 0.56]","Sustainable battery pack reorder thresholds critical levels"',
+    'SKU-505,"[0.54, -0.12, 0.98, 0.21]","Renewable energy solar inverterPhoenix desert storage limits"'
+].join('\n');
+fs.writeFileSync(path.join(TEST_DATA_DIR, 'warehouse_vector_embeddings.csv'), warehouseVectorsData);
+
 console.log('Interconnected test data generated in ./test-data directory.');
 
 
