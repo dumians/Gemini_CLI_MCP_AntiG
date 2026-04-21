@@ -10,7 +10,7 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const modelArmorClient = new ModelArmorClient();
-const MODEL_ARMOR_TEMPLATE = process.env.MODEL_ARMOR_TEMPLATE || "projects/PROJECT_ID/locations/global/templates/default";
+const MODEL_ARMOR_TEMPLATE = process.env.MODEL_ARMOR_TEMPLATE || `projects/${process.env.GCP_PROJECT_ID || 'PROJECT_ID'}/locations/global/templates/default`;
 
 class GenericAgent {
     constructor(config) {
