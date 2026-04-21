@@ -18,7 +18,7 @@ const location = process.env.BIGQUERY_LOCATION; // e.g. 'US'
 
 // BigQuery client will only be instantiated if credentials/configuration are present
 // During testing, we keep this null to trigger simulation mode.
-const bigquery = (projectId && process.env.NODE_ENV !== 'test') ? new BigQuery({ projectId }) : null;
+const bigquery = (projectId && (process.env.NODE_ENV !== 'test' || process.env.USE_REAL_CONNECTIONS === 'true')) ? new BigQuery({ projectId }) : null;
 
 const server = new Server(
     {
@@ -62,7 +62,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === "query_bigquery") {
         const query = args.query || args.sql || "";
-        const isTest = process.env.NODE_ENV === 'test';
+        const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
         if (!bigquery || isTest) {
             // FALLBACK TO SIMULATION
             try {

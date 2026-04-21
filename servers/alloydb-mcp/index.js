@@ -53,7 +53,7 @@ const server = new Server(
 );
 
 // Database Connection
-const pool = (process.env.ALLOYDB_URL && process.env.NODE_ENV !== 'test') ? new Pool({
+const pool = (process.env.ALLOYDB_URL && (process.env.NODE_ENV !== 'test' || process.env.USE_REAL_CONNECTIONS === 'true')) ? new Pool({
     connectionString: process.env.ALLOYDB_URL,
     ssl: { rejectUnauthorized: false }
 }) : null;
@@ -92,7 +92,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === "query_alloydb_vector") {
         const query = args.query || args.sql || "";
-        const isTest = process.env.NODE_ENV === 'test';
+        const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
         if (isTest || (!pool && !process.env.ALLOYDB_INSTANCE)) {
             try {
                 const csvPath = path.resolve(__dirname, '../../test-data/alloydb_tickets.csv');
@@ -168,7 +168,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === "query_alloydb_crm") {
         const query = args.query || args.sql || "";
-        const isTest = process.env.NODE_ENV === 'test';
+        const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
         if (isTest || (!pool && !process.env.ALLOYDB_INSTANCE)) {
             try {
                 const csvPath = path.resolve(__dirname, '../../test-data/alloydb_crm_customers.csv');

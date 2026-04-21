@@ -16,7 +16,7 @@ const projectId = process.env.GCP_PROJECT_ID || process.env.PROJECT_ID;
 const instanceId = process.env.SPANNER_INSTANCE_ID || process.env.SPANNER_INSTANCE;
 const databaseId = process.env.SPANNER_DATABASE_ID || process.env.SPANNER_DATABASE;
 
-const spanner = (projectId && process.env.NODE_ENV !== 'test') ? new Spanner({ projectId }) : null;
+const spanner = (projectId && (process.env.NODE_ENV !== 'test' || process.env.USE_REAL_CONNECTIONS === 'true')) ? new Spanner({ projectId }) : null;
 
 const getDb = () => {
     if (spanner && instanceId && databaseId) {
@@ -76,7 +76,7 @@ const __dirname = path.dirname(__filename);
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     const db = getDb();
-    const isTest = process.env.NODE_ENV === 'test';
+    const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
 
     if (!db || isTest) {
         // FALLBACK TO SIMULATION
