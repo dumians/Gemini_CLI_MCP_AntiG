@@ -58,7 +58,7 @@ class OneMCPGateway {
                 this.clients[key] = client;
                 logger.log("OneMCPGateway", `Successfully connected to MCP server: ${key}`, "INFO");
             } catch (error) {
-                logger.log("OneMCPGateway", `Failed to connect to ${key}: ${error.message}`, "ERROR");
+                logger.log("OneMCPGateway", `Failed to connect to ${key}: ${error.stack || error.message}`, "ERROR");
                 throw error;
             }
         }
@@ -106,7 +106,7 @@ class OneMCPGateway {
             logger.log("OneMCPGateway", `Tool ${tool.name} executed successfully in ${Date.now() - startTime}ms`, "INFO", null, traceId);
             return result;
         } catch (error) {
-            logger.log("OneMCPGateway", `Tool execution failed: ${error.message}`, "ERROR", null, traceId);
+            logger.log("OneMCPGateway", `Tool execution failed: ${error.stack || error.message}`, "ERROR", null, traceId);
             throw error;
         }
     }
