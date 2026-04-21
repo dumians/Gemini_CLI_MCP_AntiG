@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Database, Bot, Settings } from 'lucide-react';
+import { Plus, Database, Bot, Settings, RefreshCw } from 'lucide-react';
 import { GraphView } from './GraphView';
 import { api } from '../utils/api';
 

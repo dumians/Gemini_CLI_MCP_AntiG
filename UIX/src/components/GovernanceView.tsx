@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, Plus, ShieldCheck, AlertTriangle, FileText, CheckCircle2, ChevronRight, X, User } from 'lucide-react';
+import { Search, Filter, Plus, ShieldCheck, AlertTriangle, FileText, CheckCircle2, ChevronRight, X, User, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { View, Policy } from '../types';
 import { api } from '../utils/api';
