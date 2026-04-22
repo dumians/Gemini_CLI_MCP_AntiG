@@ -14,7 +14,7 @@ export function GraphView({ data: initialData }: { data?: any }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [graphData, setGraphData] = useState<any>(initialData || { nodes: [], links: [] });
     const [loading, setLoading] = useState(!initialData);
-    const [dimensions, setDimensions] = useState({ width: 900, height: 400 });
+    const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -24,7 +24,7 @@ export function GraphView({ data: initialData }: { data?: any }) {
                 if (entry.contentRect.width === 0) continue; // Ignore 0 width during component mount
                 setDimensions({
                     width: entry.contentRect.width,
-                    height: 400
+                    height: 600
                 });
             }
         });
@@ -120,8 +120,16 @@ export function GraphView({ data: initialData }: { data?: any }) {
                   };
                   return colors[domain] || 'rgba(255,255,255,0.15)';
                 }}
-                linkWidth={1.5}
-                linkDirectionalParticles={4}
+                linkWidth={(link: any) => {
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const isPhysical = sourceId?.includes('mcp') || sourceId?.includes('ora') || sourceId?.includes('span');
+                  return isPhysical ? 2.5 : 1;
+                }}
+                linkDirectionalParticles={(link: any) => {
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const isPhysical = sourceId?.includes('mcp') || sourceId?.includes('ora') || sourceId?.includes('span');
+                  return isPhysical ? 4 : 0;
+                }}
                 linkDirectionalParticleSpeed={0.006}
                 linkDirectionalParticleWidth={2}
                 d3AlphaDecay={0.02}
@@ -129,57 +137,41 @@ export function GraphView({ data: initialData }: { data?: any }) {
                 cooldownTicks={100}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                     const label = node.label;
-                    const domain = node.properties?.domain || 'Unified';
+                    const domain = node.properties?.domain || node.domain || 'Unified';
+                    const type = node.type || node.group || 'entity';
                     const color = domainColors[domain] || '#6366f1';
                     
-                    const fontSize = 12 / globalScale;
-                    ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
-                    const textWidth = ctx.measureText(label).width;
-                    const padding = 8 / globalScale;
-                    const bckgDimensions = [textWidth + padding * 2, fontSize + padding];
+                    const nodeSize = 50 / globalScale;
 
-                    // Node Circle with glow effect
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 15;
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, 10 / globalScale, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                    
-                    // Reset shadow for details
-                    ctx.shadowBlur = 0;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 2 / globalScale;
-                    ctx.stroke();
-
-                    // Label Background (Pill)
+                    // 1. Squared Transparent Background
                     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-                    const rx = node.x - bckgDimensions[0] / 2;
-                    const ry = node.y + (16 / globalScale);
-                    const rw = bckgDimensions[0];
-                    const rh = bckgDimensions[1];
-                    const radius = rh / 2;
+                    ctx.fillRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
 
-                    ctx.beginPath();
-                    ctx.moveTo(rx + radius, ry);
-                    ctx.lineTo(rx + rw - radius, ry);
-                    ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
-                    ctx.lineTo(rx + rw, ry + rh - radius);
-                    ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
-                    ctx.lineTo(rx + radius, ry + rh);
-                    ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
-                    ctx.lineTo(rx, ry + radius);
-                    ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                    ctx.stroke();
+                    // 2. Border Colored by Domain
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2 / globalScale;
+                    ctx.strokeRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
 
-                    // Label Text
+                    // 3. Name inside the square
+                    const fontSize = Math.max(6, 10 / globalScale);
+                    ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillText(label, node.x, ry + rh / 2);
+
+                    let displayText = label;
+                    const textWidth = ctx.measureText(label).width;
+                    if (textWidth > nodeSize - 4) {
+                        displayText = label.substring(0, Math.floor((nodeSize / textWidth) * label.length) - 3) + '...';
+                    }
+                    
+                    ctx.fillText(displayText, node.x, node.y - (nodeSize / 6));
+
+                    // 4. Type Label
+                    const typeFontSize = Math.max(5, 8 / globalScale);
+                    ctx.font = `${typeFontSize}px Inter, system-ui, sans-serif`;
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(type.toUpperCase(), node.x, node.y + (nodeSize / 4));
                 }}
             />
         </div>

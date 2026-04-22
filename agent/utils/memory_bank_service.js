@@ -32,10 +32,14 @@ class MemoryBankService {
         }
     }
 
-    /**
-     * Helper for REST API calls to Vertex AI
-     */
     async makeRequest(path, method = 'POST', body = null) {
+        const isPlaceholder = !process.env.VERTEX_MEMORY_BANK_ENGINE_ID || process.env.VERTEX_MEMORY_BANK_ENGINE_ID === 'default-engine';
+        const isSimulated = process.env.USE_REAL_CONNECTIONS !== 'true' || isPlaceholder;
+        
+        if (isSimulated) {
+            return this._getSimulatedResponse(path, body);
+        }
+
         const token = this.getAccessToken();
         if (!token) {
             throw new Error("Authentication failed: No access token available.");
@@ -68,6 +72,27 @@ class MemoryBankService {
             logger.log('MemoryBank', `API Request Failed to ${path}: ${error.message}`, 'ERROR');
             throw error;
         }
+    }
+
+    _getSimulatedResponse(path, body) {
+        if (path === 'sessions') {
+            return { name: `projects/${this.projectId}/locations/${this.location}/reasoningEngines/${this.engineId}/sessions/simulated-session-${Date.now()}` };
+        }
+        if (path.endsWith('/events')) {
+            return { status: "success", message: "Event simulated." };
+        }
+        if (path === 'memories:generate') {
+            return { status: "success", message: "Memory generation simulated." };
+        }
+        if (path === 'memories:retrieve') {
+            return {
+                memories: [
+                    "Simulated memory: User previously queried about cross-domain assets.",
+                    "Simulated memory: Compliance scopes require encryption for PII."
+                ]
+            };
+        }
+        return {};
     }
 
     /**

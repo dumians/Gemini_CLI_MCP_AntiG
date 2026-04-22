@@ -13,7 +13,7 @@ export function InventoryGraph() {
     const containerRef = useRef<HTMLDivElement>(null);
     const [graphData, setGraphData] = useState<any>({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);
-    const [dimensions, setDimensions] = useState({ width: 900, height: 520 });
+    const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -23,7 +23,7 @@ export function InventoryGraph() {
                 if (entry.contentRect.width === 0) continue;
                 setDimensions({
                     width: entry.contentRect.width,
-                    height: 520
+                    height: 600
                 });
             }
         });
@@ -114,31 +114,53 @@ export function InventoryGraph() {
                   };
                   return colors[domain] || 'rgba(255,255,255,0.15)';
                 }}
-                linkWidth={1.5}
-                linkDirectionalParticles={2}
+                linkWidth={(link: any) => {
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const isPhysical = sourceId === 'oracle' || sourceId === 'spanner' || sourceId === 'bigquery';
+                  return isPhysical ? 2.5 : 1;
+                }}
+                linkDirectionalParticles={(link: any) => {
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const isPhysical = sourceId === 'oracle' || sourceId === 'spanner' || sourceId === 'bigquery';
+                  return isPhysical ? 4 : 0;
+                }}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                     const label = node.label;
-                    const domain = node.properties?.domain || 'Unified';
+                    const domain = node.properties?.domain || node.domain || 'Unified';
+                    const type = node.type || 'entity';
                     const color = domainColors[domain] || '#6366f1';
                     
-                    const fontSize = 11 / globalScale;
-                    ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
-                    const textWidth = ctx.measureText(label).width;
-                    const padding = 6 / globalScale;
-                    const bckgDimensions = [textWidth + padding * 2, fontSize + padding];
+                    const nodeSize = 50 / globalScale;
 
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, 8 / globalScale, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = color;
-                    ctx.fill();
-
+                    // 1. Squared Transparent Background
                     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), bckgDimensions[0], bckgDimensions[1]);
+                    ctx.fillRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
 
+                    // 2. Border Colored by Domain
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2 / globalScale;
+                    ctx.strokeRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
+
+                    // 3. Name inside the square
+                    const fontSize = Math.max(6, 10 / globalScale);
+                    ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#ffffff';
-                    ctx.fillText(label, node.x, node.y + (12 / globalScale) + bckgDimensions[1] / 2);
+
+                    let displayText = label;
+                    const textWidth = ctx.measureText(label).width;
+                    if (textWidth > nodeSize - 4) {
+                        displayText = label.substring(0, Math.floor((nodeSize / textWidth) * label.length) - 3) + '...';
+                    }
+                    
+                    ctx.fillText(displayText, node.x, node.y - (nodeSize / 6));
+
+                    // 4. Type Label
+                    const typeFontSize = Math.max(5, 8 / globalScale);
+                    ctx.font = `${typeFontSize}px Inter, system-ui, sans-serif`;
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(type.toUpperCase(), node.x, node.y + (nodeSize / 4));
                 }}
             />
         </div>

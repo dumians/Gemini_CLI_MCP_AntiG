@@ -41,3 +41,12 @@ VALUES (
         500.00,
         CURRENT_TIMESTAMP()
     );
+
+-- BigQuery Graph Definition
+CREATE PROPERTY GRAPH marketing_graph
+  NODE TABLES (
+    customer_segments
+  )
+  EDGE TABLES (
+    campaign_metrics
+  );

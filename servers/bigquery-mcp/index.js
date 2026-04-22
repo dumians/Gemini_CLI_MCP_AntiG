@@ -52,6 +52,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     required: ["query"],
                 },
             },
+            {
+                name: "query_bigquery_graph",
+                description: "Execute a Graph (SQL/PGQ) query against the BigQuery marketing graph.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        query: { type: "string" },
+                    },
+                    required: ["query"],
+                },
+            },
         ],
     };
 });
@@ -113,6 +124,57 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     type: "text",
                     text: `Error executing BigQuery query: ${error.message}`
                 }],
+                isError: true
+            };
+        }
+    }
+
+    if (name === "query_bigquery_graph") {
+        const query = args.query || args.sql || "";
+        const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
+        if (!bigquery || isTest) {
+            try {
+                const csvPath = path.resolve(__dirname, '../../test-data/bigquery_graph.csv');
+                const fileContent = fs.readFileSync(csvPath, 'utf-8');
+                const lines = fileContent.trim().split('\n');
+                if (lines.length > 0) {
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    const rows = lines.slice(1).map(line => {
+                        const values = line.split(',');
+                        const obj = {};
+                        headers.forEach((h, i) => {
+                            obj[h] = values[i] ? values[i].trim() : null;
+                        });
+                        return obj;
+                    });
+                    return {
+                        content: [{ type: "text", text: JSON.stringify(rows, null, 2) }]
+                    };
+                }
+            } catch (e) {
+                console.error("Error reading simulation CSV:", e);
+                return {
+                    content: [{ type: "text", text: `Simulated BigQuery Graph result for: ${query}\n[{ "source": "VIP", "target": "Q3_VIP_Promo", "relationship": "TARGETS" }]` }]
+                };
+            }
+        }
+
+        try {
+            console.error(`[BigQuery-MCP] Executing Graph SQL: ${args.query}`);
+            const options = { query: args.query };
+            if (location) options.location = location;
+            if (datasetId) options.defaultDataset = { datasetId };
+
+            const [job] = await bigquery.createQueryJob(options);
+            const [rows] = await job.getQueryResults();
+
+            return {
+                content: [{ type: "text", text: JSON.stringify(rows, null, 2) }]
+            };
+        } catch (error) {
+            console.error(`[BigQuery-MCP] Error calling tool '${name}':`, error);
+            return {
+                content: [{ type: "text", text: `Error executing BigQuery Graph query: ${error.message}` }],
                 isError: true
             };
         }

@@ -56,6 +56,26 @@ export const AdminPortalView = () => {
     }
   };
 
+  const handleSaveAgent = async () => {
+    if (!editAgId) return;
+    setLoading(true);
+    try {
+      await api.put(`/api/config/agents/${editAgId}`, {
+        name: agFormData.name,
+        model: agFormData.model,
+        domain: agFormData.domain,
+        systemInstruction: agFormData.systemPrompt
+      });
+      setEditAgId(null);
+      setAgFormData({ id: '', name: '', model: 'gemini-2.5-flash', systemPrompt: '', domain: '' });
+      fetchData();
+    } catch (err) {
+      console.error('Failed to save agent:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const [mcpTools, setMcpTools] = React.useState<any[]>([]);
 
   const fetchMcpTools = async () => {
@@ -236,7 +256,7 @@ export const AdminPortalView = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <button 
-                          onClick={() => { setEditAgId(agent.id); setAgFormData({ id: agent.id, name: agent.name, model: agent.model || 'gemini-2.5-flash', systemPrompt: agent.prompt || '', domain: agent.domain || '' }); }}
+                          onClick={() => { setEditAgId(agent.id); setAgFormData({ id: agent.id, name: agent.name, model: agent.model || 'gemini-2.5-flash', systemPrompt: agent.systemInstruction || agent.prompt || '', domain: agent.domain || '' }); }}
                           className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition-colors"
                         >
                           <Edit size={16} />
@@ -336,11 +356,28 @@ export const AdminPortalView = () => {
                     );
                   })()}
 
+                  {(() => {
+                    const editingAgent = settings?.agents?.find((a: any) => a.id === editAgId);
+                    if (!editingAgent) return null;
+                    return (
+                      <div className="flex flex-col gap-2 mt-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                        <p className="text-xs font-bold text-slate-400">Agent Attributes</p>
+                        <div className="text-xs text-slate-300 space-y-1 font-mono">
+                          <div><span className="text-slate-500">ID:</span> {editingAgent.id}</div>
+                          <div><span className="text-slate-500">Tool:</span> {editingAgent.toolName || `call_${editingAgent.id}`}</div>
+                          <div><span className="text-slate-500">Specialty:</span> {editingAgent.specialty || 'N/A'}</div>
+                          <div><span className="text-slate-500">Grounding:</span> {editingAgent.groundingDomain || editingAgent.domain || 'N/A'}</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <button 
-                    disabled
-                    className="w-full bg-slate-800 text-slate-500 font-bold py-2.5 rounded-lg border border-slate-700 cursor-not-allowed mt-4"
+                    onClick={handleSaveAgent}
+                    disabled={loading}
+                    className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all mt-4"
                   >
-                    Save Configuration (Read-Only)
+                    {loading && <RefreshCw size={16} className="animate-spin" />} Save Configuration
                   </button>
                 </div>
               </section>

@@ -265,6 +265,62 @@ class DataplexIntegration {
         }
     }
 
+    async createSchemaEntry(sourceId, entity) {
+        console.log(`[Dataplex] Creating Schema Entry: ${entity.name} (Source: ${sourceId})`);
+        
+        if (this.simulationMode) {
+            return { success: true, id: entity.id || `schema-${Date.now()}`, simulated: true };
+        }
+        
+        const entryGroupId = 'agentic-mesh-group';
+        await this.ensureEntryGroup(entryGroupId);
+        
+        try {
+            const metadataTemplate = {
+                fields: [
+                    { name: 'name', type: 'string' },
+                    { name: 'type', type: 'string' },
+                    { name: 'attributes', type: 'string' },
+                    { name: 'semantic_tags', type: 'string' }
+                ]
+            };
+            
+            await this.ensureAspectType('schema-aspect-v1', metadataTemplate);
+            await this.ensureEntryType('schema-aspect-v1', [`projects/${projectId}/locations/global/aspectTypes/schema-aspect-v1`]);
+        } catch (err) {
+            console.error("[Dataplex] Failed to ensure types for Schema Entry:", err.message);
+            throw err;
+        }
+        
+        try {
+            const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
+            const attributesJson = JSON.stringify(entity.attributes || []);
+            const tags = Array.from(new Set(entity.attributes?.map(a => a.semanticTag))).filter(Boolean);
+            
+            const [response] = await this.client.createEntry({
+                parent: parent,
+                entryId: entity.id.replace(/[^a-z0-9-]/g, '-').toLowerCase(),
+                entry: {
+                    entryType: `projects/${projectId}/locations/global/entryTypes/schema-aspect-v1`,
+                    aspects: {
+                       "schema-aspect-v1": {
+                           "name": entity.name,
+                           "type": entity.type,
+                           "attributes": attributesJson,
+                           "semantic_tags": JSON.stringify(tags)
+                       }
+                    }
+                }
+            });
+            console.log(`[Dataplex] Successfully created schema entry: ${response.name}`);
+            return { success: true, id: response.name };
+            
+        } catch (error) {
+            console.error(`Error creating schema entry in Dataplex: ${error.message}`);
+            throw error;
+        }
+    }
+
     async createLineageProcess(processId, displayName) {
 
         console.log(`[Dataplex Lineage] Creating Process: ${displayName} (${processId})`);

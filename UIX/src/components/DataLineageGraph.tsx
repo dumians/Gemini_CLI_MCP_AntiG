@@ -17,7 +17,7 @@ interface Edge {
 
 export const DataLineageGraph = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 900, height: 520 });
+  const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
   const [graphData, setGraphData] = useState<{ nodes: Node[], links: Edge[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +29,7 @@ export const DataLineageGraph = () => {
               if (entry.contentRect.width === 0) continue;
               setDimensions({
                   width: entry.contentRect.width,
-                  height: 520
+                  height: 600
               });
           }
       });
@@ -138,16 +138,16 @@ export const DataLineageGraph = () => {
   }
 
   return (
-    <div ref={containerRef} className="glass rounded-2xl border-slate-700/50 p-6 h-[650px] relative overflow-hidden bg-slate-900/50 w-full">
+    <div ref={containerRef} className="glass rounded-2xl border-slate-700/50 p-6 h-[650px] relative overflow-hidden bg-slate-900/50 w-full flex flex-col">
       <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
         <ArrowRight size={20} className="text-primary" /> Data Lineage Graph
       </h3>
 
-      <div className="absolute inset-0 p-6 pt-16">
+      <div className="flex-1 relative">
         <ForceGraph2D
             graphData={graphData}
             width={dimensions.width}
-            height={520}
+            height={580}
             nodeLabel={(node: any) => `
               <div style="background: #0f172a; color: #fff; padding: 8px; border-radius: 8px; border: 1px solid #334155; font-size: 11px; font-family: monospace;">
                 <div style="font-weight: bold; color: #3b82f6; margin-bottom: 4px;">${node.label}</div>
@@ -168,44 +168,45 @@ export const DataLineageGraph = () => {
               };
               return colors[domain] || 'rgba(255,255,255,0.2)';
             }}
+            linkWidth={(link: any) => link.type === 'source' ? 2.5 : 1}
+            linkDirectionalParticles={(link: any) => link.type === 'source' ? 4 : 0}
             linkDirectionalArrowLength={6}
             linkDirectionalArrowRelPos={1}
             nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                 const label = node.label;
-                const fontSize = 12 / globalScale;
-                ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
-                const textWidth = ctx.measureText(label).width;
-                const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4) as [number, number];
-
-                // Node Circle
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, 8 / globalScale, 0, 2 * Math.PI, false);
-                ctx.fillStyle = getNodeColor(node.type);
-                ctx.fill();
+                const fontSize = Math.max(6, 10 / globalScale);
+                ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
+                const color = getNodeColor(node.type);
                 
-                // Outer ring for "product"
-                if (node.type === 'product') {
-                    ctx.beginPath();
-                    ctx.arc(node.x, node.y, 12 / globalScale, 0, 2 * Math.PI, false);
-                    ctx.strokeStyle = '#10b981';
-                    ctx.lineWidth = 1.5 / globalScale;
-                    ctx.stroke();
-                }
+                const nodeSize = 50 / globalScale;
 
-                // Label Background
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'; // slate-900
-                ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), ...bckgDimensions);
+                // 1. Squared Transparent Background
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.fillRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
 
-                // Label Text
+                // 2. Border Colored by Type
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2 / globalScale;
+                ctx.strokeRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
+
+                // 3. Name inside the square
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = '#ffffff';
-                ctx.fillText(label, node.x, node.y + (12 / globalScale) + bckgDimensions[1] / 2);
+
+                let displayText = label;
+                const textWidth = ctx.measureText(label).width;
+                if (textWidth > nodeSize - 4) {
+                    displayText = label.substring(0, Math.floor((nodeSize / textWidth) * label.length) - 3) + '...';
+                }
                 
-                // Type Label (Small)
-                ctx.font = `${8 / globalScale}px Inter, system-ui, sans-serif`;
-                ctx.fillStyle = '#94a3b8'; // slate-400
-                ctx.fillText(node.type.toUpperCase(), node.x, node.y + (12 / globalScale) + bckgDimensions[1] + (6 / globalScale));
+                ctx.fillText(displayText, node.x, node.y - (nodeSize / 6));
+
+                // 4. Type Label
+                const typeFontSize = Math.max(5, 8 / globalScale);
+                ctx.font = `${typeFontSize}px Inter, system-ui, sans-serif`;
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(node.type.toUpperCase(), node.x, node.y + (nodeSize / 4));
             }}
         />
       </div>

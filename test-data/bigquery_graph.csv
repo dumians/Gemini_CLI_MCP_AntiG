@@ -1,0 +1,4 @@
+source_node,target_node,relationship
+VIP,Q3_Promo,TARGETS
+Standard,Email_Blast,TARGETS
+Churn_Risk,Reengagement,TARGETS

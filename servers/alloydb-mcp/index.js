@@ -31,7 +31,7 @@ class AlloyDBAuth {
 }
 
 const { Pool } = pg;
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // GCP AlloyDB Configuration
 const auth = new AlloyDBAuth({

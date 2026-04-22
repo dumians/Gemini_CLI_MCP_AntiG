@@ -528,7 +528,7 @@ app.put('/api/config/data-sources/:id', authMiddleware, (req, res) => {
 
 app.put('/api/config/agents/:id', authMiddleware, (req, res) => {
     const { id } = req.params;
-    const { specialty, owner, description, mcpServers } = req.body;
+    const { specialty, owner, description, mcpServers, name, model, domain, systemInstruction } = req.body;
 
     try {
         const agentsPath = path.join(__dirname, '../config/agents.json');
@@ -544,6 +544,10 @@ app.put('/api/config/agents/:id', authMiddleware, (req, res) => {
 
         agentsData[agentIndex] = {
             ...agentsData[agentIndex],
+            name: name || agentsData[agentIndex].name,
+            model: model || agentsData[agentIndex].model,
+            domain: domain || agentsData[agentIndex].domain,
+            systemInstruction: systemInstruction || agentsData[agentIndex].systemInstruction,
             specialty: specialty || agentsData[agentIndex].specialty,
             mcpServers: mcpServers || agentsData[agentIndex].mcpServers
         };

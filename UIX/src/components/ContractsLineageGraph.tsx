@@ -16,7 +16,7 @@ interface Edge {
 
 export const ContractsLineageGraph = ({ products = [], contracts = [] }: { products?: any[], contracts?: any[] }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 600, height: 400 });
+  const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
 
   useEffect(() => {
       if (!containerRef.current) return;
@@ -26,7 +26,7 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
               if (entry.contentRect.width === 0) continue;
               setDimensions({
                   width: entry.contentRect.width,
-                  height: 400
+                  height: 600
               });
           }
       });
@@ -127,7 +127,7 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
   };
 
   return (
-    <div ref={containerRef} className="bg-slate-900/40 rounded-3xl border border-white/10 h-[400px] relative overflow-hidden isolate transform-gpu">
+    <div ref={containerRef} className="bg-slate-900/40 rounded-3xl border border-white/10 h-[650px] relative overflow-hidden isolate transform-gpu flex flex-col">
       <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
         <Shield size={12} className="text-primary animate-pulse" />
         Contracts & Lineage
@@ -143,7 +143,7 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
       <ForceGraph2D
         graphData={graphData}
         width={dimensions.width}
-        height={400}
+        height={580}
         nodeLabel="label"
         nodeRelSize={6}
         linkColor={(link: any) => {
@@ -173,15 +173,14 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
             const padding = 6 / globalScale;
             const bckgDimensions = [textWidth + padding * 2, fontSize + padding];
 
-            // Node Circle
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 8 / globalScale, 0, 2 * Math.PI, false);
+            // Node Square
+            const size = 14 / globalScale;
             ctx.fillStyle = color;
-            ctx.fill();
+            ctx.fillRect(node.x - size / 2, node.y - size / 2, size, size);
             
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 1.5 / globalScale;
-            ctx.stroke();
+            ctx.strokeRect(node.x - size / 2, node.y - size / 2, size, size);
 
             // Label Background
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';

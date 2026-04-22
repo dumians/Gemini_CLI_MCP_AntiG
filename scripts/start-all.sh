@@ -2,6 +2,9 @@
 
 export PATH="/opt/homebrew/bin:$PATH"
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
+
 # start-all.sh
 # This script starts the entire Agentic Data Mesh locally on Linux/Mac.
 
@@ -19,9 +22,9 @@ lsof -ti:3000,3001,5173,5174,3002,3003,3004,3005,3006 | xargs kill -9 2>/dev/nul
 echo -e "\033[0;33m[1/4] Configuring Environment...\033[0m"
 
 # Verify GEMINI_API_KEY and export all .env variables
-if [ -f ".env" ]; then
+if [ -f "$ROOT_DIR/.env" ]; then
     set -a
-    source .env
+    source "$ROOT_DIR/.env"
     set +a
 fi
 
@@ -62,21 +65,21 @@ set_default_env "ORACLE_CONNECT_STRING" "localhost:1521/xe"
 # 1. Start local MCP servers if requested
 if [ "$LOCAL_MCP" = true ]; then
     echo -e "\033[0;33mStarting Local MCP Servers (SSE Mode)...\033[0m"
-    node servers/alloydb-mcp/index.js --transport sse --port 3005 &
-    node servers/bigquery-mcp/index.js --transport sse --port 3004 &
-    node servers/oracle-mcp/index.js --transport sse --port 3003 &
-    node servers/spanner-mcp/index.js --transport sse --port 3002 &
-    node servers/oracle-mcp/index.js --transport sse --port 3006 &
+    node "$ROOT_DIR/servers/alloydb-mcp/index.js" --transport sse --port 3005 &
+    node "$ROOT_DIR/servers/bigquery-mcp/index.js" --transport sse --port 3004 &
+    node "$ROOT_DIR/servers/oracle-mcp/index.js" --transport sse --port 3003 &
+    node "$ROOT_DIR/servers/spanner-mcp/index.js" --transport sse --port 3002 &
+    node "$ROOT_DIR/servers/oracle-mcp/index.js" --transport sse --port 3006 &
     echo -e "\033[0;37m      Local MCP SSE endpoints active: Spanner (3002), Oracle (3003), BQ (3004), AlloyDB (3005), HR (3006)\033[0m"
 fi
 
 # 2. Start UIX App in background
 echo -e "\033[0;33m[2/4] Starting UIX App...\033[0m"
-(cd UIX && npm run dev) &
+(cd "$ROOT_DIR/UIX" && npm run dev) &
 
 # 3. Start Backend Orchestrator in background
 echo -e "\033[0;33m[3/4] Starting Backend Orchestrator...\033[0m"
-(cd server && npm run start) &
+(cd "$ROOT_DIR/server" && npm run start) &
 
 echo -e "\033[0;32m--- Mesh is booting up ---\033[0m"
 echo "UIX App: http://localhost:3000"

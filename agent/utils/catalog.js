@@ -390,6 +390,11 @@ export class MetadataCatalog {
                     }
                 }
             }
+            
+            const currentEntity = this.entities[entityId];
+            import('./dataplex.js').then(({ dataplex }) => {
+                dataplex.createSchemaEntry(sourceId, currentEntity);
+            }).catch(e => console.error("[Catalog] Failed to report schema to Dataplex:", e));
         }
 
         // Detect graph entities with detailed node/edge parsing
@@ -442,6 +447,10 @@ export class MetadataCatalog {
 
 
             this.entities[entityId] = graphEntity;
+            
+            import('./dataplex.js').then(({ dataplex }) => {
+                dataplex.createSchemaEntry(sourceId, graphEntity);
+            }).catch(e => console.error("[Catalog] Failed to report graph to Dataplex:", e));
         }
 
 
