@@ -138,10 +138,11 @@ export const DataLineageGraph = () => {
   }
 
   return (
-    <div ref={containerRef} className="glass rounded-2xl border-slate-700/50 p-6 h-[650px] relative overflow-hidden bg-slate-900/50 w-full flex flex-col">
-      <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-        <ArrowRight size={20} className="text-primary" /> Data Lineage Graph
-      </h3>
+    <div ref={containerRef} className="glass rounded-2xl border-slate-200 dark:border-slate-800 p-6 h-[600px] relative overflow-hidden bg-white dark:bg-slate-900/40 flex flex-col pt-16">
+      <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-slate-800 dark:text-white flex items-center gap-2 bg-slate-100 dark:bg-black/40 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800">
+        <ArrowRight size={14} className="text-primary" />
+        Data Lineage Graph
+      </div>
 
       <div className="flex-1 relative">
         <ForceGraph2D

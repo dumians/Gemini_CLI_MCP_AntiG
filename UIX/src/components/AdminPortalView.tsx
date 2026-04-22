@@ -552,19 +552,19 @@ export const AdminPortalView = () => {
         )}
 
         {activeTab === 'logs' && (
-          <section className="glass rounded-2xl border-slate-800 p-6 h-[700px] flex flex-col">
-            <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+          <section className="glass rounded-2xl border-slate-200 dark:border-slate-800 p-6 h-[700px] flex flex-col bg-white dark:bg-slate-900/40">
+            <div className="flex items-center justify-between mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-500">
                   <Terminal size={20} />
                 </div>
-                <h3 className="text-lg font-bold text-white">Live Transaction Logs</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Live Transaction Logs</h3>
               </div>
               
               <select 
                 value={selectedDomain}
                 onChange={(e) => setSelectedDomain(e.target.value)}
-                className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-primary"
+                className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-primary"
               >
                 <option value="all">All Domains</option>
                 <option value="System">System / Non-Agent</option>
@@ -573,7 +573,7 @@ export const AdminPortalView = () => {
                 ))}
               </select>
             </div>
-            <div className="flex-1 bg-black/40 p-6 rounded-xl overflow-y-auto font-mono text-xs space-y-2">
+            <div className="flex-1 bg-slate-50 dark:bg-black/40 p-6 rounded-xl overflow-y-auto font-mono text-xs space-y-2">
               {logs && logs.length > 0 ? logs.filter(log => {
                 if (selectedDomain === 'all') return true;
                 
@@ -587,19 +587,19 @@ export const AdminPortalView = () => {
                 
                 return logDomain === selectedDomain;
               }).map((log: any, i: number) => (
-                <div key={i} className="flex flex-col border-b border-slate-800/50 pb-2 last:border-0 hover:bg-white/5 transition-colors">
+                <div key={i} className="flex flex-col border-b border-slate-200 dark:border-slate-800/50 pb-2 last:border-0 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                   <div className="flex flex-wrap gap-4 items-center">
                     <span className="text-slate-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                     <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase border ${
                       log.type === 'ERROR' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
                       log.type === 'WARNING' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' :
-                      'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
+                      'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400'
                     }`}>{log.agent || 'System'}</span>
-                    <span className="text-slate-300 flex-1">{log.message}</span>
+                    <span className="text-slate-800 dark:text-slate-300 flex-1">{log.message}</span>
                   </div>
                 </div>
               )) : (
-                <div className="text-slate-500">No logs found. Use the system to generate traffic.</div>
+                <div className="text-slate-500 text-center italic">No logs recorded yet.</div>
               )}
             </div>
           </section>

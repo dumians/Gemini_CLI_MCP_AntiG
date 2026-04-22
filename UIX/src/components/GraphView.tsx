@@ -14,7 +14,7 @@ export function GraphView({ data: initialData }: { data?: any }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [graphData, setGraphData] = useState<any>(initialData || { nodes: [], links: [] });
     const [loading, setLoading] = useState(!initialData);
-    const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
+    const [dimensions, setDimensions] = useState({ width: 900, height: 500 });
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -24,7 +24,7 @@ export function GraphView({ data: initialData }: { data?: any }) {
                 if (entry.contentRect.width === 0) continue; // Ignore 0 width during component mount
                 setDimensions({
                     width: entry.contentRect.width,
-                    height: 600
+                    height: 500
                 });
             }
         });
@@ -92,19 +92,19 @@ export function GraphView({ data: initialData }: { data?: any }) {
     }, [initialData]);
 
     if (loading) {
-        return <div className="h-[400px] flex items-center justify-center text-white/20 uppercase tracking-widest text-[10px] font-bold">Mapping Mesh Topology...</div>;
+        return <div className="h-[600px] flex items-center justify-center text-slate-500 uppercase tracking-widest text-[10px] font-bold bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700/50">Mapping Mesh Topology...</div>;
     }
 
     return (
-        <div ref={containerRef} className="bg-slate-900/40 rounded-3xl border border-white/10 h-[400px] relative overflow-hidden isolate transform-gpu">
-            <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
+        <div ref={containerRef} className="bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-white/10 h-[600px] relative overflow-hidden isolate transform-gpu flex flex-col p-6 pt-16">
+            <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-slate-800 dark:text-white flex items-center gap-2 bg-slate-100 dark:bg-black/40 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                 Live Architecture Telemetry
             </div>
             <ForceGraph2D
                 graphData={graphData}
                 width={dimensions.width}
-                height={400}
+                height={500}
                 nodeLabel="label"
                 nodeRelSize={6}
                 linkColor={(link: any) => {

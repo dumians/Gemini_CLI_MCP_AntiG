@@ -69,7 +69,7 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
             }
             fetchData();
           }}
-          className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-slate-400 hover:text-white"
+          className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-200 dark:hover:bg-white/5 transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
         >
           <RefreshCw size={16} /> Refresh
         </button>
@@ -346,8 +346,8 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
 
                     {/* Agent Node */}
                     <g transform={`translate(320, ${agent.y})`}>
-                      <rect x="-40" y="-20" width="80" height="40" rx="8" className="fill-slate-800 stroke-2" stroke={agentColor} filter={agentFilter} />
-                      <text y="5" textAnchor="middle" className="fill-white font-semibold text-[10px]">{agent.name}</text>
+                      <rect x="-40" y="-20" width="80" height="40" rx="8" className="fill-slate-100 dark:fill-slate-800 stroke-2" stroke={agentColor} filter={agentFilter} />
+                      <text y="5" textAnchor="middle" className="fill-slate-900 dark:fill-white font-semibold text-[10px]">{agent.name}</text>
                     </g>
 
                     {/* MCP Servers */}
@@ -370,8 +370,8 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
 
                           {/* MCP Node */}
                           <g transform={`translate(600, ${mcpY})`}>
-                            <circle r="15" className="fill-slate-800 stroke-2" stroke={mcpColor} filter={mcpFilter} />
-                            <text y="5" textAnchor="middle" className="fill-slate-400 font-medium text-[8px]">{mcpName}</text>
+                            <circle r="15" className="fill-slate-100 dark:fill-slate-800 stroke-2" stroke={mcpColor} filter={mcpFilter} />
+                            <text y="5" textAnchor="middle" className="fill-slate-700 dark:fill-slate-400 font-medium text-[8px]">{mcpName}</text>
                           </g>
                         </g>
                       );

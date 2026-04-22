@@ -31,9 +31,9 @@ test("Real Connection vs Simulation: Spanner", async (t) => {
     if (result.isError) {
         assert.ok(result.content[0].text.includes("Error") || result.content[0].text.includes("invalid_grant"));
     } else if (hasRealConfig && process.env.NODE_ENV !== 'test') {
-        assert.ok(result.content[0].text.includes("[{") || result.content[0].text.includes("Simulated"));
+        assert.ok(result.content[0].text.replace(/\s/g, '').includes("[{") || result.content[0].text.includes("Simulated"));
     } else {
-        assert.ok(result.content[0].text.includes("TR-101") || result.content[0].text.includes("[{") || result.content[0].text.includes("Simulated"));
+        assert.ok(result.content[0].text.includes("TR-101") || result.content[0].text.replace(/\s/g, '').includes("[{") || result.content[0].text.includes("Simulated"));
     }
 });
 
@@ -52,9 +52,9 @@ test("Real Connection vs Simulation: BigQuery", async (t) => {
     if (result.isError) {
         assert.ok(result.content[0].text.includes("Error") || result.content[0].text.includes("invalid_grant"));
     } else if (hasRealConfig && process.env.NODE_ENV !== 'test') {
-        assert.ok(result.content[0].text.includes("[{") || result.content[0].text.includes("Simulated"));
+        assert.ok(result.content[0].text.replace(/\s/g, '').includes("[{") || result.content[0].text.includes("Simulated"));
     } else {
-        assert.ok(result.content[0].text.includes("VIP") || result.content[0].text.includes("[{") || result.content[0].text.includes("Simulated"));
+        assert.ok(result.content[0].text.includes("VIP") || result.content[0].text.replace(/\s/g, '').includes("[{") || result.content[0].text.includes("Simulated"));
     }
 });
 

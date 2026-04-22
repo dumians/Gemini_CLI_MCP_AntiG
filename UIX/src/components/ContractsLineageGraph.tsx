@@ -16,7 +16,7 @@ interface Edge {
 
 export const ContractsLineageGraph = ({ products = [], contracts = [] }: { products?: any[], contracts?: any[] }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 600, height: 500 });
 
   useEffect(() => {
       if (!containerRef.current) return;
@@ -26,7 +26,7 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
               if (entry.contentRect.width === 0) continue;
               setDimensions({
                   width: entry.contentRect.width,
-                  height: 600
+                  height: 500
               });
           }
       });
@@ -127,72 +127,82 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
   };
 
   return (
-    <div ref={containerRef} className="bg-slate-900/40 rounded-3xl border border-white/10 h-[650px] relative overflow-hidden isolate transform-gpu flex flex-col">
-      <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
+    <div ref={containerRef} className="bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-white/10 h-[600px] relative overflow-hidden isolate transform-gpu flex flex-col pt-16 p-6">
+      <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-slate-800 dark:text-white flex items-center gap-2 bg-slate-100 dark:bg-black/40 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10">
         <Shield size={12} className="text-primary animate-pulse" />
         Contracts & Lineage
       </div>
       
-      <div className="absolute bottom-4 right-4 z-10 flex gap-4 bg-black/60 px-4 py-2 rounded-xl border border-slate-800 text-[10px] text-slate-300 font-bold uppercase tracking-wider">
+      <div className="absolute bottom-4 right-4 z-10 flex gap-4 bg-slate-100 dark:bg-black/60 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-[10px] text-slate-700 dark:text-slate-300 font-bold uppercase tracking-wider">
         <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-500"/> Tables</div>
         <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"/> Products</div>
         <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"/> Contracts</div>
         <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-purple-500"/> Subscribers</div>
       </div>
 
-      <ForceGraph2D
-        graphData={graphData}
-        width={dimensions.width}
-        height={580}
-        nodeLabel="label"
-        nodeRelSize={6}
-        linkColor={(link: any) => {
-          const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-          const sourceNode = nodes.find((n: any) => n.id === sourceId);
-          const domain = sourceNode?.domain || 'General';
-          const colors: { [key: string]: string } = {
-            Finance: '#f97316',
-            Sales: '#3b82f6',
-            Unified: '#a855f7',
-            General: 'rgba(255,255,255,0.15)'
-          };
-          return colors[domain] || 'rgba(255,255,255,0.15)';
-        }}
-        linkWidth={1.5}
-        linkDirectionalArrowLength={6}
-        linkDirectionalArrowRelPos={1}
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.4}
-        nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-            const label = node.label;
-            const color = getNodeColor(node.type);
-            
-            const fontSize = 11 / globalScale;
-            ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
-            const textWidth = ctx.measureText(label).width;
-            const padding = 6 / globalScale;
-            const bckgDimensions = [textWidth + padding * 2, fontSize + padding];
+      <div className="flex-1 relative">
+        <ForceGraph2D
+          graphData={graphData}
+          width={dimensions.width}
+          height={500}
+          nodeLabel="label"
+          nodeRelSize={6}
+          linkColor={(link: any) => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const sourceNode = nodes.find((n: any) => n.id === sourceId);
+            const domain = sourceNode?.domain || 'General';
+            const colors: { [key: string]: string } = {
+              Finance: '#f97316',
+              Sales: '#3b82f6',
+              Unified: '#a855f7',
+              General: 'rgba(255,255,255,0.15)'
+            };
+            return colors[domain] || 'rgba(255,255,255,0.15)';
+          }}
+          linkWidth={1.5}
+          linkDirectionalArrowLength={6}
+          linkDirectionalArrowRelPos={1}
+          d3AlphaDecay={0.02}
+          d3VelocityDecay={0.4}
+          nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+              const label = node.label;
+              const color = getNodeColor(node.type);
+              const type = node.type || 'entity';
+              
+              const nodeSize = 50 / globalScale;
 
-            // Node Square
-            const size = 14 / globalScale;
-            ctx.fillStyle = color;
-            ctx.fillRect(node.x - size / 2, node.y - size / 2, size, size);
-            
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1.5 / globalScale;
-            ctx.strokeRect(node.x - size / 2, node.y - size / 2, size, size);
+              // 1. Squared Transparent Background
+              ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+              ctx.fillRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
 
-            // Label Background
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), bckgDimensions[0], bckgDimensions[1]);
+              // 2. Border Colored by Type
+              ctx.strokeStyle = color;
+              ctx.lineWidth = 2 / globalScale;
+              ctx.strokeRect(node.x - nodeSize / 2, node.y - nodeSize / 2, nodeSize, nodeSize);
 
-            // Label Text
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(label, node.x, node.y + (12 / globalScale) + bckgDimensions[1] / 2);
-        }}
-      />
+              // 3. Name inside the square
+              const fontSize = Math.max(6, 10 / globalScale);
+              ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillStyle = '#ffffff';
+
+              let displayText = label;
+              const textWidth = ctx.measureText(label).width;
+              if (textWidth > nodeSize - 4) {
+                  displayText = label.substring(0, Math.floor((nodeSize / textWidth) * label.length) - 3) + '...';
+              }
+              
+              ctx.fillText(displayText, node.x, node.y - (nodeSize / 6));
+
+              // 4. Type Label
+              const typeFontSize = Math.max(5, 8 / globalScale);
+              ctx.font = `${typeFontSize}px Inter, system-ui, sans-serif`;
+              ctx.fillStyle = '#94a3b8';
+              ctx.fillText(type.toUpperCase(), node.x, node.y + (nodeSize / 4));
+          }}
+        />
+      </div>
     </div>
   );
 };

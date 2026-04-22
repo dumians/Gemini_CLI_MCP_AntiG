@@ -91,11 +91,13 @@ export function InventoryGraph() {
     }
 
     return (
-        <div ref={containerRef} className="bg-slate-900/40 rounded-3xl border border-white/10 h-[520px] relative overflow-hidden isolate transform-gpu">
-            <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
+        <div ref={containerRef} className="bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-200 dark:border-white/10 h-[600px] relative overflow-hidden isolate transform-gpu flex flex-col pt-16 p-6">
+            <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-slate-800 dark:text-white flex items-center gap-2 bg-slate-100 dark:bg-black/40 px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10">
                 <Database size={12} className="text-primary" />
                 Asset Trace
             </div>
+
+            <div className="flex-1 relative">
 
             <ForceGraph2D
                 graphData={graphData}
@@ -163,6 +165,7 @@ export function InventoryGraph() {
                     ctx.fillText(type.toUpperCase(), node.x, node.y + (nodeSize / 4));
                 }}
             />
+          </div>
         </div>
     );
 }

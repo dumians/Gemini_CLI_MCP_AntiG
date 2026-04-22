@@ -456,17 +456,17 @@ export const MarketplaceView = ({ initialTab = 'products' }: { initialTab?: stri
                 </div>
               ) : (
                 <>
-                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-primary transition-colors">{prod.name} Data Product</h3>
-                  <p className="text-xs text-slate-500 mb-6 flex-1">{prod.description || 'Unified profile of customers across CRM and ERP.'}</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors">{prod.name} Data Product</h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-500 mb-6 flex-1">{prod.description || 'Unified profile of customers across CRM and ERP.'}</p>
                   
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs">
-                    <span className="text-slate-400">Domain: <span className="text-white font-mono">{prod.domain || 'General'}</span></span>
-                    <span className="text-slate-400">Owner: <span className="text-white font-mono">{prod.owner || 'Finance'}</span></span>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800/50 text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">Domain: <span className="text-slate-900 dark:text-white font-mono">{prod.domain || 'General'}</span></span>
+                    <span className="text-slate-600 dark:text-slate-400">Owner: <span className="text-slate-900 dark:text-white font-mono">{prod.owner || 'Finance'}</span></span>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs mt-2">
-                    <span className="text-slate-400">Access: <span className="text-white font-mono">{prod.access || 'open'}</span></span>
-                    <button disabled className="px-4 py-1.5 bg-slate-800 text-slate-500 border border-slate-700 rounded-lg text-xs font-bold cursor-not-allowed">
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800/50 text-xs mt-2">
+                    <span className="text-slate-600 dark:text-slate-400">Access: <span className="text-slate-900 dark:text-white font-mono">{prod.access || 'open'}</span></span>
+                    <button disabled className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold cursor-not-allowed">
                       Access Restricted
                     </button>
                   </div>

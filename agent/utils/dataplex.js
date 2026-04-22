@@ -14,13 +14,17 @@ const __dirname = dirname(__filename);
 
 class DataplexIntegration {
     constructor() {
-        // Only attempt to initialize if we have a project ID and are not in test mode
         this.client = (projectId && process.env.NODE_ENV !== 'test') ? new CatalogServiceClient() : null;
         this.simulationMode = !this.client;
         
         if (this.simulationMode) {
             console.error("DataplexServiceClient not initialized or running in test. Running in simulation mode for Dataplex.");
         }
+        
+        this.schemaTypesEnsured = false;
+        this.productTypesEnsured = false;
+        this.contractTypesEnsured = false;
+        this.policyTypesEnsured = false;
     }
 
     async ensureEntryGroup(entryGroupId) {
@@ -123,19 +127,22 @@ class DataplexIntegration {
             return { success: true, id: product.id || `dataplex-${Date.now()}`, simulated: true };
         }
         
-        const entryGroupId = 'agentic-mesh-group';
-        await this.ensureEntryGroup(entryGroupId);
-        
-        try {
-            const schemaPath = join(__dirname, '../../db-schemas/data_product_aspect_schema.json');
-            const schemaContent = fs.readFileSync(schemaPath, 'utf8');
-            const schema = JSON.parse(schemaContent);
+        if (!this.productTypesEnsured) {
+            const entryGroupId = 'agentic-mesh-group';
+            await this.ensureEntryGroup(entryGroupId);
             
-            await this.ensureAspectType('data-product-v4', schema.metadataTemplate);
-            await this.ensureEntryType('data-product-v4', [`projects/${projectId}/locations/global/aspectTypes/data-product-v4`]);
-        } catch (err) {
-            console.error("[Dataplex] Failed to load schema or ensure types for Data Product:", err.message);
-            throw err;
+            try {
+                const schemaPath = join(__dirname, '../../db-schemas/data_product_aspect_schema.json');
+                const schemaContent = fs.readFileSync(schemaPath, 'utf8');
+                const schema = JSON.parse(schemaContent);
+                
+                await this.ensureAspectType('data-product-v4', schema.metadataTemplate);
+                await this.ensureEntryType('data-product-v4', [`projects/${projectId}/locations/global/aspectTypes/data-product-v4`]);
+                this.productTypesEnsured = true;
+            } catch (err) {
+                console.error("[Dataplex] Failed to load schema or ensure types for Data Product:", err.message);
+                // Don't throw to avoid breaking client updates
+            }
         }
         
         try {
@@ -172,19 +179,21 @@ class DataplexIntegration {
         }
 
         try {
-            const entryGroupId = 'agentic-mesh-group';
-            await this.ensureEntryGroup(entryGroupId);
-            
-            try {
-                const schemaPath = join(__dirname, '../../db-schemas/data_contract_aspect_schema.json');
-                const schemaContent = fs.readFileSync(schemaPath, 'utf8');
-                const schema = JSON.parse(schemaContent);
+            if (!this.contractTypesEnsured) {
+                const entryGroupId = 'agentic-mesh-group';
+                await this.ensureEntryGroup(entryGroupId);
                 
-                await this.ensureAspectType('data-contract-v4', schema.metadataTemplate);
-                await this.ensureEntryType('data-contract-v4', [`projects/${projectId}/locations/global/aspectTypes/data-contract-v4`]);
-            } catch (err) {
-                console.error("[Dataplex] Failed to load schema or ensure types for Data Contract:", err.message);
-                throw err;
+                try {
+                    const schemaPath = join(__dirname, '../../db-schemas/data_contract_aspect_schema.json');
+                    const schemaContent = fs.readFileSync(schemaPath, 'utf8');
+                    const schema = JSON.parse(schemaContent);
+                    
+                    await this.ensureAspectType('data-contract-v4', schema.metadataTemplate);
+                    await this.ensureEntryType('data-contract-v4', [`projects/${projectId}/locations/global/aspectTypes/data-contract-v4`]);
+                    this.contractTypesEnsured = true;
+                } catch (err) {
+                    console.error("[Dataplex] Failed to load schema or ensure types for Data Contract:", err.message);
+                }
             }
             
             const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
@@ -221,19 +230,21 @@ class DataplexIntegration {
         }
 
         try {
-            const entryGroupId = 'agentic-mesh-group';
-            await this.ensureEntryGroup(entryGroupId);
-            
-            try {
-                const schemaPath = join(__dirname, '../../db-schemas/data_policy_aspect_schema.json');
-                const schemaContent = fs.readFileSync(schemaPath, 'utf8');
-                const schema = JSON.parse(schemaContent);
+            if (!this.policyTypesEnsured) {
+                const entryGroupId = 'agentic-mesh-group';
+                await this.ensureEntryGroup(entryGroupId);
                 
-                await this.ensureAspectType('data-policy-v4', schema.metadataTemplate);
-                await this.ensureEntryType('data-policy-v4', [`projects/${projectId}/locations/global/aspectTypes/data-policy-v4`]);
-            } catch (err) {
-                console.error("[Dataplex] Failed to load schema or ensure types for Data Policy:", err.message);
-                throw err;
+                try {
+                    const schemaPath = join(__dirname, '../../db-schemas/data_policy_aspect_schema.json');
+                    const schemaContent = fs.readFileSync(schemaPath, 'utf8');
+                    const schema = JSON.parse(schemaContent);
+                    
+                    await this.ensureAspectType('data-policy-v4', schema.metadataTemplate);
+                    await this.ensureEntryType('data-policy-v4', [`projects/${projectId}/locations/global/aspectTypes/data-policy-v4`]);
+                    this.policyTypesEnsured = true;
+                } catch (err) {
+                    console.error("[Dataplex] Failed to load schema or ensure types for Data Policy:", err.message);
+                }
             }
             
             const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
@@ -272,24 +283,26 @@ class DataplexIntegration {
             return { success: true, id: entity.id || `schema-${Date.now()}`, simulated: true };
         }
         
-        const entryGroupId = 'agentic-mesh-group';
-        await this.ensureEntryGroup(entryGroupId);
-        
-        try {
-            const metadataTemplate = {
-                fields: [
-                    { name: 'name', type: 'string' },
-                    { name: 'type', type: 'string' },
-                    { name: 'attributes', type: 'string' },
-                    { name: 'semantic_tags', type: 'string' }
-                ]
-            };
+        if (!this.schemaTypesEnsured) {
+            const entryGroupId = 'agentic-mesh-group';
+            await this.ensureEntryGroup(entryGroupId);
             
-            await this.ensureAspectType('schema-aspect-v1', metadataTemplate);
-            await this.ensureEntryType('schema-aspect-v1', [`projects/${projectId}/locations/global/aspectTypes/schema-aspect-v1`]);
-        } catch (err) {
-            console.error("[Dataplex] Failed to ensure types for Schema Entry:", err.message);
-            throw err;
+            try {
+                const metadataTemplate = {
+                    fields: [
+                        { name: 'name', type: 'string' },
+                        { name: 'type', type: 'string' },
+                        { name: 'attributes', type: 'string' },
+                        { name: 'semantic_tags', type: 'string' }
+                    ]
+                };
+                
+                await this.ensureAspectType('schema-aspect-v1', metadataTemplate);
+                await this.ensureEntryType('schema-aspect-v1', [`projects/${projectId}/locations/global/aspectTypes/schema-aspect-v1`]);
+                this.schemaTypesEnsured = true;
+            } catch (err) {
+                console.error("[Dataplex] Failed to ensure types for Schema Entry:", err.message);
+            }
         }
         
         try {
