@@ -12,9 +12,63 @@ import { metadataCatalog, AgentRegistry } from '../agent/utils/catalog.js';
 import { storageProvider } from '../agent/utils/storage_service.js';
 import { authMiddleware } from './middleware/auth.js';
 import { dataplex } from '../agent/utils/dataplex.js';
+import { gateway } from '../agent/utils/one_mcp_gateway.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: '../.env' });
+
+const agentConnectivityStatuses = {};
+const mcpServerStatuses = {};
+
+async function checkAgentConnectivityForAgent(agent) {
+    const isEnabled = agent.enabled !== false;
+    
+    if (!isEnabled) {
+        agentConnectivityStatuses[agent.id] = 'disabled';
+        logger.setAgentStatus(agent.name, 'disabled', 'Agent is disabled');
+        return 'disabled';
+    }
+    
+    if (!agent.mcpServers || agent.mcpServers.length === 0) {
+        agentConnectivityStatuses[agent.id] = 'online';
+        logger.setAgentStatus(agent.name, 'online', 'No external dependencies');
+        return 'online';
+    }
+    
+    let successes = 0;
+    let failures = 0;
+    
+    for (const serverConfig of agent.mcpServers) {
+        try {
+            await gateway.connect(serverConfig);
+            successes++;
+            mcpServerStatuses[serverConfig.name] = 'online';
+        } catch (error) {
+            failures++;
+            mcpServerStatuses[serverConfig.name] = 'offline';
+            logger.log('Server', `Connectivity check failed for ${agent.name} -> ${serverConfig.name}`, 'WARNING');
+        }
+    }
+    
+    let status = 'offline';
+    if (successes === agent.mcpServers.length) {
+        status = 'online';
+    } else if (successes > 0) {
+        status = 'degraded';
+    }
+    
+    agentConnectivityStatuses[agent.id] = status;
+    logger.setAgentStatus(agent.name, status, `Connectivity check: ${successes}/${agent.mcpServers.length} online`);
+    return status;
+}
+
+async function checkAgentConnectivity() {
+    logger.log('Server', 'Starting connectivity check for enabled agents...', 'INFO');
+    for (const agent of AgentRegistry) {
+        await checkAgentConnectivityForAgent(agent);
+    }
+    logger.log('Server', 'Connectivity check for enabled agents completed.', 'INFO');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -101,6 +155,9 @@ app.post('/api/agents', authMiddleware, async (req, res) => {
 
         // Update local memory registry without restart trigger
         AgentRegistry.unshift(newAgent);
+        
+        // Run connectivity check for the new agent
+        checkAgentConnectivityForAgent(newAgent);
         
         logger.log('Server', `Agent ${name} created dynamically via factory endpoint`, 'INFO');
         res.status(201).json({ message: `Agent ${name} created successfully`, agent: newAgent });
@@ -220,8 +277,22 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
 app.get('/api/status', authMiddleware, (req, res) => {
     res.json({
         ...currentStatus,
-        agents: logger.getAgentStatuses()
+        agents: logger.getAgentStatuses(),
+        mcpServerStatuses
     });
+});
+
+app.post('/api/refresh-telemetry', authMiddleware, async (req, res) => {
+    try {
+        await checkAgentConnectivity();
+        res.json({ 
+            success: true, 
+            agents: logger.getAgentStatuses(),
+            mcpServerStatuses 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.get('/api/admin/events', authMiddleware, (req, res) => {
@@ -713,7 +784,7 @@ app.post('/api/products', authMiddleware, (req, res) => {
 
 app.post('/api/products/:id/subscribe', authMiddleware, (req, res) => {
     const { id } = req.params;
-    const { user_role, user_id } = req.body; // Simulated RBAC credentials via payload
+    const { user_role, user_id } = req.body; // Fallbacks
 
     try {
         const productsPath = path.join(__dirname, '../config/data_products.json');
@@ -724,22 +795,75 @@ app.post('/api/products/:id/subscribe', authMiddleware, (req, res) => {
 
         if (!product) return res.status(404).json({ error: "Product not found" });
 
+        // Link security context (req.user)
+        const userRole = req.user?.role || user_role || 'Consumer';
+        const userId = req.user?.username || user_id || 'unknown';
+
         // RBAC Check for Confidential Products
-        if (product.security_level === 'Confidential' && user_role !== 'Admin' && user_role !== 'Producer') {
+        if (product.security_level === 'Confidential' && userRole !== 'admin' && userRole !== 'Producer') {
             return res.status(403).json({ error: "Forbidden: Only Admin or Producer can subscribe to Confidential products." });
         }
 
         if (!product.subscribers) product.subscribers = [];
-        if (product.subscribers.includes(user_id)) {
+        if (product.subscribers.includes(userId)) {
             return res.status(400).json({ error: "User already subscribed" });
         }
 
-        product.subscribers.push(user_id);
+        product.subscribers.push(userId);
         fs.writeFileSync(productsPath, JSON.stringify(productsData, null, 2));
 
         res.json({ message: "Subscribed successfully", subscribers: product.subscribers });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/config/api-keys', authMiddleware, (req, res) => {
+    try {
+        let keys = storageProvider.get('api_keys');
+        if (!Array.isArray(keys)) keys = [];
+        res.json(keys);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load API keys" });
+    }
+});
+
+app.post('/api/config/api-keys', authMiddleware, (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    
+    try {
+        let keys = storageProvider.get('api_keys');
+        if (!Array.isArray(keys)) keys = [];
+        
+        const newKey = {
+            id: `KEY-${Math.floor(Math.random() * 1000)}`,
+            name,
+            key: `sk_live_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
+            created: new Date().toISOString()
+        };
+        
+        keys.push(newKey);
+        storageProvider.set('api_keys', keys);
+        
+        res.status(201).json(newKey);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to create API key" });
+    }
+});
+
+app.delete('/api/config/api-keys/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    try {
+        let keys = storageProvider.get('api_keys');
+        if (!Array.isArray(keys)) keys = [];
+        
+        const filteredKeys = keys.filter(k => k.id !== id);
+        storageProvider.set('api_keys', filteredKeys);
+        
+        res.json({ message: "API key deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete API key" });
     }
 });
 
@@ -822,12 +946,12 @@ app.get('/api/settings', authMiddleware, (req, res) => {
         const agents = AgentRegistry.map(a => ({
             id: a.id,
             name: a.name,
-            status: 'idle',
+            status: agentConnectivityStatuses[a.id] || 'online',
             domain: a.domain,
             mcpServers: a.mcpServers
         }));
 
-        res.json({ dataSources, agents });
+        res.json({ dataSources, agents, mcpServerStatuses });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -1044,6 +1168,7 @@ if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
         console.log(`\n\x1b[32m[Mesh Server] Running on http://localhost:${PORT}\x1b[0m`);
         logger.log('Server', `Starting system in ${process.env.NODE_ENV || 'development'} mode`, 'INFO');
+        checkAgentConnectivity();
     });
 }
 

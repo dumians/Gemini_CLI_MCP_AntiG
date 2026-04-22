@@ -22,5 +22,12 @@
         "supplier_id": ["oracle_schema.suppliers", "oracle_schema.purchase_orders"],
         "store_id": ["spanner_schema.stores", "spanner_schema.global_inventory", "spanner_schema.realtime_transactions"],
         "dept_id": ["hr_schema.hr_departments", "hr_schema.hr_employees", "hr_schema.hr_recruitment"]
+    },
+    "domain_metadata": {
+        "Oracle ERP": "Stores financial ledgers, invoices, and supplier data. Relies on Oracle DB.",
+        "Spanner Retail": "Stores global inventory, store locations, and real-time transactions. Powered by Cloud Spanner.",
+        "BigQuery Analytics": "Enterprise Data Warehouse for marketing segments, user behavior, and behavioral heuristics.",
+        "AlloyDB CRM": "High-performance relational hub tracking customer relationship profiles.",
+        "Warehouse": "Supply Chain Lineage nodes tracking inventory distributions."
     }
 }

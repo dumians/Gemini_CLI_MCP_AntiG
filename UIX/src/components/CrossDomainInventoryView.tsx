@@ -1,7 +1,7 @@
 import React from 'react';
 import { RefreshCw, Activity, Bot } from 'lucide-react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
-import { GraphView } from './GraphView';
+import { InventoryGraph } from './InventoryGraph';
 
 export const CrossDomainInventoryView = () => {
   const [inventoryData, setInventoryData] = React.useState<any[]>([]);
@@ -82,7 +82,7 @@ export const CrossDomainInventoryView = () => {
       </div>
 
       <div className="w-full">
-        <GraphView />
+        <InventoryGraph />
       </div>
 
       <div className="glass rounded-2xl border-slate-800 p-6">

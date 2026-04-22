@@ -35,14 +35,25 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
 
   const getAgentStatus = (id: string) => {
     const agent = status.agents?.find((a: any) => a.agent === id);
-    return agent ? (agent.status === 'processing' ? 'Active' : 'Standby') : 'Offline';
+    if (!agent) return 'Offline';
+    if (agent.status === 'processing') return 'Active';
+    if (agent.status === 'offline') return 'Offline';
+    if (agent.status === 'degraded') return 'Degraded';
+    return 'Online';
   };
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
       <div className="flex justify-end mb-4">
         <button 
-          onClick={fetchData}
+          onClick={async () => {
+            try {
+              await api.post('/api/refresh-telemetry');
+            } catch (e) {
+              console.error("Refresh failed", e);
+            }
+            fetchData();
+          }}
           className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2 text-slate-400 hover:text-white"
         >
           <RefreshCw size={16} /> Refresh
@@ -113,41 +124,56 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
           <div className="flex flex-col md:flex-row">
             <div className="w-full md:w-64 bg-primary/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800">
               <div className="size-20 rounded-full bg-primary/20 flex items-center justify-center mb-4">
-                <RefreshCw size={40} className="text-primary" />
+                <RefreshCw size={40} className={`text-primary ${status.state === 'processing' ? 'animate-spin' : ''}`} />
               </div>
-              <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-500 text-[10px] font-bold rounded-full uppercase tracking-widest">Active Task</span>
+              <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-widest ${
+                status.state === 'processing' ? 'bg-green-500/10 text-green-600 dark:text-green-500' :
+                status.state === 'completed' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500' :
+                'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+              }`}>
+                {status.state === 'processing' ? 'Active Task' : status.state === 'completed' ? 'Last Task' : 'System Idle'}
+              </span>
             </div>
             <div className="flex-1 p-8">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">A2A Orchestrator</h2>
-                  <p className="text-slate-600 dark:text-slate-400">Processing cross-domain inventory synchronization</p>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    {status.lastQuery ? `"${status.lastQuery}"` : "No active traces."}
+                  </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-2xl font-bold text-primary">65%</span>
-                  <p className="text-xs text-slate-500 uppercase tracking-widest">Efficiency Rate</p>
+                  <span className="text-2xl font-bold text-primary">
+                    {status.state === 'processing' ? '50%' : status.state === 'completed' ? '100%' : '0%'}
+                  </span>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest">Completion Rate</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                   <div 
-                    style={{ width: '65%' }}
-                    className="bg-primary h-full rounded-full"
+                    style={{ width: status.state === 'processing' ? '50%' : status.state === 'completed' ? '100%' : '0%' }}
+                    className="bg-primary h-full rounded-full transition-all duration-500"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-3 text-sm text-green-600 dark:text-green-500">
-                    <CheckCircle2 size={16} />
-                    <span>Connecting to Spanner Retail... <span className="font-bold">Complete</span></span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
-                    <RefreshCw size={16} className="text-primary" />
-                    <span className="font-medium">Analyzing Inventory Data...</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-                    <Circle size={16} />
-                    <span>Cross-referencing with Oracle ERP... <span className="italic text-xs">Waiting</span></span>
-                  </div>
+                  {status.steps && status.steps.length > 0 ? (
+                    status.steps.map((step: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 text-sm text-green-600 dark:text-green-500">
+                        <CheckCircle2 size={16} className="flex-shrink-0" />
+                        <span>
+                          <span className="font-bold">{step.agent || 'Agent'}:</span> {step.query || 'Executing task...'}
+                        </span>
+                      </div>
+                    ))
+                  ) : status.state === 'processing' ? (
+                    <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+                      <RefreshCw size={16} className="text-primary animate-spin" />
+                      <span className="font-medium">Orchestrator is formulating execution plan...</span>
+                    </div>
+                  ) : (
+                    <div className="text-slate-500 text-sm italic">Ready for intent routing.</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -234,6 +260,100 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
             </div>
           </div>
         ))}
+      </section>
+
+      {/* Live Architecture Topology */}
+      <section className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Live Architecture Topology</h3>
+        <div className="w-full overflow-x-auto">
+          <svg width="800" height="400" viewBox="0 0 800 400" className="mx-auto">
+            {/* Definitions for glow filters */}
+            <defs>
+              <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="glow-yellow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            {/* Orchestrator Node */}
+            <g transform="translate(80, 200)">
+              <circle r="40" className="fill-primary/20 stroke-primary stroke-2" />
+              <text y="5" textAnchor="middle" className="fill-slate-900 dark:fill-white font-bold text-xs">Orchestrator</text>
+            </g>
+
+            {/* Agents & MCP Servers Mapping */}
+            {(() => {
+              const agents = [
+                { id: 'FinancialAgent', name: 'Financial', y: 50, mcp: ['oracle'] },
+                { id: 'RetailAgent', name: 'Retail', y: 125, mcp: ['spanner'] },
+                { id: 'AnalyticsAgent', name: 'Analytics', y: 200, mcp: ['bigquery', 'alloydb'] },
+                { id: 'HRAgent', name: 'HR', y: 275, mcp: ['oracle_hr'] },
+                { id: 'WarehouseAgent', name: 'Warehouse', y: 350, mcp: ['oracle_warehouse'] }
+              ];
+
+              return agents.map(agent => {
+                const agentStatus = status.agents?.find((a: any) => a.agent === agent.id)?.status || 'online';
+                const agentColor = agentStatus === 'offline' ? '#ef4444' : agentStatus === 'degraded' ? '#eab308' : '#22c55e';
+                const agentFilter = agentStatus === 'offline' ? 'url(#glow-red)' : agentStatus === 'degraded' ? 'url(#glow-yellow)' : 'url(#glow-green)';
+
+                return (
+                  <g key={agent.id}>
+                    {/* Line from Orchestrator to Agent */}
+                    <path 
+                      d={`M 120 200 Q 200 ${(200 + agent.y) / 2} 300 ${agent.y}`} 
+                      fill="none" 
+                      stroke={agentColor} 
+                      strokeWidth="2" 
+                      strokeDasharray="5 5"
+                      className="opacity-50"
+                    />
+
+                    {/* Agent Node */}
+                    <g transform={`translate(320, ${agent.y})`}>
+                      <rect x="-40" y="-20" width="80" height="40" rx="8" className="fill-slate-800 stroke-2" stroke={agentColor} filter={agentFilter} />
+                      <text y="5" textAnchor="middle" className="fill-white font-semibold text-[10px]">{agent.name}</text>
+                    </g>
+
+                    {/* MCP Servers */}
+                    {agent.mcp.map((mcpName, idx) => {
+                      const mcpY = agent.mcp.length === 1 ? agent.y : (idx === 0 ? agent.y - 25 : agent.y + 25);
+                      const mcpStatus = status.mcpServerStatuses?.[mcpName] || 'online';
+                      const mcpColor = mcpStatus === 'offline' ? '#ef4444' : '#22c55e';
+                      const mcpFilter = mcpStatus === 'offline' ? 'url(#glow-red)' : 'url(#glow-green)';
+
+                      return (
+                        <g key={mcpName}>
+                          {/* Line from Agent to MCP */}
+                          <line 
+                            x1="360" y1={agent.y} 
+                            x2="580" y2={mcpY} 
+                            stroke={mcpColor} 
+                            strokeWidth="2"
+                            className="opacity-50"
+                          />
+
+                          {/* MCP Node */}
+                          <g transform={`translate(600, ${mcpY})`}>
+                            <circle r="15" className="fill-slate-800 stroke-2" stroke={mcpColor} filter={mcpFilter} />
+                            <text y="5" textAnchor="middle" className="fill-slate-400 font-medium text-[8px]">{mcpName}</text>
+                          </g>
+                        </g>
+                      );
+                    })}
+                  </g>
+                );
+              });
+            })()}
+          </svg>
+        </div>
       </section>
     </div>
   );

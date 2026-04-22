@@ -76,9 +76,7 @@ class MemoryBankService {
      * @returns {Promise<string>} The Session Path/ID
      */
     async createSession(userId) {
-        const response = await this.makeRequest('sessions', 'POST', {
-            user: userId
-        });
+        const response = await this.makeRequest('sessions', 'POST', {});
         return response.name; // e.g., projects/.../locations/.../reasoningEngines/.../sessions/...
     }
 

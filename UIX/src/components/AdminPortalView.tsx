@@ -23,6 +23,39 @@ export const AdminPortalView = () => {
   const [logs, setLogs] = React.useState<any[]>([]);
   const [selectedDomain, setSelectedDomain] = React.useState<string>('all');
 
+  // API Keys State
+  const [apiKeys, setApiKeys] = React.useState<any[]>([]);
+  const [newKeyName, setNewKeyName] = React.useState('');
+
+  const fetchApiKeys = async () => {
+    try {
+      const data = await api.get('/api/config/api-keys');
+      setApiKeys(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch API keys:', err);
+    }
+  };
+
+  const handleCreateKey = async () => {
+    if (!newKeyName) return;
+    try {
+      await api.post('/api/config/api-keys', { name: newKeyName });
+      setNewKeyName('');
+      fetchApiKeys();
+    } catch (err) {
+      console.error('Failed to create API key:', err);
+    }
+  };
+
+  const handleDeleteKey = async (id: string) => {
+    try {
+      await api.delete(`/api/config/api-keys/${id}`);
+      fetchApiKeys();
+    } catch (err) {
+      console.error('Failed to delete API key:', err);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -45,6 +78,7 @@ export const AdminPortalView = () => {
 
   React.useEffect(() => {
     fetchData();
+    fetchApiKeys();
   }, []);
 
   const handleDsSubmit = async (data: any) => {
@@ -83,7 +117,15 @@ export const AdminPortalView = () => {
           <p className="text-slate-400">Configure mesh settings, agents, and data governance.</p>
         </div>
         <button 
-          onClick={fetchData}
+          onClick={async () => {
+            setLoading(true);
+            try {
+              await api.post('/api/refresh-telemetry');
+            } catch (e) {
+              console.error("Refresh failed", e);
+            }
+            fetchData();
+          }}
           className="glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
@@ -187,7 +229,12 @@ export const AdminPortalView = () => {
                         >
                           <Edit size={16} />
                         </button>
-                        <span className={`px-2 py-0.5 rounded border text-xs font-bold uppercase ${agent.status === 'online' || !agent.status ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded border text-xs font-bold uppercase ${
+                          agent.status === 'online' || !agent.status ? 'bg-green-500/10 border-green-500/30 text-green-500' :
+                          agent.status === 'degraded' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' :
+                          agent.status === 'offline' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
+                          'bg-slate-800 border-slate-700 text-slate-500'
+                        }`}>
                           {agent.status || 'online'}
                         </span>
                       </div>
@@ -344,21 +391,43 @@ export const AdminPortalView = () => {
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-bold text-slate-400">Key Name</label>
-                    <input type="text" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary" placeholder="e.g. Analytics Frontend" />
+                    <input 
+                      type="text" 
+                      value={newKeyName}
+                      onChange={e => setNewKeyName(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary" 
+                      placeholder="e.g. Analytics Frontend" 
+                    />
                   </div>
-                  <button className="bg-primary hover:bg-primary/80 text-white font-bold py-2 rounded-lg text-sm">Generate Key</button>
+                  <button 
+                    onClick={handleCreateKey}
+                    className="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded-lg text-sm"
+                  >
+                    Generate Key
+                  </button>
                 </div>
                 <div className="space-y-4">
                   <h4 className="text-sm font-bold text-white">Active Keys</h4>
-                  <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-bold text-white">Default Internal Key</p>
-                      <p className="text-xs text-slate-500">sk_live_...4a2b</p>
+                  {apiKeys.length === 0 ? (
+                    <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 text-slate-500 text-sm italic">
+                      No API keys created yet.
                     </div>
-                    <button className="p-2 bg-slate-700 hover:bg-red-500/20 rounded-lg text-slate-300 hover:text-red-500 transition-colors">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  ) : (
+                    apiKeys.map((key: any) => (
+                      <div key={key.id} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-bold text-white">{key.name}</p>
+                          <p className="text-xs text-slate-500 font-mono">{key.key}</p>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteKey(key.id)}
+                          className="p-2 bg-slate-700 hover:bg-red-500/20 rounded-lg text-slate-300 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </section>
@@ -406,21 +475,34 @@ export const AdminPortalView = () => {
                 className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-primary"
               >
                 <option value="all">All Domains</option>
-                {Array.from(new Set(logs.map(l => l.domain))).filter(Boolean).map((domain, i) => (
+                <option value="System">System / Non-Agent</option>
+                {Array.from(new Set(settings?.dataSources?.map((ds: any) => ds.domain))).filter(Boolean).map((domain: any, i: number) => (
                   <option key={i} value={domain}>{domain}</option>
                 ))}
               </select>
             </div>
             <div className="flex-1 bg-black/40 p-6 rounded-xl overflow-y-auto font-mono text-xs space-y-2">
-              {logs && logs.length > 0 ? logs.filter(l => selectedDomain === 'all' || l.domain === selectedDomain).map((log: any, i: number) => (
+              {logs && logs.length > 0 ? logs.filter(log => {
+                if (selectedDomain === 'all') return true;
+                
+                let logDomain = 'System';
+                if (log.agent && log.agent !== 'Server' && log.agent !== 'Orchestrator') {
+                  const agentDef = settings?.agents?.find((a: any) => a.name === log.agent);
+                  if (agentDef && agentDef.domain) {
+                    logDomain = agentDef.domain;
+                  }
+                }
+                
+                return logDomain === selectedDomain;
+              }).map((log: any, i: number) => (
                 <div key={i} className="flex flex-col border-b border-slate-800/50 pb-2 last:border-0 hover:bg-white/5 transition-colors">
                   <div className="flex flex-wrap gap-4 items-center">
                     <span className="text-slate-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                     <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase border ${
-                      log.level === 'ERROR' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
-                      log.level === 'WARNING' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' :
+                      log.type === 'ERROR' ? 'bg-red-500/10 border-red-500/30 text-red-500' :
+                      log.type === 'WARNING' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' :
                       'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
-                    }`}>{log.domain}</span>
+                    }`}>{log.agent || 'System'}</span>
                     <span className="text-slate-300 flex-1">{log.message}</span>
                   </div>
                 </div>

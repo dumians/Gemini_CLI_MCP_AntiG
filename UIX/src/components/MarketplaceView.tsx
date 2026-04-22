@@ -4,6 +4,7 @@ import { Sparkles, ShoppingBag, Shield, CheckCircle, Clock, AlertCircle, Search,
 import { GraphView } from './GraphView';
 import { DataLineageGraph } from './DataLineageGraph';
 import { DatasetLineageView } from './DatasetLineageView';
+import { ContractsLineageGraph } from './ContractsLineageGraph';
 
 export const MarketplaceView = () => {
   const [activeTab, setActiveTab] = React.useState('products');
@@ -485,7 +486,7 @@ export const MarketplaceView = () => {
             <div className="w-full">
               <h4 className="text-sm font-bold text-white mb-2">Contracts & Product Lineage Graph</h4>
               <div className="h-[400px]">
-                <GraphView />
+                <ContractsLineageGraph products={products} contracts={contracts} />
               </div>
             </div>
 

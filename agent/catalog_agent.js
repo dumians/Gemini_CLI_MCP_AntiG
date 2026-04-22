@@ -18,6 +18,15 @@ class CatalogAgent {
     constructor() {
         this.config = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/catalog_agent.json'), 'utf8'));
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        
+        let domainKnowledge = "";
+        if (this.config.domain_metadata) {
+            domainKnowledge = "\n\n[Domain Metadata Knowledge]:\n" + 
+                Object.entries(this.config.domain_metadata)
+                    .map(([dom, desc]) => `- ${dom}: ${desc}`)
+                    .join('\n');
+        }
+
         this.model = genAI.getGenerativeModel({
             model: this.config.model,
             systemInstruction: `${this.config.system_instruction_prefix}\n\n` +
@@ -25,7 +34,8 @@ class CatalogAgent {
                 `You answer questions about WHERE data is, WHAT schemas look like, and HOW entities relate across domains.\n` +
                 `You also identify 'data contracts' and lineage.\n\n` +
                 `You do NOT have access to live business data (rows), but you know all table structures.\n` +
-                `Always use the shared MetadataCatalog tools provided below.\n\n` +
+                `Always use the shared MetadataCatalog tools provided below.\n` +
+                domainKnowledge + `\n\n` +
                 groundingInstructions
         });
 
@@ -42,10 +52,11 @@ class CatalogAgent {
     _queryCrossDomainInventory() {
         const catalog = metadataCatalog.getCatalog();
         const links = catalog.crossDomainLinks;
+        const sources = Object.values(catalog.sources).map(s => s.name).join(', ');
         return {
             status: "success",
             graphLinks: links,
-            summary: "Cross-domain inventory links synthesized from Metadata Graph."
+            summary: `Unified view of assets across dynamic sources: ${sources}.`
         };
     }
 
@@ -89,7 +100,7 @@ class CatalogAgent {
                     },
                     {
                         name: "query_cross_domain_inventory",
-                        description: "Finds cross-domain inventory links between Oracle and Spanner using the metadata graph."
+                        description: "Finds cross-domain inventory links across dynamic sources including Oracle, Spanner, and BigQuery using the metadata graph."
                     }
                 ]
             }]
