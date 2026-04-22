@@ -11,16 +11,31 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
   const [status, setStatus] = React.useState<any>({ agents: [], steps: [] });
   const [metrics, setMetrics] = React.useState<any>({ uptime: {}, latency: {} });
   const [searchText, setSearchText] = React.useState('');
+  const [exampleQueries, setExampleQueries] = React.useState<string[]>([
+    "Find cross-domain inventory discrepancies between Spanner and Oracle",
+    "Check compliance status for PII data pipelines",
+    "Synthesize customer 360 profiles"
+  ]);
   
   const fetchData = async () => {
     try {
-      const [statusData, metricsData] = await Promise.all([
+      const [statusData, metricsData, catalogData] = await Promise.all([
         api.get('/api/status'),
-        api.get('/api/metrics')
+        api.get('/api/metrics'),
+        api.get('/api/catalog').catch(() => ({ entities: {}, sources: {} }))
       ]);
       setStatus(statusData);
       if (metricsData.metrics) {
         setMetrics(metricsData.metrics);
+      }
+      
+      if (catalogData) {
+        const examples: string[] = [
+          "Analyze the financial impact of global inventory stockouts on Q2 revenue projections.",
+          "Identify high-value customer segments affected by supply chain hotspots.",
+          "Cross-reference active procurement contracts with cross-border data policies."
+        ];
+        setExampleQueries(examples);
       }
     } catch (err) {
       console.error(err);
@@ -48,7 +63,7 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
         <button 
           onClick={async () => {
             try {
-              await api.post('/api/refresh-telemetry');
+              await api.post('/api/refresh-telemetry', {});
             } catch (e) {
               console.error("Refresh failed", e);
             }
@@ -86,6 +101,19 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
               </button>
             </div>
           </div>
+        </div>
+        
+        <div className="mt-3 flex flex-wrap gap-2 justify-center w-full max-w-3xl animate-fade-in">
+          <span className="text-xs text-slate-500 flex items-center gap-1 self-center mr-1">Try:</span>
+          {exampleQueries.map((q, i) => (
+            <button 
+              key={i}
+              onClick={() => setSearchText(q)}
+              className="text-xs bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-slate-200 dark:hover:bg-slate-800 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary/30 transition-all"
+            >
+              {q}
+            </button>
+          ))}
         </div>
       </div>
 

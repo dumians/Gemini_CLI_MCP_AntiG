@@ -25,6 +25,8 @@ INTERLEAVE IN PARENT stores ON DELETE CASCADE;
 
 -- Add a supplier reference to link back to the Oracle ERP system
 ALTER TABLE global_inventory ADD COLUMN supplier_id STRING(MAX);
+ALTER TABLE global_inventory ADD COLUMN warehouse_id STRING(MAX);
+ALTER TABLE realtime_transactions ADD COLUMN warehouse_id STRING(MAX);
 
 -- Spanner Graph: Create a Property Graph to trace inventory to transactions
 CREATE PROPERTY GRAPH RetailGraph NODE TABLES (

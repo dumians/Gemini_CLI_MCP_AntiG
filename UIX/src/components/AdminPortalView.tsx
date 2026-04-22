@@ -56,6 +56,17 @@ export const AdminPortalView = () => {
     }
   };
 
+  const [mcpTools, setMcpTools] = React.useState<any[]>([]);
+
+  const fetchMcpTools = async () => {
+    try {
+      const data = await api.get('/api/mcp/tools');
+      setMcpTools(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch MCP tools:', err);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -79,6 +90,7 @@ export const AdminPortalView = () => {
   React.useEffect(() => {
     fetchData();
     fetchApiKeys();
+    fetchMcpTools();
   }, []);
 
   const handleDsSubmit = async (data: any) => {
@@ -120,7 +132,7 @@ export const AdminPortalView = () => {
           onClick={async () => {
             setLoading(true);
             try {
-              await api.post('/api/refresh-telemetry');
+              await api.post('/api/refresh-telemetry', {});
             } catch (e) {
               console.error("Refresh failed", e);
             }
@@ -267,6 +279,7 @@ export const AdminPortalView = () => {
                       <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                       <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                       <option value="gemini-3.1-preview">Gemini 3.1 Preview</option>
+                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -293,11 +306,41 @@ export const AdminPortalView = () => {
                       className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
                     />
                   </div>
+                  
+                  {(() => {
+                    const editingAgent = settings?.agents?.find((a: any) => a.id === editAgId);
+                    if (!editingAgent) return null;
+                    return (
+                      <div className="flex flex-col gap-1.5 mt-4">
+                        <label className="text-xs font-bold text-slate-400">Active Connections</label>
+                        <div className="flex flex-col gap-2 mt-1">
+                          {editingAgent.mcpServers && editingAgent.mcpServers.length > 0 ? (
+                            editingAgent.mcpServers.map((m: any) => (
+                              <div key={m.name} className="p-3 bg-slate-900 border border-slate-700 rounded-xl flex justify-between items-center">
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-xs font-bold text-white truncate">{m.name}</span>
+                                  <span className="text-[10px] text-slate-500 truncate max-w-[150px]">{m.mcpUrl || 'Local Process'}</span>
+                                </div>
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                  settings?.mcpServerStatuses?.[m.name] === 'online' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                                }`}>
+                                  {settings?.mcpServerStatuses?.[m.name] || 'online'}
+                                </span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-slate-500 text-xs italic p-3 bg-slate-900 rounded-xl border border-slate-800">No dependencies.</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <button 
-                    onClick={() => alert('Agent updated successfully!')}
-                    className="w-full bg-primary hover:bg-primary/80 text-white font-bold py-2.5 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all mt-4"
+                    disabled
+                    className="w-full bg-slate-800 text-slate-500 font-bold py-2.5 rounded-lg border border-slate-700 cursor-not-allowed mt-4"
                   >
-                    Save Configuration
+                    Save Configuration (Read-Only)
                   </button>
                 </div>
               </section>
@@ -371,10 +414,22 @@ export const AdminPortalView = () => {
                   </div>
                   <div className="space-y-4">
                     <h4 className="text-sm font-bold text-white">Available Tools</h4>
-                    <div className="grid grid-cols-1 gap-2">
-                      <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                        <p className="text-sm text-slate-500">Tools are loaded by agents at runtime. UI integration for tool discovery is not enabled.</p>
-                      </div>
+                    <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto">
+                      {mcpTools.length === 0 ? (
+                        <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 text-slate-500 text-sm italic">
+                          No tools discovered yet.
+                        </div>
+                      ) : (
+                        mcpTools.map((tool: any) => (
+                          <div key={tool.name} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex flex-col gap-1">
+                            <div className="flex justify-between items-center">
+                              <p className="text-sm font-bold text-white">{tool.name}</p>
+                              <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono">{tool.server}</span>
+                            </div>
+                            <p className="text-xs text-slate-400">{tool.description}</p>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>

@@ -12,6 +12,9 @@ export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => voi
     { id: 'POL-004', name: 'Marketing Segment Anonymization', status: 'Draft', domain: 'BigQuery', lastUpdated: '5h ago' },
   ]);
 
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedDomainFilter, setSelectedDomainFilter] = React.useState('all');
+
   const fetchPolicies = async () => {
     try {
       const data = await api.get('/api/governance/policies');
@@ -74,13 +77,24 @@ export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => voi
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input 
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="w-full bg-slate-900/50 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-primary focus:border-primary text-slate-200 placeholder:text-slate-500"
                 placeholder="Search policies by ID, name, or domain..."
               />
             </div>
-            <button className="glass px-6 py-3 rounded-xl flex items-center gap-2 text-sm font-medium hover:bg-white/5 transition-colors">
-              <Filter size={18} /> Filter
-            </button>
+            
+            <select 
+              value={selectedDomainFilter}
+              onChange={(e) => setSelectedDomainFilter(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
+            >
+              <option value="all">All Domains</option>
+              <option value="Global">Global</option>
+              {Array.from(new Set(policies.map(p => p.domain))).filter(Boolean).map((dom: any, i: number) => (
+                <option key={i} value={dom}>{dom}</option>
+              ))}
+            </select>
           </div>
 
           <div className="bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden">
@@ -94,7 +108,13 @@ export const GovernanceView = ({ onNavigate }: { onNavigate: (view: View) => voi
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
-                {policies.map((policy) => (
+                {policies.filter(p => {
+                  const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                       p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                       p.domain.toLowerCase().includes(searchTerm.toLowerCase());
+                  const matchesDomain = selectedDomainFilter === 'all' || p.domain === selectedDomainFilter;
+                  return matchesSearch && matchesDomain;
+                }).map((policy) => (
                   <tr 
                     key={policy.id} 
                     className="hover:bg-white/5 transition-colors cursor-pointer group"

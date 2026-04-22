@@ -3,7 +3,7 @@ import { RefreshCw, Activity, Bot } from 'lucide-react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { InventoryGraph } from './InventoryGraph';
 
-export const CrossDomainInventoryView = () => {
+export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: any, query?: string, tab?: string) => void }) => {
   const [inventoryData, setInventoryData] = React.useState<any[]>([]);
 
   const [agentOutput, setAgentOutput] = React.useState<{ summary: string; steps: any[] }>({ summary: '', steps: [] });
@@ -244,7 +244,10 @@ export const CrossDomainInventoryView = () => {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-6 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-all rounded-xl border border-primary/30">
+            <button 
+              onClick={() => onNavigate('marketplace', undefined, 'domains')}
+              className="w-full mt-6 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-all rounded-xl border border-primary/30"
+            >
               Deploy New ADK Agent
             </button>
           </section>

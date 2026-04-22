@@ -81,6 +81,30 @@ export const SpannerDetailView = () => {
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isShipping, setIsShipping] = React.useState(false);
   const [spannerMessage, setSpannerMessage] = React.useState('');
+  
+  const [sqlQuery, setSqlQuery] = React.useState("SELECT * FROM global_inventory WHERE item_id = 'ITEM-X1';");
+  const [queryResult, setQueryResult] = React.useState('');
+  const [executing, setExecuting] = React.useState(false);
+
+  const handleExecuteQuery = async () => {
+    setExecuting(true);
+    setQueryResult('');
+    try {
+      const data = await api.post('/api/query', { query: `Execute this Spanner SQL against the mesh: ${sqlQuery}` });
+      if (data.text) {
+        setQueryResult(data.text);
+      } else if (data.insights) {
+        setQueryResult(data.insights);
+      } else {
+        setQueryResult(JSON.stringify(data, null, 2));
+      }
+    } catch (err: any) {
+      console.error('Query execution failed:', err);
+      setQueryResult(`Error: ${err.message}`);
+    } finally {
+      setExecuting(false);
+    }
+  };
 
   const handleForceSync = () => {
     setIsSyncing(true);
@@ -291,21 +315,40 @@ export const SpannerDetailView = () => {
               <h3 className="text-sm font-bold uppercase tracking-widest text-slate-300">Spanner GQL Console</h3>
             </div>
             <div className="flex gap-2">
-              <button className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs rounded transition-colors">Clear</button>
-              <button className="px-3 py-1 bg-primary text-white text-xs rounded font-bold hover:bg-primary/80 transition-all">Execute Query</button>
+              <button 
+                onClick={() => { setSqlQuery(''); setQueryResult(''); }}
+                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs rounded transition-colors"
+              >
+                Clear
+              </button>
+              <button 
+                onClick={handleExecuteQuery}
+                disabled={executing}
+                className="px-3 py-1 bg-primary text-white text-xs rounded font-bold hover:bg-primary/80 transition-all flex items-center gap-1"
+              >
+                {executing && <RefreshCw size={12} className="animate-spin" />}
+                Execute Query
+              </button>
             </div>
           </div>
-          <div className="flex-1 p-6 font-mono text-sm leading-relaxed overflow-auto min-h-[150px]">
-            <p className="text-purple-400">SELECT</p>
-            <p className="pl-4 text-blue-300">warehouse_id, stock_count, last_updated</p>
-            <p className="text-purple-400">FROM</p>
-            <p className="pl-4 text-white">Inventory_Distribution</p>
-            <p className="text-purple-400">WHERE</p>
-            <p className="pl-4 text-white">sku_id = <span className="text-orange-400">'GLOBAL-77X'</span></p>
-            <p className="text-purple-400">AND</p>
-            <p className="pl-4 text-white">region = <span className="text-orange-400">'EMEA'</span></p>
-            <p className="text-slate-600 mt-4 italic">-- Results limited to top 50 rows</p>
-            <p className="animate-pulse border-l-2 border-primary pl-1">&nbsp;</p>
+          <div className="flex-1 p-6 flex flex-col min-h-[200px]">
+            <textarea
+              value={sqlQuery}
+              onChange={e => setSqlQuery(e.target.value)}
+              className="w-full bg-slate-900/80 border border-slate-800 rounded-xl p-4 font-mono text-sm text-blue-300 focus:outline-none focus:border-primary flex-1 resize-none"
+              rows={4}
+            />
+            {queryResult && (
+              <div className="mt-4 p-4 bg-black/40 rounded-xl border border-slate-800 font-mono text-xs overflow-x-auto">
+                <p className="text-primary font-bold mb-2">Query Result:</p>
+                <pre className="text-slate-300 whitespace-pre-wrap">{queryResult}</pre>
+              </div>
+            )}
+            {executing && (
+              <div className="mt-4 text-slate-500 text-xs animate-pulse font-mono flex items-center gap-2">
+                <RefreshCw size={14} className="animate-spin" /> Routing query through A2A Mesh...
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -318,7 +361,7 @@ export const SpannerDetailView = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
               <input className="bg-slate-900 border-slate-700 rounded-lg text-xs pl-9 pr-4 py-2 focus:ring-primary focus:border-primary" placeholder="Filter warehouses..." type="text" />
             </div>
-            <button className="flex items-center gap-2 text-xs bg-slate-800 px-4 py-2 rounded-lg hover:bg-slate-700">
+            <button disabled className="flex items-center gap-2 text-xs bg-slate-900 text-slate-500 border border-slate-800 px-4 py-2 rounded-lg cursor-not-allowed">
               <RefreshCw size={14} /> Filter
             </button>
           </div>

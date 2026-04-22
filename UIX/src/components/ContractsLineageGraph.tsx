@@ -146,7 +146,18 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
         height={400}
         nodeLabel="label"
         nodeRelSize={6}
-        linkColor={() => 'rgba(255, 255, 255, 0.15)'}
+        linkColor={(link: any) => {
+          const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+          const sourceNode = nodes.find((n: any) => n.id === sourceId);
+          const domain = sourceNode?.domain || 'General';
+          const colors: { [key: string]: string } = {
+            Finance: '#f97316',
+            Sales: '#3b82f6',
+            Unified: '#a855f7',
+            General: 'rgba(255,255,255,0.15)'
+          };
+          return colors[domain] || 'rgba(255,255,255,0.15)';
+        }}
         linkWidth={1.5}
         linkDirectionalArrowLength={6}
         linkDirectionalArrowRelPos={1}
@@ -174,7 +185,7 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
 
             // Label Background
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), ...bckgDimensions);
+            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), bckgDimensions[0], bckgDimensions[1]);
 
             // Label Text
             ctx.textAlign = 'center';

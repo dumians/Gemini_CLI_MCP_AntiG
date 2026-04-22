@@ -6,8 +6,12 @@ import { DataLineageGraph } from './DataLineageGraph';
 import { DatasetLineageView } from './DatasetLineageView';
 import { ContractsLineageGraph } from './ContractsLineageGraph';
 
-export const MarketplaceView = () => {
-  const [activeTab, setActiveTab] = React.useState('products');
+export const MarketplaceView = ({ initialTab = 'products' }: { initialTab?: string }) => {
+  const [activeTab, setActiveTab] = React.useState(initialTab);
+
+  React.useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const [products, setProducts] = React.useState<any[]>([]);
   const [editingProductId, setEditingProductId] = React.useState<string | null>(null);
@@ -22,6 +26,8 @@ export const MarketplaceView = () => {
   });
   const [productLoading, setProductLoading] = React.useState(false);
   const [showPublishForm, setShowPublishForm] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedDomainFilter, setSelectedDomainFilter] = React.useState('all');
 
   const fetchProducts = async () => {
     try {
@@ -39,6 +45,16 @@ export const MarketplaceView = () => {
   ];
 
   const [contracts, setContracts] = React.useState<any[]>([]);
+  const [policies, setPolicies] = React.useState<any[]>([]);
+  
+  const fetchPolicies = async () => {
+    try {
+      const data = await api.get('/api/governance/policies');
+      setPolicies(data.rules || []);
+    } catch (err) {
+      console.error('Failed to load policies:', err);
+    }
+  };
   const [editingContractId, setEditingContractId] = React.useState<string | null>(null);
   const [contractFormData, setContractFormData] = React.useState({ status: '', sla: '', privacy: '' });
   const [contractLoading, setContractLoading] = React.useState(false);
@@ -79,7 +95,8 @@ export const MarketplaceView = () => {
     await Promise.all([
       fetchContracts(),
       fetchProducts(),
-      fetchDomains()
+      fetchDomains(),
+      fetchPolicies()
     ]);
   };
 
@@ -172,9 +189,6 @@ export const MarketplaceView = () => {
           >
             <RefreshCw size={16} /> Refresh
           </button>
-          <button className="bg-primary text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 flex items-center gap-2">
-            <Sparkles size={16} /> Publish Product
-          </button>
         </div>
       </div>
 
@@ -233,18 +247,29 @@ export const MarketplaceView = () => {
         <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
             className="w-full bg-slate-900/50 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-primary focus:border-primary text-slate-200 placeholder:text-slate-500"
             placeholder="Search thousands of data products by name, tag, or owner..."
           />
         </div>
+        
+        <select 
+          value={selectedDomainFilter}
+          onChange={(e) => setSelectedDomainFilter(e.target.value)}
+          className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-primary"
+        >
+          <option value="all">All Domains</option>
+          {domains.map((dom: any, i: number) => (
+            <option key={i} value={dom}>{dom}</option>
+          ))}
+        </select>
+
         <button 
           onClick={() => setShowPublishForm(!showPublishForm)}
           className="glass px-6 py-3 rounded-xl flex items-center gap-2 text-sm font-medium hover:bg-white/5 transition-colors text-primary font-bold"
         >
           <Sparkles size={18} /> {showPublishForm ? 'Cancel Publish' : 'Publish Data Product'}
-        </button>
-        <button className="glass px-6 py-3 rounded-xl flex items-center gap-2 text-sm font-medium hover:bg-white/5 transition-colors">
-          <Filter size={18} /> Filters
         </button>
       </div>
 
@@ -335,7 +360,13 @@ export const MarketplaceView = () => {
 
       {activeTab === 'products' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {products.map((prod, i) => (
+          {products.filter(prod => {
+            const matchesSearch = prod.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                 (prod.description && prod.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                                 (prod.owner && prod.owner.toLowerCase().includes(searchTerm.toLowerCase()));
+            const matchesDomain = selectedDomainFilter === 'all' || prod.domain === selectedDomainFilter;
+            return matchesSearch && matchesDomain;
+          }).map((prod, i) => (
             <div key={i} className="glass rounded-2xl border-slate-800 p-6 flex flex-col hover:border-primary/30 transition-colors group cursor-pointer">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
@@ -435,8 +466,8 @@ export const MarketplaceView = () => {
                   
                   <div className="flex items-center justify-between pt-4 border-t border-slate-800/50 text-xs mt-2">
                     <span className="text-slate-400">Access: <span className="text-white font-mono">{prod.access || 'open'}</span></span>
-                    <button className="px-4 py-1.5 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg text-xs font-bold transition-all">
-                      Access Data
+                    <button disabled className="px-4 py-1.5 bg-slate-800 text-slate-500 border border-slate-700 rounded-lg text-xs font-bold cursor-not-allowed">
+                      Access Restricted
                     </button>
                   </div>
                 </>
@@ -595,13 +626,16 @@ export const MarketplaceView = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-slate-400">Domain</label>
-                  <input 
-                    type="text" 
+                  <select 
                     value={newContractFormData.domain}
                     onChange={(e) => setNewContractFormData({ ...newContractFormData, domain: e.target.value })}
                     className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    placeholder="e.g. Sales"
-                  />
+                  >
+                    <option value="">-- Select Domain --</option>
+                    {domains.map((dom: any, i: number) => (
+                      <option key={i} value={dom}>{dom}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-slate-400">Schema File / Definition</label>
@@ -624,13 +658,16 @@ export const MarketplaceView = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-slate-400">Privacy Scope</label>
-                  <input 
-                    type="text" 
+                  <select 
                     value={newContractFormData.privacy}
                     onChange={(e) => setNewContractFormData({ ...newContractFormData, privacy: e.target.value })}
                     className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
-                    placeholder="e.g. GDPR, PII-Restricted"
-                  />
+                  >
+                    <option value="Standard">Standard</option>
+                    {policies.map((p: any, i: number) => (
+                      <option key={i} value={`${p.classification} (${p.name})`}>{p.classification} - {p.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <button 
                   onClick={handleCreateContract}

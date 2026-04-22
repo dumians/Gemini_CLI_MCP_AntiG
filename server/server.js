@@ -295,6 +295,34 @@ app.post('/api/refresh-telemetry', authMiddleware, async (req, res) => {
     }
 });
 
+app.get('/api/mcp/tools', authMiddleware, async (req, res) => {
+    try {
+        const tools = [];
+        for (const agent of AgentRegistry) {
+            if (agent.mcpServers && agent.mcpServers.length > 0) {
+                try {
+                    const agentTools = await gateway.listTools(agent.domain, agent.mcpServers);
+                    for (const t of agentTools) {
+                        if (!tools.find(existing => existing.name === t.name)) {
+                            tools.push({
+                                name: t.name,
+                                description: t.description,
+                                inputSchema: t.inputSchema,
+                                server: t._serverName
+                            });
+                        }
+                    }
+                } catch (e) {
+                    logger.log('Server', `Failed to list tools for agent ${agent.name}`, 'WARNING');
+                }
+            }
+        }
+        res.json(tools);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/admin/events', authMiddleware, (req, res) => {
     res.json(logger.getA2AEvents());
 });

@@ -13,7 +13,7 @@ export function InventoryGraph() {
     const containerRef = useRef<HTMLDivElement>(null);
     const [graphData, setGraphData] = useState<any>({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);
-    const [dimensions, setDimensions] = useState({ width: 900, height: 400 });
+    const [dimensions, setDimensions] = useState({ width: 900, height: 520 });
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -23,7 +23,7 @@ export function InventoryGraph() {
                 if (entry.contentRect.width === 0) continue;
                 setDimensions({
                     width: entry.contentRect.width,
-                    height: 400
+                    height: 520
                 });
             }
         });
@@ -87,11 +87,11 @@ export function InventoryGraph() {
     }, []);
 
     if (loading) {
-        return <div className="h-[400px] flex items-center justify-center text-white/20 uppercase tracking-widest text-[10px] font-bold">Mapping Inventory Assets...</div>;
+        return <div className="h-[520px] flex items-center justify-center text-white/20 uppercase tracking-widest text-[10px] font-bold bg-slate-900/40 rounded-3xl border border-white/10">Mapping Inventory Assets...</div>;
     }
 
     return (
-        <div ref={containerRef} className="bg-slate-900/40 rounded-3xl border border-white/10 h-[400px] relative overflow-hidden isolate transform-gpu">
+        <div ref={containerRef} className="bg-slate-900/40 rounded-3xl border border-white/10 h-[520px] relative overflow-hidden isolate transform-gpu">
             <div className="absolute top-4 left-4 z-10 text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
                 <Database size={12} className="text-primary" />
                 Asset Trace
@@ -100,10 +100,20 @@ export function InventoryGraph() {
             <ForceGraph2D
                 graphData={graphData}
                 width={dimensions.width}
-                height={400}
+                height={520}
                 nodeLabel="label"
                 nodeRelSize={6}
-                linkColor={() => 'rgba(255, 255, 255, 0.15)'}
+                linkColor={(link: any) => {
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const sourceNode = graphData.nodes.find((n: any) => n.id === sourceId);
+                  const domain = sourceNode?.properties?.domain || sourceNode?.domain || 'Unified';
+                  const colors: { [key: string]: string } = {
+                    Finance: '#f97316',
+                    Sales: '#3b82f6',
+                    Unified: '#a855f7'
+                  };
+                  return colors[domain] || 'rgba(255,255,255,0.15)';
+                }}
                 linkWidth={1.5}
                 linkDirectionalParticles={2}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -123,7 +133,7 @@ export function InventoryGraph() {
                     ctx.fill();
 
                     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), ...bckgDimensions);
+                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y + (12 / globalScale), bckgDimensions[0], bckgDimensions[1]);
 
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';

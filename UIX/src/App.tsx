@@ -20,6 +20,7 @@ import type { View } from './types';
 
 function App() {
   const [activeView, setActiveView] = useState<View>('dashboard');
+  const [marketplaceInitialTab, setMarketplaceInitialTab] = useState('products');
   const [pendingQuery, setPendingQuery] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => auth.isAuthenticated());
   const [user, setUser] = useState<any>(() => auth.getUser());
@@ -58,10 +59,13 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  const handleNavigate = (view: View, query?: string) => {
+  const handleNavigate = (view: View, query?: string, tab?: string) => {
     setActiveView(view);
     if (query) {
       setPendingQuery(query);
+    }
+    if (tab && view === 'marketplace') {
+      setMarketplaceInitialTab(tab);
     }
   };
 
@@ -91,7 +95,7 @@ function App() {
                 onClearQuery={() => setPendingQuery(undefined)}
               />
             )}
-            {activeView === 'marketplace' && <MarketplaceView />}
+            {activeView === 'marketplace' && <MarketplaceView initialTab={marketplaceInitialTab} />}
             {activeView === 'governance' && <GovernanceView onNavigate={setActiveView} />}
             {activeView === 'governance-detail' && <GovernanceDetailView />}
             {activeView === 'spanner-detail' && <SpannerDetailView />}
@@ -100,7 +104,7 @@ function App() {
             {activeView === 'alloy-detail' && <AlloyDetailView />}
             {activeView === 'domains' && <DataDomainsView />}
             {activeView === 'warehouse-detail' && <WarehouseDetailView />}
-            {activeView === 'cross-domain-inventory' && <CrossDomainInventoryView />}
+            {activeView === 'cross-domain-inventory' && <CrossDomainInventoryView onNavigate={handleNavigate} />}
             {activeView === 'admin-portal' && <AdminPortalView />}
           </div>
         </div>

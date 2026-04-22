@@ -107,7 +107,19 @@ export function GraphView({ data: initialData }: { data?: any }) {
                 height={400}
                 nodeLabel="label"
                 nodeRelSize={6}
-                linkColor={() => 'rgba(255, 255, 255, 0.15)'}
+                linkColor={(link: any) => {
+                  const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+                  const sourceNode = graphData.nodes.find((n: any) => n.id === sourceId);
+                  const domain = sourceNode?.properties?.domain || sourceNode?.domain || 'Unified';
+                  const colors: { [key: string]: string } = {
+                    Finance: '#f97316',
+                    Sales: '#3b82f6',
+                    Unified: '#a855f7',
+                    HR: '#10b981',
+                    Logistics: '#f59e0b'
+                  };
+                  return colors[domain] || 'rgba(255,255,255,0.15)';
+                }}
                 linkWidth={1.5}
                 linkDirectionalParticles={4}
                 linkDirectionalParticleSpeed={0.006}
