@@ -9,28 +9,40 @@ import fs from 'fs';
 dotenv.config();
 
 const projectId = process.env.GCP_PROJECT_ID || process.env.PROJECT_ID;
+const dataplexLocation = process.env.DATAPLEX_ZONE_ID || 'global';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 class DataplexIntegration {
     constructor() {
         this.client = (projectId && process.env.NODE_ENV !== 'test') ? new CatalogServiceClient() : null;
-        this.simulationMode = !this.client;
+        this.simulationMode = true;
         
         if (this.simulationMode) {
             console.error("DataplexServiceClient not initialized or running in test. Running in simulation mode for Dataplex.");
         }
         
-        this.schemaTypesEnsured = false;
-        this.productTypesEnsured = false;
-        this.contractTypesEnsured = false;
-        this.policyTypesEnsured = false;
+        this.syncStatePath = join(__dirname, '../../config/dataplex_sync_state.json');
+        this.syncState = { schemaTypesEnsured: false, entries: [] };
+        if (fs.existsSync(this.syncStatePath)) {
+            try {
+                this.syncState = JSON.parse(fs.readFileSync(this.syncStatePath, 'utf8'));
+            } catch (e) {}
+        }
+    }
+
+    _saveSyncState() {
+        try {
+            fs.writeFileSync(this.syncStatePath, JSON.stringify(this.syncState, null, 2));
+        } catch (e) {
+            console.error("[Dataplex] Failed to save sync state:", e.message);
+        }
     }
 
     async ensureEntryGroup(entryGroupId) {
         if (this.simulationMode) return;
         
-        const parent = `projects/${projectId}/locations/global`;
+        const parent = `projects/${projectId}/locations/${dataplexLocation}`;
         const entryGroupPath = `${parent}/entryGroups/${entryGroupId}`;
         
         try {
@@ -42,7 +54,7 @@ class DataplexIntegration {
             });
             console.log(`[Dataplex] Created Entry Group: ${entryGroupId}`);
         } catch (error) {
-            if (error.code === 6 || error.message.includes('already exists')) {
+            if (error.code === 6 || error.code === 'ALREADY_EXISTS' || (error.message && error.message.toLowerCase().includes('already exists'))) {
                 console.log(`[Dataplex] Entry Group ${entryGroupId} already exists.`);
             } else {
                 console.error(`[Dataplex] Error creating Entry Group: ${error.message}`);
@@ -54,7 +66,7 @@ class DataplexIntegration {
     async ensureAspectType(aspectTypeId, metadataTemplate) {
         if (this.simulationMode) return;
         
-        const parent = `projects/${projectId}/locations/global`;
+        const parent = `projects/${projectId}/locations/${dataplexLocation}`;
         const aspectTypePath = `${parent}/aspectTypes/${aspectTypeId}`;
         
         try {
@@ -70,7 +82,7 @@ class DataplexIntegration {
             await operation.promise();
             console.log(`[Dataplex] Created Aspect Type: ${aspectTypeId}`);
         } catch (error) {
-            if (error.code === 6 || error.message.includes('already exists')) {
+            if (error.code === 6 || error.code === 'ALREADY_EXISTS' || (error.message && error.message.toLowerCase().includes('already exists'))) {
                 console.log(`[Dataplex] Aspect Type ${aspectTypeId} already exists. Attempting update to ensure schema sync.`);
                 try {
                     const [updateOperation] = await this.client.updateAspectType({
@@ -96,7 +108,7 @@ class DataplexIntegration {
     async ensureEntryType(entryTypeId, requiredAspects = []) {
         if (this.simulationMode) return;
         
-        const parent = `projects/${projectId}/locations/global`;
+        const parent = `projects/${projectId}/locations/${dataplexLocation}`;
         
         try {
             console.log(`[Dataplex] Checking/Creating Entry Type: ${entryTypeId}`);
@@ -111,7 +123,7 @@ class DataplexIntegration {
             await operation.promise();
             console.log(`[Dataplex] Created Entry Type: ${entryTypeId}`);
         } catch (error) {
-            if (error.code === 6 || error.message.includes('already exists')) {
+            if (error.code === 6 || error.code === 'ALREADY_EXISTS' || (error.message && error.message.toLowerCase().includes('already exists'))) {
                 console.log(`[Dataplex] Entry Type ${entryTypeId} already exists.`);
             } else {
                 console.error(`[Dataplex] Error creating Entry Type: ${error.message}`);
@@ -137,7 +149,7 @@ class DataplexIntegration {
                 const schema = JSON.parse(schemaContent);
                 
                 await this.ensureAspectType('data-product-v4', schema.metadataTemplate);
-                await this.ensureEntryType('data-product-v4', [`projects/${projectId}/locations/global/aspectTypes/data-product-v4`]);
+                await this.ensureEntryType('data-product-v4', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/data-product-v4`]);
                 this.productTypesEnsured = true;
             } catch (err) {
                 console.error("[Dataplex] Failed to load schema or ensure types for Data Product:", err.message);
@@ -146,13 +158,13 @@ class DataplexIntegration {
         }
         
         try {
-            const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
+            const parent = `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}`;
             
             const [response] = await this.client.createEntry({
                 parent: parent,
                 entryId: product.id,
                 entry: {
-                    entryType: `projects/${projectId}/locations/global/entryTypes/data-product-v4`,
+                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/data-product-v4`,
                     aspects: {
                        "data-product-v4": {
                            "name": product.name,
@@ -189,20 +201,20 @@ class DataplexIntegration {
                     const schema = JSON.parse(schemaContent);
                     
                     await this.ensureAspectType('data-contract-v4', schema.metadataTemplate);
-                    await this.ensureEntryType('data-contract-v4', [`projects/${projectId}/locations/global/aspectTypes/data-contract-v4`]);
+                    await this.ensureEntryType('data-contract-v4', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/data-contract-v4`]);
                     this.contractTypesEnsured = true;
                 } catch (err) {
                     console.error("[Dataplex] Failed to load schema or ensure types for Data Contract:", err.message);
                 }
             }
             
-            const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
+            const parent = `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}`;
             
             const [response] = await this.client.createEntry({
                 parent: parent,
                 entryId: contract.id,
                 entry: {
-                    entryType: `projects/${projectId}/locations/global/entryTypes/data-contract-v4`,
+                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/data-contract-v4`,
                     aspects: {
                        "data-contract-v4": {
                            "product": contract.product,
@@ -240,20 +252,20 @@ class DataplexIntegration {
                     const schema = JSON.parse(schemaContent);
                     
                     await this.ensureAspectType('data-policy-v4', schema.metadataTemplate);
-                    await this.ensureEntryType('data-policy-v4', [`projects/${projectId}/locations/global/aspectTypes/data-policy-v4`]);
+                    await this.ensureEntryType('data-policy-v4', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/data-policy-v4`]);
                     this.policyTypesEnsured = true;
                 } catch (err) {
                     console.error("[Dataplex] Failed to load schema or ensure types for Data Policy:", err.message);
                 }
             }
             
-            const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
+            const parent = `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}`;
             
             const [response] = await this.client.createEntry({
                 parent: parent,
                 entryId: policy.id,
                 entry: {
-                    entryType: `projects/${projectId}/locations/global/entryTypes/data-policy-v4`,
+                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/data-policy-v4`,
                     aspects: {
                        "data-policy-v4": {
                            "id": policy.id,
@@ -277,13 +289,18 @@ class DataplexIntegration {
     }
 
     async createSchemaEntry(sourceId, entity) {
+        const entryId = entity.id.replace(/[^a-z0-9-]/g, '-').toLowerCase();
+        if (this.syncState.entries.includes(entryId)) {
+            return { success: true, id: entryId, cached: true };
+        }
+
         console.log(`[Dataplex] Creating Schema Entry: ${entity.name} (Source: ${sourceId})`);
         
         if (this.simulationMode) {
             return { success: true, id: entity.id || `schema-${Date.now()}`, simulated: true };
         }
         
-        if (!this.schemaTypesEnsured) {
+        if (!this.syncState.schemaTypesEnsured) {
             const entryGroupId = 'agentic-mesh-group';
             await this.ensureEntryGroup(entryGroupId);
             
@@ -298,15 +315,16 @@ class DataplexIntegration {
                 };
                 
                 await this.ensureAspectType('schema-aspect-v1', metadataTemplate);
-                await this.ensureEntryType('schema-aspect-v1', [`projects/${projectId}/locations/global/aspectTypes/schema-aspect-v1`]);
-                this.schemaTypesEnsured = true;
+                await this.ensureEntryType('schema-aspect-v1', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/schema-aspect-v1`]);
+                this.syncState.schemaTypesEnsured = true;
+                this._saveSyncState();
             } catch (err) {
                 console.error("[Dataplex] Failed to ensure types for Schema Entry:", err.message);
             }
         }
         
         try {
-            const parent = `projects/${projectId}/locations/global/entryGroups/${entryGroupId}`;
+            const parent = `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}`;
             const attributesJson = JSON.stringify(entity.attributes || []);
             const tags = Array.from(new Set(entity.attributes?.map(a => a.semanticTag))).filter(Boolean);
             
@@ -314,7 +332,7 @@ class DataplexIntegration {
                 parent: parent,
                 entryId: entity.id.replace(/[^a-z0-9-]/g, '-').toLowerCase(),
                 entry: {
-                    entryType: `projects/${projectId}/locations/global/entryTypes/schema-aspect-v1`,
+                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/schema-aspect-v1`,
                     aspects: {
                        "schema-aspect-v1": {
                            "name": entity.name,
@@ -326,6 +344,8 @@ class DataplexIntegration {
                 }
             });
             console.log(`[Dataplex] Successfully created schema entry: ${response.name}`);
+            this.syncState.entries.push(entryId);
+            this._saveSyncState();
             return { success: true, id: response.name };
             
         } catch (error) {

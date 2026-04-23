@@ -8,6 +8,11 @@ import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { memoryBankService } from "./utils/memory_bank_service.js";
 import dotenv from "dotenv";
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -33,7 +38,8 @@ let oracleClient = null;
 async function getOracleClient() {
     if (!oracleClient) {
         const oracleMcpUrl = process.env.ORACLE_MCP_URL;
-        oracleClient = await createMcpClient("node", ["servers/oracle-mcp/index.js"], oracleMcpUrl);
+        const serverPath = path.resolve(__dirname, '../servers/oracle-mcp/index.js');
+        oracleClient = await createMcpClient("node", [serverPath], oracleMcpUrl);
     }
     return oracleClient;
 }

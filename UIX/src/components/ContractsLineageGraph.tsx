@@ -166,6 +166,10 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
           d3VelocityDecay={0.4}
           nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
               const label = node.label;
+              let displayName = label;
+              if (label && label.includes('.')) {
+                  displayName = label.split('.').pop() || label;
+              }
               const color = getNodeColor(node.type);
               const type = node.type || 'entity';
               
@@ -187,10 +191,10 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
               ctx.textBaseline = 'middle';
               ctx.fillStyle = '#ffffff';
 
-              let displayText = label;
-              const textWidth = ctx.measureText(label).width;
+              let displayText = displayName;
+              const textWidth = ctx.measureText(displayName).width;
               if (textWidth > nodeSize - 4) {
-                  displayText = label.substring(0, Math.floor((nodeSize / textWidth) * label.length) - 3) + '...';
+                  displayText = displayName.substring(0, Math.floor((nodeSize / textWidth) * displayName.length) - 3) + '...';
               }
               
               ctx.fillText(displayText, node.x, node.y - (nodeSize / 6));

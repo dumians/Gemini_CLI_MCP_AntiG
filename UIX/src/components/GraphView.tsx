@@ -137,6 +137,10 @@ export function GraphView({ data: initialData }: { data?: any }) {
                 cooldownTicks={100}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                     const label = node.label;
+                    let displayName = label;
+                    if (label && label.includes('.')) {
+                        displayName = label.split('.').pop() || label;
+                    }
                     const domain = node.properties?.domain || node.domain || 'Unified';
                     const type = node.type || node.group || 'entity';
                     const color = domainColors[domain] || '#6366f1';
@@ -159,10 +163,10 @@ export function GraphView({ data: initialData }: { data?: any }) {
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#ffffff';
 
-                    let displayText = label;
-                    const textWidth = ctx.measureText(label).width;
+                    let displayText = displayName;
+                    const textWidth = ctx.measureText(displayName).width;
                     if (textWidth > nodeSize - 4) {
-                        displayText = label.substring(0, Math.floor((nodeSize / textWidth) * label.length) - 3) + '...';
+                        displayText = displayName.substring(0, Math.floor((nodeSize / textWidth) * displayName.length) - 3) + '...';
                     }
                     
                     ctx.fillText(displayText, node.x, node.y - (nodeSize / 6));

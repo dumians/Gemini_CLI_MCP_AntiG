@@ -3,17 +3,36 @@
  * Implements Zero-Trust security for A2A and Tool-Call validation.
  */
 import fs from 'fs';
-import path from 'path';
+import path, { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import { logger } from './logging_service.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 class GovernanceAgent {
     constructor() {
         this.policies = this._loadPolicies();
+        this._loadAgentIdentities();
+    }
+
+    _loadAgentIdentities() {
+        try {
+            const agentsPath = join(__dirname, '../../config/agents.json');
+            if (fs.existsSync(agentsPath)) {
+                this.agentIdentities = JSON.parse(fs.readFileSync(agentsPath, 'utf8'));
+            } else {
+                this.agentIdentities = [];
+            }
+        } catch (e) {
+            console.error("[Governance] Failed to load agent identities:", e.message);
+            this.agentIdentities = [];
+        }
     }
 
     _loadPolicies() {
         try {
-            const policyPath = path.resolve('config/policies.json');
+            const policyPath = join(__dirname, '../../config/policies.json');
             const data = fs.readFileSync(policyPath, 'utf8');
             return JSON.parse(data);
         } catch (err) {
@@ -31,13 +50,16 @@ class GovernanceAgent {
      * @returns {boolean} True if allowed.
      */
     validateAccess(sourceAgent, targetDomain, action, traceId = null) {
-        // Mock Zero-Trust logic: Limit HR access to specifically authorized agents
+        const agentDef = (this.agentIdentities || []).find(a => a.name === sourceAgent || a.id === sourceAgent);
+        const projectId = process.env.GCP_PROJECT_ID || 'mesh-nexus-2026';
+        const gcpIdentity = agentDef ? agentDef.gcpServiceAccount : `system-orchestrator@${projectId}.iam.gserviceaccount.com`;
+
         if (targetDomain === 'HR' && sourceAgent !== 'MasterOrchestrator' && sourceAgent !== 'HRAgent') {
-            logger.logGovernance(sourceAgent, targetDomain, action, 'DENIED', 'Access Restricted: Zero-Trust Domain Boundary');
+            logger.logGovernance(sourceAgent, targetDomain, action, 'DENIED', `Access Restricted: Zero-Trust Domain Boundary for ${gcpIdentity}`, traceId);
             return false;
         }
 
-        logger.logGovernance(sourceAgent, targetDomain, action, 'ALLOWED', null);
+        logger.logGovernance(sourceAgent, targetDomain, action, 'ALLOWED', `GCP Identity ${gcpIdentity} authorized.`, traceId);
         return true;
     }
 

@@ -175,6 +175,10 @@ export const DataLineageGraph = () => {
             linkDirectionalArrowRelPos={1}
             nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                 const label = node.label;
+                let displayName = label;
+                if (label && label.includes('.')) {
+                    displayName = label.split('.').pop() || label;
+                }
                 const fontSize = Math.max(6, 10 / globalScale);
                 ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
                 const color = getNodeColor(node.type);
@@ -195,10 +199,10 @@ export const DataLineageGraph = () => {
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = '#ffffff';
 
-                let displayText = label;
-                const textWidth = ctx.measureText(label).width;
+                let displayText = displayName;
+                const textWidth = ctx.measureText(displayName).width;
                 if (textWidth > nodeSize - 4) {
-                    displayText = label.substring(0, Math.floor((nodeSize / textWidth) * label.length) - 3) + '...';
+                    displayText = displayName.substring(0, Math.floor((nodeSize / textWidth) * displayName.length) - 3) + '...';
                 }
                 
                 ctx.fillText(displayText, node.x, node.y - (nodeSize / 6));

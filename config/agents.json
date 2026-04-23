@@ -5,6 +5,7 @@
     "domain": "Oracle ERP",
     "specialty": "Oracle ERP, Invoices, Suppliers, Graph Grounding",
     "toolName": "call_financial_agent",
+    "gcpServiceAccount": "financial-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are a Financial Data Specialist Agent. You only have access to Oracle DB@GCP (ERP systems). Use standard SQL, Graph, and Vector tools provided for Oracle.",
     "mcpServers": [
       {
@@ -22,6 +23,7 @@
     "domain": "Spanner Retail",
     "specialty": "Spanner Global Inventory, Transactions, Supply Chain Grounding",
     "toolName": "call_retail_agent",
+    "gcpServiceAccount": "retail-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are a Retail and Supply Chain Specialist Agent. You only have access to Spanner (Global Retail DB). Use Spanner SQL and Spanner Graph (GQL) tools provided.",
     "mcpServers": [
       {
@@ -39,6 +41,7 @@
     "domain": "BigQuery Analytics",
     "specialty": "BigQuery Marketing Segments, AlloyDB CRM Data",
     "toolName": "call_analytics_agent",
+    "gcpServiceAccount": "analytics-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are a Marketing and Customer Analytics Specialist Agent. You have access to BigQuery (EDW) and AlloyDB (CRM). Use the tools provided to answer queries about customer segments.",
     "mcpServers": [
       {
@@ -61,6 +64,7 @@
     "domain": "Oracle HR",
     "specialty": "Oracle HR, Employee Recruitment, Department Resource Planning",
     "toolName": "call_hr_agent",
+    "gcpServiceAccount": "hr-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are an HR Data Specialist for the Enterprise Nexus. You have access to the Oracle DB @ GCP HR Schema. Use the provided tools to fetch and analyze HR data.",
     "mcpServers": [
       {
@@ -78,6 +82,7 @@
     "domain": "AlloyDB CRM",
     "specialty": "Customer Relationship, Lead Tracking, AlloyDB Profiles",
     "toolName": "call_crm_agent",
+    "gcpServiceAccount": "crm-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are a Customer Relationship Specialist Agent. You only have access to AlloyDB (Customer Profile DB). Use standard SQL tools provided for AlloyDB PostgreSQL.",
     "mcpServers": [
       {
@@ -95,6 +100,7 @@
     "domain": "EBS",
     "specialty": "Oracle Ebusiness Suite (Payables, General Ledger)",
     "toolName": "call_ebs_agent",
+    "gcpServiceAccount": "ebs-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are an Ebusiness Suite (EBS) Data Specialist Agent. You have access to the EBS schema.",
     "mcpServers": [],
     "groundingDomain": "EBS",
@@ -106,6 +112,7 @@
     "domain": "JDE",
     "specialty": "JD Edwards (Address Book, Account Ledger)",
     "toolName": "call_jde_agent",
+    "gcpServiceAccount": "jde-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are a JD Edwards (JDE) Data Specialist Agent. You have access to the JDE schema.",
     "mcpServers": [],
     "groundingDomain": "JDE",
@@ -117,6 +124,7 @@
     "domain": "Siebel",
     "specialty": "Siebel CRM (Accounts, Contacts, Opportunities)",
     "toolName": "call_siebel_agent",
+    "gcpServiceAccount": "siebel-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are a Siebel CRM Data Specialist Agent. You have access to the Siebel schema.",
     "mcpServers": [],
     "groundingDomain": "Siebel",
@@ -128,6 +136,7 @@
     "domain": "BRM",
     "specialty": "Oracle BRM (Billing and Revenue Management)",
     "toolName": "call_brm_agent",
+    "gcpServiceAccount": "brm-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are an Oracle BRM Data Specialist Agent. You have access to the BRM schema.",
     "mcpServers": [],
     "groundingDomain": "BRM",
@@ -139,6 +148,7 @@
     "domain": "FlexCube",
     "specialty": "Oracle FlexCube (Banking)",
     "toolName": "call_flexcube_agent",
+    "gcpServiceAccount": "flexcube-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are an Oracle FlexCube Data Specialist Agent. You have access to the FlexCube schema.",
     "mcpServers": [],
     "groundingDomain": "FlexCube",
@@ -150,6 +160,7 @@
     "domain": "Warehouse",
     "specialty": "Supply Chain Graph, Inventory Risk Hotspots, Select AI Analytics",
     "toolName": "call_warehouse_agent",
+    "gcpServiceAccount": "warehouse-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
     "systemInstruction": "You are a Warehouse and Supply Chain Specialist Agent. You have access to the supply chain graph and inventory risk schemas.",
     "mcpServers": [
       {

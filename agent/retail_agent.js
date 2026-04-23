@@ -8,6 +8,11 @@ import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { memoryBankService } from "./utils/memory_bank_service.js";
 import dotenv from "dotenv";
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -33,7 +38,8 @@ let spannerClient = null;
 async function getSpannerClient() {
     if (!spannerClient) {
         const spannerMcpUrl = process.env.SPANNER_MCP_URL;
-        spannerClient = await createMcpClient("node", ["servers/spanner-mcp/index.js"], spannerMcpUrl);
+        const serverPath = path.resolve(__dirname, '../servers/spanner-mcp/index.js');
+        spannerClient = await createMcpClient("node", [serverPath], spannerMcpUrl);
     }
     return spannerClient;
 }

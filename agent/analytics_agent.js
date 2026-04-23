@@ -5,6 +5,11 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import dotenv from "dotenv";
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -38,7 +43,8 @@ let alloydbClient = null;
 async function getBqClient() {
     if (!bqClient) {
         const bqMcpUrl = process.env.BIGQUERY_MCP_URL;
-        bqClient = await createMcpClient("node", [config.bq_mcp_server || "servers/bigquery-mcp/index.js"], bqMcpUrl);
+        const serverPath = path.resolve(__dirname, '../servers/bigquery-mcp/index.js');
+        bqClient = await createMcpClient("node", [serverPath], bqMcpUrl);
     }
     return bqClient;
 }
@@ -46,7 +52,8 @@ async function getBqClient() {
 async function getAlloyDbClient() {
     if (!alloydbClient) {
         const alloydbMcpUrl = process.env.ALLOYDB_MCP_URL;
-        alloydbClient = await createMcpClient("node", [config.alloydb_mcp_server || "servers/alloydb-mcp/index.js"], alloydbMcpUrl);
+        const serverPath = path.resolve(__dirname, '../servers/alloydb-mcp/index.js');
+        alloydbClient = await createMcpClient("node", [serverPath], alloydbMcpUrl);
     }
     return alloydbClient;
 }
