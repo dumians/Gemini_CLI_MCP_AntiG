@@ -13,6 +13,7 @@ import { storageProvider } from '../agent/utils/storage_service.js';
 import { authMiddleware } from './middleware/auth.js';
 import { dataplex } from '../agent/utils/dataplex.js';
 import { gateway } from '../agent/utils/one_mcp_gateway.js';
+import { GovernanceMetadataPropagator } from '../agent/utils/governance_metadata_propagator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: '../.env' });
@@ -1019,6 +1020,119 @@ app.post('/api/governance/policies', authMiddleware, (req, res) => {
         res.status(500).json({ error: "Failed to save policies" });
     }
 });
+
+const metadataPropagator = new GovernanceMetadataPropagator();
+
+app.get('/api/governance/scan', authMiddleware, async (req, res) => {
+    const datasetId = req.query.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    try {
+        const gaps = await metadataPropagator.scanForMissingDescriptions(datasetId);
+        res.json({ status: 'success', gaps });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/scan failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/governance/preview-propagation', authMiddleware, async (req, res) => {
+    const datasetId = req.query.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    const table = req.query.table;
+    if (!table) return res.status(400).json({ error: "Missing parameter: table" });
+
+    try {
+        const candidates = await metadataPropagator.previewPropagation(datasetId, table);
+        res.json({ status: 'success', candidates });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/preview-propagation failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/governance/apply-propagation', authMiddleware, async (req, res) => {
+    const datasetId = req.body.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    const updates = req.body.updates;
+    if (!updates || !Array.isArray(updates)) return res.status(400).json({ error: "Missing or invalid parameter: updates" });
+
+    try {
+        const result = await metadataPropagator.applyPropagation(datasetId, updates);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/apply-propagation failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/governance/glossary-recommend', authMiddleware, async (req, res) => {
+    const datasetId = req.query.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    const table = req.query.table;
+    if (!table) return res.status(400).json({ error: "Missing parameter: table" });
+
+    try {
+        const recommendations = await metadataPropagator.recommendGlossaryTerms(datasetId, table);
+        res.json({ status: 'success', recommendations });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/glossary-recommend failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/governance/glossary-apply', authMiddleware, async (req, res) => {
+    const datasetId = req.body.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    const table = req.body.table;
+    const updates = req.body.updates;
+    if (!table || !updates || !Array.isArray(updates)) {
+        return res.status(400).json({ error: "Missing parameters: table or updates" });
+    }
+
+    try {
+        const result = await metadataPropagator.applyGlossaryTerms(datasetId, table, updates);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/glossary-apply failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/governance/policy-recommend', authMiddleware, async (req, res) => {
+    const datasetId = req.query.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    const table = req.query.table;
+    if (!table) return res.status(400).json({ error: "Missing parameter: table" });
+
+    try {
+        const recommendations = await metadataPropagator.previewPolicyTagPropagation(datasetId, table);
+        res.json({ status: 'success', recommendations });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/policy-recommend failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/governance/policy-apply', authMiddleware, async (req, res) => {
+    const datasetId = req.body.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    const updates = req.body.updates;
+    if (!updates || !Array.isArray(updates)) return res.status(400).json({ error: "Missing or invalid parameter: updates" });
+
+    try {
+        const result = await metadataPropagator.applyPolicyTags(datasetId, updates);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/policy-apply failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/governance/dq-propagate', authMiddleware, async (req, res) => {
+    const datasetId = req.query.dataset || process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+    const table = req.query.table;
+    if (!table) return res.status(400).json({ error: "Missing parameter: table" });
+
+    try {
+        const columnsTrust = await metadataPropagator.propagateDQScores(datasetId, table);
+        res.json({ status: 'success', columnsTrust });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/dq-propagate failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
 
 
 // Real Spanner Inventory from Test Data
