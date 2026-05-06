@@ -206,6 +206,38 @@ app.get('/api/catalog', authMiddleware, (req, res) => {
     }
 });
 
+app.get('/api/catalog/entities/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    try {
+        if (!metadataCatalog._initialized) metadataCatalog.initialize();
+        const entity = metadataCatalog.entities[id];
+        if (!entity) return res.status(404).json({ error: `Entity ${id} not found in catalog.` });
+        
+        const glossaryLinksPath = path.join(__dirname, '../config/glossary_links.json');
+        let links = [];
+        if (fs.existsSync(glossaryLinksPath)) {
+            links = JSON.parse(fs.readFileSync(glossaryLinksPath, 'utf8'));
+        }
+        
+        const enrichedAttributes = (entity.attributes || []).map(attr => {
+            const termLink = links.find(l => l.table === entity.name && l.column === attr.name);
+            return {
+                ...attr,
+                glossaryTerm: termLink ? termLink.term_display : null,
+                termId: termLink ? termLink.term_id : null,
+                isSensitive: ['card_number', 'email', 'salary', 'phone', 'employee_id', 'customer_id'].includes(attr.name.toLowerCase())
+            };
+        });
+
+        res.json({
+            ...entity,
+            attributes: enrichedAttributes
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/catalog/graph', authMiddleware, (req, res) => {
     try {
         const catalog = metadataCatalog.getCatalog();
