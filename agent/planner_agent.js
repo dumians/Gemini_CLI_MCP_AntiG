@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { AgentRegistry } from "./utils/catalog.js";
+import { callAiOperationWithRetry } from "./utils/ai_retry_helper.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -46,7 +47,7 @@ export async function generatePlan(query, traceId = null) {
     });
 
     try {
-        const result = await model.generateContent(query);
+        const result = await callAiOperationWithRetry(() => model.generateContent(query));
         const responseText = result.response.text();
         logger.log("PlannerAgent", `Plan generated raw: ${responseText}`, "DEBUG", null, traceId);
         

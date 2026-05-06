@@ -15,7 +15,7 @@ import { semanticCache } from "./utils/semantic_cache.js";
 import { governanceAgent } from "./utils/governance_agent.js";
 import GenericAgent from "./utils/generic_agent.js";
 import { eventBus } from "./utils/event_bus.js";
-
+import { callAiOperationWithRetry } from "./utils/ai_retry_helper.js";
 dotenv.config();
 
 import { agenticFactory } from "./utils/agentic_factory.js";
@@ -96,7 +96,7 @@ async function mapBusinessTerms(query, traceId) {
     });
 
     try {
-        const result = await model.generateContent(query);
+        const result = await callAiOperationWithRetry(() => model.generateContent(query));
         const responseText = result.response.text();
         const mapping = JSON.parse(responseText);
         logger.log("Orchestrator", `Mapped terms: ${responseText}`, "DEBUG", null, traceId);
@@ -165,7 +165,7 @@ export async function askOrchestrator(query, userId = 'admin') {
     const meshContext = {}; // The shared intelligence layer
 
     try {
-        let result = await chat.sendMessage(query);
+        let result = await callAiOperationWithRetry(() => chat.sendMessage(query));
         let response = result.response;
 
         // Loop while there are function calls
@@ -278,7 +278,7 @@ export async function askOrchestrator(query, userId = 'admin') {
                 });
             }
 
-            result = await chat.sendMessage(toolCallParts);
+            result = await callAiOperationWithRetry(() => chat.sendMessage(toolCallParts));
             response = result.response;
         }
 
@@ -309,7 +309,7 @@ export async function askOrchestrator(query, userId = 'admin') {
         Output ONLY 'APPROVED' or 'REVISED_ANSWER: <content>'.`;
 
         const reflectionModel = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const reflectionResult = await reflectionModel.generateContent(reflectionPrompt);
+        const reflectionResult = await callAiOperationWithRetry(() => reflectionModel.generateContent(reflectionPrompt));
         const reflectionText = reflectionResult.response.text();
         
         let finalAnswer = response.text();

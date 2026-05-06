@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { callAiOperationWithRetry } from "./ai_retry_helper.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -308,7 +309,7 @@ export class MetadataCatalog {
 
         try {
             const prompt = `Here are the entities in the mesh:\n${entitiesSummary.join('\n')}\n\nIdentify potential correlations.`;
-            const result = await model.generateContent(prompt);
+            const result = await callAiOperationWithRetry(() => model.generateContent(prompt));
             const responseText = result.response.text();
             
             const suggestions = JSON.parse(responseText);

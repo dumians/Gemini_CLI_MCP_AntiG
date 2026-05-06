@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { ModelArmorClient } from "@google-cloud/modelarmor";
 import { gateway } from "./one_mcp_gateway.js";
 import { mcpToolbox } from "./mcp_toolbox.js";
+import { callAiOperationWithRetry } from "./ai_retry_helper.js";
 
 dotenv.config();
 
@@ -85,7 +86,7 @@ class GenericAgent {
         });
 
         const chat = model.startChat();
-        let result = await chat.sendMessage(query);
+        let result = await callAiOperationWithRetry(() => chat.sendMessage(query));
         let response = result.response;
 
         let groundingData = [];
@@ -120,7 +121,7 @@ class GenericAgent {
                     }
                 });
             }
-            result = await chat.sendMessage(toolCallParts);
+            result = await callAiOperationWithRetry(() => chat.sendMessage(toolCallParts));
             response = result.response;
         }
 
