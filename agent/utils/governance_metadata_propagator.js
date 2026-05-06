@@ -10,6 +10,7 @@ import { v1 as dataplexv1 } from '@google-cloud/dataplex';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 import { logger } from './logging_service.js';
+import { metadataCatalog } from './catalog.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,24 +60,32 @@ export class GovernanceMetadataPropagator {
     /**
      * 1. Scan dataset for missing descriptions
      */
-    async scanForMissingDescriptions(datasetId) {
-        if (this.isSimulationMode) {
-            // Mock Gap Scan
-            return [
-                { Table: "campaign_metrics", Column: "campaign_id", Type: "STRING" },
-                { Table: "campaign_metrics", Column: "segment_name", Type: "STRING" },
-                { Table: "campaign_metrics", Column: "spend", Type: "FLOAT" },
-                { Table: "campaign_metrics", Column: "impressions", Type: "INTEGER" },
-                { Table: "campaign_metrics", Column: "conversions", Type: "INTEGER" },
-                { Table: "campaign_metrics", Column: "date", Type: "DATE" },
-                { Table: "customer_segments", Column: "lifetime_value", Type: "FLOAT" },
-                { Table: "customer_segments", Column: "last_interaction", Type: "TIMESTAMP" },
-                { Table: "web_events", Column: "event_id", Type: "STRING" },
-                { Table: "web_events", Column: "customer_id", Type: "STRING" },
-                { Table: "web_events", Column: "event_type", Type: "STRING" },
-                { Table: "web_events", Column: "page_url", Type: "STRING" },
-                { Table: "web_events", Column: "event_timestamp", Type: "TIMESTAMP" }
-            ];
+    async scanForMissingDescriptions(sourceId, datasetId) {
+        const targetSourceId = sourceId || 'bigquery';
+
+        if (this.isSimulationMode || targetSourceId !== 'bigquery') {
+            // Dynamic Mesh-wide Gap Introspection
+            if (!metadataCatalog._initialized) {
+                metadataCatalog.initialize();
+            }
+            
+            const catalog = metadataCatalog.getCatalog();
+            const missing = [];
+            
+            const targetEntities = Object.values(catalog.entities).filter(e => e.sourceId === targetSourceId);
+            for (const entity of targetEntities) {
+                const attrs = entity.attributes || [];
+                for (const attr of attrs) {
+                    if (!attr.description) {
+                        missing.push({
+                            Table: entity.name,
+                            Column: attr.name,
+                            Type: attr.dataType
+                        });
+                    }
+                }
+            }
+            return missing;
         }
 
         try {
@@ -195,9 +204,38 @@ export class GovernanceMetadataPropagator {
     /**
      * 3. Apply propagation
      */
-    async applyPropagation(datasetId, updates) {
-        if (this.isSimulationMode) {
-            logger.log('GovernancePropagator', `Simulating application of ${updates.length} description updates.`, 'INFO');
+    async applyPropagation(datasetId, updates, sourceId = 'bigquery') {
+        // 1. Persist to config/applied_metadata.json so it's read by MetadataCatalog
+        try {
+            let applied = [];
+            const appliedPath = path.join(__dirname, '../../config/applied_metadata.json');
+            if (fs.existsSync(appliedPath)) {
+                applied = JSON.parse(fs.readFileSync(appliedPath, 'utf8'));
+            }
+            
+            for (const up of updates) {
+                const existsIdx = applied.findIndex(a => a.sourceId === sourceId && a.table === up.table && a.column === up.column);
+                const record = {
+                    sourceId,
+                    table: up.table,
+                    column: up.column,
+                    description: up.description,
+                    timestamp: new Date().toISOString()
+                };
+                if (existsIdx !== -1) {
+                    applied[existsIdx] = record;
+                } else {
+                    applied.push(record);
+                }
+            }
+            fs.writeFileSync(appliedPath, JSON.stringify(applied, null, 2));
+            metadataCatalog.reload(); // Force reload to sync catalog memory instantly!
+        } catch (e) {
+            logger.log('GovernancePropagator', `Failed to persist custom applied metadata: ${e.message}`, 'WARNING');
+        }
+
+        if (this.isSimulationMode || sourceId !== 'bigquery') {
+            logger.log('GovernancePropagator', `Simulating application of ${updates.length} description updates for ${sourceId}.`, 'INFO');
             return { success: true, count: updates.length };
         }
 
@@ -618,5 +656,68 @@ Output ONLY the raw JSON array. No markdown formatting blocks, no backticks.`;
             return `, with value adjustment applied (calculated as \`${expr}\`)`;
         }
         return `, calculated via: \`${expr}\``;
+    }
+
+    /**
+     * Automatically propagates metadata upon creation/registration of a new Data Source (Domain).
+     */
+    async propagateNewDomainMetadata(sourceId, domainName, schemaFilePath) {
+        logger.log('GovernancePropagator', `🚀 Running Auto-Propagation on Data Domain creation: ${domainName} (${sourceId})`, 'INFO');
+        
+        try {
+            // 1. Scan for Gaps
+            const gaps = await this.scanForMissingDescriptions(sourceId);
+            if (gaps.length === 0) {
+                logger.log('GovernancePropagator', `Auto-Propagate: No gaps found in new domain ${domainName}.`, 'INFO');
+                return { status: "COMPLETED", reason: "No gaps found." };
+            }
+
+            logger.log('GovernancePropagator', `Auto-Propagate: Found ${gaps.length} column gaps. Initiating propagation...`, 'INFO');
+            
+            // 2. Auto-propagate descriptions from lineage mappings in catalog
+            const tables = [...new Set(gaps.map(g => g.Table))];
+            const updates = [];
+
+            for (const table of tables) {
+                // Try preview lineage (use default or simulated)
+                const candidates = await this.previewPropagation('marketing_edw', table);
+                if (candidates && candidates.length > 0) {
+                    candidates.forEach(c => {
+                        if (c.Confidence >= 0.8) {
+                            updates.push({
+                                table: table,
+                                column: c["Target Column"],
+                                description: c["Proposed Description"]
+                            });
+                        }
+                    });
+                }
+            }
+
+            if (updates.length > 0) {
+                await this.applyPropagation('marketing_edw', updates, sourceId);
+                logger.log('GovernancePropagator', `Auto-Propagate: Successfully propagated ${updates.length} column descriptions!`, 'INFO');
+            }
+
+            // 3. Auto-propagate Glossary Terms
+            for (const table of tables) {
+                const recos = await this.recommendGlossaryTerms('marketing_edw', table);
+                const glossaryUpdates = recos.filter(r => r.Confidence >= 0.85).map(r => ({
+                    column: r.Column,
+                    term_id: r["Term ID"],
+                    term_display: r["Suggested Term"]
+                }));
+                
+                if (glossaryUpdates.length > 0) {
+                    await this.applyGlossaryTerms('marketing_edw', table, glossaryUpdates);
+                    logger.log('GovernancePropagator', `Auto-Propagate: Successfully deployed ${glossaryUpdates.length} Dataplex glossary associations for table ${table}!`, 'INFO');
+                }
+            }
+
+            return { status: "COMPLETED", propagatedDescriptions: updates.length };
+        } catch (e) {
+            logger.log('GovernancePropagator', `Auto-Propagation failed on domain creation: ${e.message}`, 'ERROR');
+            return { status: "FAILED", error: e.message };
+        }
     }
 }

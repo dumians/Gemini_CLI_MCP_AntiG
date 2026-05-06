@@ -21,7 +21,7 @@
   },
   {
     "fqn": "bigquery:total-vertex-469513-r8.customers.lifetime_value",
-    "score": 0.70,
+    "score": 0.7,
     "time": "2026-05-04T10:00:00.000Z"
   },
   {
@@ -33,5 +33,25 @@
     "fqn": "bigquery:total-vertex-469513-r8.customers.lifetime_value",
     "score": 0.82,
     "time": "2026-05-06T10:00:00.000Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customer_segments.customer_id",
+    "score": 0.8,
+    "time": "2026-05-06T16:06:14.429Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customer_segments.segment_name",
+    "score": 0.8,
+    "time": "2026-05-06T16:06:14.429Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customer_segments.lifetime_value",
+    "score": 0.8,
+    "time": "2026-05-06T16:06:14.429Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customer_segments.last_interaction",
+    "score": 0.8,
+    "time": "2026-05-06T16:06:14.430Z"
   }
 ]

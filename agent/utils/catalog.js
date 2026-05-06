@@ -215,6 +215,26 @@ export class MetadataCatalog {
             }
         }
 
+        // Apply saved custom metadata descriptions (propagated / edited)
+        const appliedPath = path.join(ROOT_DIR, 'config', 'applied_metadata.json');
+        if (fs.existsSync(appliedPath)) {
+            try {
+                const applied = JSON.parse(fs.readFileSync(appliedPath, 'utf-8'));
+                for (const app of applied) {
+                    const entityId = `${app.sourceId}.${app.table}`;
+                    const entity = this.entities[entityId];
+                    if (entity) {
+                        const attr = entity.attributes.find(a => a.name.toUpperCase() === app.column.toUpperCase());
+                        if (attr) {
+                            attr.description = app.description;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("[Catalog] Failed to load applied metadata:", e.message);
+            }
+        }
+
         // Build cross-domain links from config
         const crossDomainKeys = catalogConfig.cross_domain_keys || {};
         for (const [keyName, locations] of Object.entries(crossDomainKeys)) {
