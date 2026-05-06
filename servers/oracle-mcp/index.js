@@ -39,6 +39,9 @@ const server = new Server(
 const getConnection = async () => {
     if (dbConfig.user && dbConfig.password && dbConfig.connectString && process.env.NODE_ENV !== 'test') {
         try {
+            if (process.env.ORACLE_WALLET) {
+                process.env.TNS_ADMIN = process.env.ORACLE_WALLET;
+            }
             return await oracledb.getConnection(dbConfig);
         } catch (e) {
             console.error("Oracle Connection Error:", e.message);
@@ -66,6 +69,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 description: "Execute a Vector Search query against Oracle AI Vector Search.",
                 inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
             },
+            {
+                name: "query_autonomous_db_agent",
+                description: "Submit natural language queries, analyze tables, perform range/distinct checks, or generate chart configurations using the database-native Oracle AI Database Agent.",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        query: { type: "string", description: "The query or instructions for the database-native agent" }
+                    },
+                    required: ["query"]
+                }
+            }
         ],
     };
 });
@@ -107,6 +121,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 return {
                     content: [{ type: "text", text: JSON.stringify([{ "metadata": "Matched from Oracle DB CSV rows", "distance": 0.12, "match": rows[0] || {} }], null, 2) }]
                 };
+            } else if (name === "query_autonomous_db_agent") {
+                return {
+                    content: [{ type: "text", text: `[Autonomous DB Agent Simulated Response from CSV]\nMatching inventory records found:\n- SKU-500: Reno DC, 4000 units\n* ORACLE AI DATABASE` }]
+                };
             }
         } catch (e) {
             console.error("Error reading Oracle simulation CSV:", e);
@@ -124,6 +142,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 const query = args.query || args.vector_query || "";
                 return {
                     content: [{ type: "text", text: `Simulated Oracle Vector Search result for: ${query}\n[{ "metadata": "High value anomaly detected", "distance": 0.12 }]` }]
+                };
+            } else if (name === "query_autonomous_db_agent") {
+                const query = args.query || "";
+                return {
+                    content: [{ type: "text", text: `[Autonomous DB Agent Simulated Response]\nMatching records found for: "${query}"\n- SKU-500: Total Units 4000, Status: Active\n* ORACLE AI DATABASE` }]
                 };
             }
         }
@@ -148,6 +171,31 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             await connection.close();
             return {
                 content: [{ type: "text", text: JSON.stringify(result.rows, null, 2) }]
+            };
+        } else if (name === "query_autonomous_db_agent") {
+            const sql = `
+                SELECT DBMS_CLOUD_AI_AGENT.RUN(
+                    team_name => 'ORACLE_AI_DATABASE_AGENT',
+                    prompt => :prompt
+                ) AS response FROM DUAL
+            `;
+            const result = await connection.execute(sql, { prompt: args.query }, { outFormat: oracledb.OUT_FORMAT_OBJECT });
+            await connection.close();
+            
+            let response = result.rows[0].RESPONSE || result.rows[0].response;
+            if (response && typeof response.getData === 'function') {
+                response = await response.getData();
+            } else if (response && response.pipe) {
+                response = await new Promise((resolve, reject) => {
+                    let clobData = '';
+                    response.setEncoding('utf8');
+                    response.on('data', (chunk) => { clobData += chunk; });
+                    response.on('end', () => resolve(clobData));
+                    response.on('error', (err) => reject(err));
+                });
+            }
+            return {
+                content: [{ type: "text", text: response }]
             };
         }
     } catch (error) {

@@ -70,8 +70,14 @@ export async function handleWarehouseRequest(query, context = {}, traceId = null
     const catalogContext = groundWithCatalogContext("Warehouse");
 
     const systemInstruction = `You are a Warehouse and Supply Chain Specialist Agent based on the Oracle Agent Java model.
-    You have access to the supply chain graph and inventory risk schemas.
-    Use standard SQL, Property Graph, and Select AI tools provided for Oracle.
+    You have access to the supply chain graph, inventory risk schemas, and the database-native Oracle AI Database Agent (team).
+    
+    Available database tools:
+    - Use \`query_autonomous_db_agent\` to ask natural language database questions, inspect metadata, perform distinct/range checks, or generate chart configurations.
+    - Prefer \`query_autonomous_db_agent\` for complex natural language queries, retries, and data-driven charts.
+    - Standard SQL and PGQL graph tools are also available for specific table and network traversal.
+    
+    If the user asks for a chart or graph, explicitly prompt \`query_autonomous_db_agent\` to generate a chart. It will execute the GENERATE_CHART tool and return a valid Chart.js JSON block wrapped in a \`\`\`chartjs code block. Do not alter this block; return it as-is in the final data.
     
     ${groundingInstructions}
     

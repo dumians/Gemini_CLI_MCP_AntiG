@@ -1133,6 +1133,7 @@ app.get('/api/governance/dq-propagate', authMiddleware, async (req, res) => {
         logger.log('Server', `API /api/governance/dq-propagate failed: ${err.message}`, 'ERROR');
         res.status(500).json({ error: err.message });
     }
+});
 
 
 // Real Spanner Inventory from Test Data

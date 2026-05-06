@@ -4,6 +4,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
+import { governanceAgent } from "./utils/governance_agent.js";
 import dotenv from "dotenv";
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -117,6 +118,18 @@ export async function handleAnalyticsRequest(query, meshContext = {}, traceId = 
         for (const call of response.functionCalls) {
             const startTime = Date.now();
             logger.logToolCall("AnalyticsAgent", call.name, call.args, traceId);
+            
+            // --- Localized Evaluation Loop ---
+            const isAuthorized = governanceAgent.validateAccess("AnalyticsAgent", "Analytics", call.name, traceId);
+            if (!isAuthorized) {
+                toolCallParts.push({
+                    functionResponse: {
+                        name: call.name,
+                        response: { result: "Access Denied: Unauthorized tool execution prevented locally." }
+                    }
+                });
+                continue;
+            }
 
             const tool = allTools.find(t => t.name === call.name);
             const result = await tool._client.callTool(call.name, call.args);
