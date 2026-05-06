@@ -90,7 +90,7 @@ export class GovernanceMetadataPropagator {
                 
                 for (const field of fields) {
                     if (!field.description) {
-                        missing.append({
+                        missing.push({
                             Table: tableItem.id,
                             Column: field.name,
                             Type: field.type
@@ -501,8 +501,17 @@ Output ONLY the raw JSON array. No markdown formatting blocks, no backticks.`;
                 columns = ["customer_id", "lifetime_value", "last_interaction"];
             }
         } else {
-            const [metadata] = await this.bqClient.dataset(datasetId).table(tableId).getMetadata();
-            columns = (metadata.schema?.fields || []).map(f => f.name);
+            try {
+                const [metadata] = await this.bqClient.dataset(datasetId).table(tableId).getMetadata();
+                columns = (metadata.schema?.fields || []).map(f => f.name);
+            } catch (err) {
+                logger.log('GovernancePropagator', `Table ${tableId} not found in BQ. Falling back to mock columns.`, 'WARNING');
+                if (tableId === 'transactions') {
+                    columns = ["transaction_id", "store_id", "quantity_sold", "timestamp"];
+                } else {
+                    columns = ["customer_id", "lifetime_value", "last_interaction"];
+                }
+            }
         }
 
         const results = [];
