@@ -77,6 +77,25 @@ export const GovernanceView = () => {
   const [additionalReaders, setAdditionalReaders] = React.useState('');
   const [trustMetrics, setTrustMetrics] = React.useState<TrustItem[]>([]);
 
+  // Compliance Alerts States
+  const [isAlertsOpen, setIsAlertsOpen] = React.useState(false);
+  const [alerts, setAlerts] = React.useState<any[]>([]);
+
+  const fetchAlerts = async () => {
+    try {
+      const res = await api.get('/api/governance/compliance-alerts');
+      if (res && res.status === 'success') {
+        setAlerts(res.alerts || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch alerts:", err);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchAlerts();
+  }, []);
+
   // Trigger Global Gap Scan
   const handleScan = async () => {
     setIsScanning(true);
@@ -245,14 +264,28 @@ export const GovernanceView = () => {
           </h2>
           <p className="text-slate-400">Intelligently scan data assets, propagate column descriptions recursively, tag PII dynamically, and monitor data quality scores.</p>
         </div>
-        <div className="flex items-center gap-3 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-          <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Dataset:</span>
-          <input 
-            type="text"
-            value={datasetId}
-            onChange={e => setDatasetId(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm font-mono text-slate-200 focus:outline-none focus:border-primary w-44"
-          />
+        <div className="flex items-center gap-4 shrink-0">
+          <button 
+            onClick={() => { fetchAlerts(); setIsAlertsOpen(true); }}
+            className="glass px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/5 transition-all flex items-center gap-2 text-slate-300 hover:text-white relative"
+          >
+            <AlertTriangle size={16} className="text-yellow-500" /> View Compliance Alerts
+            {alerts.filter(a => a.status === 'PENDING_REVIEW').length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                {alerts.filter(a => a.status === 'PENDING_REVIEW').length}
+              </span>
+            )}
+          </button>
+
+          <div className="flex items-center gap-3 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Dataset:</span>
+            <input 
+              type="text"
+              value={datasetId}
+              onChange={e => setDatasetId(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-sm font-mono text-slate-200 focus:outline-none focus:border-primary w-36"
+            />
+          </div>
         </div>
       </div>
 
@@ -801,6 +834,102 @@ export const GovernanceView = () => {
           </div>
         )}
       </div>
+      
+      {/* Compliance Alerts Drawer */}
+      <ComplianceAlertsDrawer 
+        isOpen={isAlertsOpen}
+      onClose={() => setIsAlertsOpen(false)}
+      alerts={alerts}
+      onApprove={async (alertId) => {
+        try {
+          const res = await api.post(`/api/governance/compliance-alerts/${alertId}/approve`);
+          if (res && res.status === 'success') {
+            setActionMessage({ text: res.message });
+            fetchAlerts(); // Refresh alerts list
+          }
+        } catch (err: any) {
+          setActionMessage({ text: `Approve failed: ${err.message}`, isError: true });
+        }
+      }}
+    />
+    </div>
+  );
+};
+
+const ComplianceAlertsDrawer = ({ isOpen, onClose, alerts, onApprove }: { isOpen: boolean, onClose: () => void, alerts: any[], onApprove: (id: string) => void }) => {
+  if (!isOpen) return null;
+
+  const activeAlerts = alerts.filter(a => a.status === 'PENDING_REVIEW');
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
+      {/* Backdrop closer */}
+      <div className="absolute inset-0" onClick={onClose} />
+      
+      <motion.div 
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'tween', duration: 0.3 }}
+        className="relative w-full max-w-lg h-full bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col"
+      >
+        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <AlertTriangle size={18} className="text-yellow-500" /> Compliance Alerts Audit
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">Pending human-in-the-loop policy tag reviews.</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
+          {activeAlerts.length > 0 ? (
+            activeAlerts.map((alert) => (
+              <div key={alert.id} className="bg-slate-950/40 border border-slate-800 rounded-2xl p-5 space-y-3 hover:border-slate-700 transition-all">
+                <div className="flex justify-between items-start">
+                  <span className="bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                    Pending Audit
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">{alert.id}</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-200 text-sm">PII Data Flow Blocked</h4>
+                  <p className="text-xs text-slate-400 mt-1">{alert.reason}</p>
+                </div>
+                
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-900 space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Target Asset:</span>
+                    <span className="font-mono text-slate-300">{alert.table}.{alert.column}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">PII Policy Tag:</span>
+                    <span className="font-mono text-amber-500 max-w-[180px] truncate" title={alert.policyTag}>{alert.policyTag.split('/').pop()}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button 
+                    onClick={() => onApprove(alert.id)}
+                    className="bg-primary text-white text-xs font-bold px-5 py-2 rounded-xl flex items-center gap-1.5 shadow-md hover:bg-primary/85 transition-all"
+                  >
+                    <Check size={12} /> Audit & Approve Policy Tag
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center h-full">
+              <CheckCircle2 size={40} className="text-green-500 mb-3" />
+              <h4 className="font-bold text-slate-200">Compliance is 100% Green</h4>
+              <p className="text-xs text-slate-400 mt-1">No pending policy tags require manual human reviews.</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 };

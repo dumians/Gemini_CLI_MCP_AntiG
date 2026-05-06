@@ -95,6 +95,65 @@ class GovernanceAgent {
 
         return maskField(masked);
     }
+
+    /**
+     * Syncs policies locally and in Dataplex Catalog
+     */
+    async syncPolicies(newPolicies) {
+        try {
+            const policyPath = join(__dirname, '../../config/policies.json');
+            fs.writeFileSync(policyPath, JSON.stringify(newPolicies, null, 2));
+            this.policies = newPolicies;
+            logger.log('Governance', 'Successfully synchronized governance policies locally', 'INFO');
+
+            // Async Dataplex sync if not in simulation mode
+            const isSimulation = !process.env.GCP_PROJECT_ID || process.env.NODE_ENV === 'test' || process.env.USE_REAL_CONNECTIONS !== 'true';
+            if (!isSimulation && newPolicies.rules) {
+                const { dataplex } = await import('./dataplex.js');
+                newPolicies.rules.forEach(rule => {
+                    dataplex.createGovernancePolicy(rule).catch(err => {
+                        console.error("[Governance] Failed to sync policy to Dataplex:", err);
+                    });
+                });
+            }
+            return { success: true };
+        } catch (err) {
+            logger.log('Governance', `Failed to sync policies: ${err.message}`, 'ERROR');
+            throw err;
+        }
+    }
+
+    /**
+     * Triggers a compliance review request (Human-in-the-loop audit alert)
+     */
+    triggerComplianceReview(alertData) {
+        try {
+            const alertsPath = join(__dirname, '../../config/compliance_alerts.json');
+            let alerts = [];
+            if (fs.existsSync(alertsPath)) {
+                alerts = JSON.parse(fs.readFileSync(alertsPath, 'utf8'));
+            }
+            
+            const alert = {
+                id: `ALR-${Math.floor(Math.random() * 10000)}`,
+                timestamp: new Date().toISOString(),
+                status: 'PENDING_REVIEW',
+                ...alertData
+            };
+            
+            // Deduplicate by target column and status
+            const exists = alerts.some(a => a.table === alert.table && a.column === alert.column && a.status === 'PENDING_REVIEW');
+            if (!exists) {
+                alerts.push(alert);
+                fs.writeFileSync(alertsPath, JSON.stringify(alerts, null, 2));
+                logger.log('Governance', `Compliance review alert triggered for ${alert.table}.${alert.column}: ${alert.reason}`, 'WARNING');
+            }
+            return alert;
+        } catch (e) {
+            logger.log('Governance', `Failed to trigger compliance review: ${e.message}`, 'ERROR');
+            return null;
+        }
+    }
 }
 
 export const governanceAgent = new GovernanceAgent();

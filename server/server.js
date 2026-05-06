@@ -14,6 +14,7 @@ import { authMiddleware } from './middleware/auth.js';
 import { dataplex } from '../agent/utils/dataplex.js';
 import { gateway } from '../agent/utils/one_mcp_gateway.js';
 import { GovernanceMetadataPropagator } from '../agent/utils/governance_metadata_propagator.js';
+import { governanceAgent } from '../agent/utils/governance_agent.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: '../.env' });
@@ -428,6 +429,12 @@ app.post('/api/config/data-sources', authMiddleware, (req, res) => {
         storageProvider.set('data_sources', config);
         metadataCatalog.reload(); // Sync in-memory graph with new source
         logger.log('Server', `Data source ${name} validated and added dynamically`, 'INFO');
+
+        // Asynchronously trigger metadata propagation (Lineage, Glossary matching, Policy Tag propagates)
+        metadataPropagator.propagateNewDomainMetadata(id, name, schemaPath).catch(e => {
+            console.error("[Server] Background domain auto-propagation failed:", e);
+        });
+
         res.status(201).json({ message: `Data source ${name} validated and added successfully` });
     } catch (error) {
         logger.log('Server', `Failed to add data source: ${error.message}`, 'ERROR');
@@ -1000,24 +1007,12 @@ app.get('/api/governance/policies', authMiddleware, (req, res) => {
     }
 });
 
-app.post('/api/governance/policies', authMiddleware, (req, res) => {
+app.post('/api/governance/policies', authMiddleware, async (req, res) => {
     try {
-        const pPath = path.join(__dirname, '../config/policies.json');
-        fs.writeFileSync(pPath, JSON.stringify(req.body, null, 2));
-        logger.log('Server', `Governance policies updated`, 'INFO');
-
-        // Integration with GCP Dataplex
-        if (req.body.rules && Array.isArray(req.body.rules)) {
-            req.body.rules.forEach(rule => {
-                dataplex.createGovernancePolicy(rule).catch(err => {
-                    console.error("[Server] Failed to create policy in Dataplex:", err);
-                });
-            });
-        }
-
-        res.json({ message: "Policies updated successfully" });
+        await governanceAgent.syncPolicies(req.body);
+        res.json({ message: "Policies updated and synced successfully" });
     } catch (error) {
-        res.status(500).json({ error: "Failed to save policies" });
+        res.status(500).json({ error: "Failed to save and sync policies" });
     }
 });
 
@@ -1100,6 +1095,21 @@ app.get('/api/governance/policy-recommend', authMiddleware, async (req, res) => 
 
     try {
         const recommendations = await metadataPropagator.previewPolicyTagPropagation(datasetId, table);
+        
+        // Check if any recommendation requires human-in-the-loop compliance review
+        for (const rec of recommendations) {
+            if (rec.Recommendation && rec.Recommendation.includes('Review Required')) {
+                governanceAgent.triggerComplianceReview({
+                    table: table,
+                    column: rec["Target Column"],
+                    source: rec["Source Table"] || 'alloydb',
+                    sourceColumn: rec["Source Column"] || 'id',
+                    policyTag: rec["Policy Tags"] || 'projects/...',
+                    reason: `Policy tag propagation blocked: Computed transformation logic detected on field: ${rec.Logic}`
+                });
+            }
+        }
+        
         res.json({ status: 'success', recommendations });
     } catch (err) {
         logger.log('Server', `API /api/governance/policy-recommend failed: ${err.message}`, 'ERROR');
@@ -1132,6 +1142,50 @@ app.get('/api/governance/dq-propagate', authMiddleware, async (req, res) => {
     } catch (err) {
         logger.log('Server', `API /api/governance/dq-propagate failed: ${err.message}`, 'ERROR');
         res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/governance/compliance-alerts', authMiddleware, (req, res) => {
+    try {
+        const alertsPath = path.join(__dirname, '../config/compliance_alerts.json');
+        let alerts = [];
+        if (fs.existsSync(alertsPath)) {
+            alerts = JSON.parse(fs.readFileSync(alertsPath, 'utf8'));
+        }
+        res.json({ status: 'success', alerts });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load compliance alerts" });
+    }
+});
+
+app.post('/api/governance/compliance-alerts/:id/approve', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const alertsPath = path.join(__dirname, '../config/compliance_alerts.json');
+        if (!fs.existsSync(alertsPath)) return res.status(404).json({ error: "No alerts found" });
+
+        const alerts = JSON.parse(fs.readFileSync(alertsPath, 'utf8'));
+        const alertIdx = alerts.findIndex(a => a.id === id);
+        if (alertIdx === -1) return res.status(404).json({ error: "Alert not found" });
+
+        const alert = alerts[alertIdx];
+        alert.status = 'APPROVED';
+        
+        // Apply the policy tag immediately upon human approval!
+        const datasetId = process.env.BIGQUERY_DATASET_ID || 'marketing_edw';
+        await metadataPropagator.applyPolicyTags(datasetId, [{
+            table: alert.table,
+            column: alert.column,
+            policy_tag: alert.policyTag
+        }]);
+
+        // Update status in local alerts store
+        alerts[alertIdx] = alert;
+        fs.writeFileSync(alertsPath, JSON.stringify(alerts, null, 2));
+
+        res.json({ status: 'success', message: `Compliance alert ${id} successfully audited and approved! Policy tag applied.` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
