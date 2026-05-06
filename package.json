@@ -9,6 +9,7 @@
         "start-oracle-mcp": "node servers/oracle-mcp/index.js",
         "start-spanner-mcp": "node servers/spanner-mcp/index.js",
         "start-bigquery-mcp": "node servers/bigquery-mcp/index.js",
+        "setup-bq-governance": "node scripts/create_bq_governance_demo.js",
         "test": "node --test tests/integration/*.test.js"
     },
     "dependencies": {
