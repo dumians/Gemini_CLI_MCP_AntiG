@@ -10,6 +10,30 @@ export const AdminPortalView = () => {
   const [activeTab, setActiveTab] = React.useState<TabType>('general');
   const [loading, setLoading] = React.useState(false);
   const [settings, setSettings] = React.useState<any>(null);
+
+  // System Agents Models State
+  const [systemModels, setSystemModels] = React.useState({ planner: 'gemini-2.5-flash', catalog: 'gemini-2.5-flash', orchestrator: 'gemini-2.5-flash' });
+
+  const fetchSystemModels = async () => {
+    try {
+      const res = await api.get('/api/config/system-models');
+      if (res) {
+        setSystemModels(res);
+      }
+    } catch (err) {
+      console.error('Failed to fetch system models:', err);
+    }
+  };
+
+  const handleSaveSystemModels = async (agentType: string, modelName: string) => {
+    const updated = { ...systemModels, [agentType]: modelName };
+    setSystemModels(updated);
+    try {
+      await api.post('/api/config/system-models', updated);
+    } catch (err) {
+      console.error('Failed to save system models:', err);
+    }
+  };
   
   const [editDsId, setEditDsId] = React.useState<string | null>(null);
   const [isDsModalOpen, setIsDsModalOpen] = React.useState(false);
@@ -111,6 +135,7 @@ export const AdminPortalView = () => {
     fetchData();
     fetchApiKeys();
     fetchMcpTools();
+    fetchSystemModels();
   }, []);
 
   const handleDsSubmit = async (data: any) => {
@@ -272,6 +297,57 @@ export const AdminPortalView = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </section>
+
+              <section className="glass rounded-2xl border-slate-800 p-6 mt-6">
+                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                  <Cpu size={18} className="text-primary" /> System Core Agents Models
+                </h3>
+                <p className="text-xs text-slate-500 mb-6">Configure Gemini LLM choices for central strategic mesh agents.</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Planner Agent Model</label>
+                    <select 
+                      value={systemModels.planner}
+                      onChange={(e) => handleSaveSystemModels('planner', e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                      <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                      <option value="gemini-3.1-preview">Gemini 3.1 Preview</option>
+                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Catalog Agent Model</label>
+                    <select 
+                      value={systemModels.catalog}
+                      onChange={(e) => handleSaveSystemModels('catalog', e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                      <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                      <option value="gemini-3.1-preview">Gemini 3.1 Preview</option>
+                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-400">Orchestrator Model</label>
+                    <select 
+                      value={systemModels.orchestrator}
+                      onChange={(e) => handleSaveSystemModels('orchestrator', e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary cursor-pointer"
+                    >
+                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                      <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                      <option value="gemini-3.1-preview">Gemini 3.1 Preview</option>
+                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
+                    </select>
+                  </div>
                 </div>
               </section>
             </div>

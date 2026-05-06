@@ -89,8 +89,9 @@ async function mapBusinessTerms(query, traceId) {
     
     Output ONLY the JSON object.`;
 
+    const modelName = config.model || "gemini-2.5-flash";
     const model = new GoogleGenerativeAI(process.env.GEMINI_API_KEY).getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: modelName,
         systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
     });
@@ -154,8 +155,9 @@ export async function askOrchestrator(query, userId = 'admin') {
     const planContext = `\n\n[STRATEGIC PLAN]\n` + JSON.stringify(plan, null, 2);
     const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext + planContext;
 
+    const modelName = config.model || "gemini-2.5-flash";
     const model = ai.getGenerativeModel({
-        model: config.model || "gemini-2.5-flash",
+        model: modelName,
         systemInstruction: enrichedSystemInstruction,
         tools: getDiscoveryTools(), // Dynamically fetch loaded registry items
     });
@@ -308,7 +310,7 @@ export async function askOrchestrator(query, userId = 'admin') {
         If no, provide a 'REVISED_ANSWER:' followed by the corrected answer.
         Output ONLY 'APPROVED' or 'REVISED_ANSWER: <content>'.`;
 
-        const reflectionModel = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const reflectionModel = ai.getGenerativeModel({ model: config.model || "gemini-2.5-flash" });
         const reflectionResult = await callAiOperationWithRetry(() => reflectionModel.generateContent(reflectionPrompt));
         const reflectionText = reflectionResult.response.text();
         

@@ -15,6 +15,7 @@ import { dataplex } from '../agent/utils/dataplex.js';
 import { gateway } from '../agent/utils/one_mcp_gateway.js';
 import { GovernanceMetadataPropagator } from '../agent/utils/governance_metadata_propagator.js';
 import { governanceAgent } from '../agent/utils/governance_agent.js';
+import { configService } from '../agent/utils/config_service.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: '../.env' });
@@ -1026,6 +1027,61 @@ app.get('/api/settings', authMiddleware, (req, res) => {
         res.json({ dataSources, agents, mcpServerStatuses });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/config/system-models', authMiddleware, (req, res) => {
+    try {
+        const plannerPath = path.join(__dirname, '../config/planner_agent.json');
+        const catalogPath = path.join(__dirname, '../config/catalog_agent.json');
+        const orchPath = path.join(__dirname, '../config/orchestrator.json');
+
+        const plannerModel = fs.existsSync(plannerPath) ? JSON.parse(fs.readFileSync(plannerPath, 'utf8')).model || 'gemini-2.5-flash' : 'gemini-2.5-flash';
+        const catalogModel = fs.existsSync(catalogPath) ? JSON.parse(fs.readFileSync(catalogPath, 'utf8')).model || 'gemini-2.5-flash' : 'gemini-2.5-flash';
+        const orchModel = fs.existsSync(orchPath) ? JSON.parse(fs.readFileSync(orchPath, 'utf8')).model || 'gemini-2.5-flash' : 'gemini-2.5-flash';
+
+        res.json({
+            planner: plannerModel,
+            catalog: catalogModel,
+            orchestrator: orchModel
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/config/system-models', authMiddleware, (req, res) => {
+    const { planner, catalog, orchestrator } = req.body;
+    try {
+        const plannerPath = path.join(__dirname, '../config/planner_agent.json');
+        const catalogPath = path.join(__dirname, '../config/catalog_agent.json');
+        const orchPath = path.join(__dirname, '../config/orchestrator.json');
+
+        // Save Planner Model
+        let plannerConfig = {};
+        if (fs.existsSync(plannerPath)) plannerConfig = JSON.parse(fs.readFileSync(plannerPath, 'utf8'));
+        plannerConfig.model = planner || plannerConfig.model || 'gemini-2.5-flash';
+        fs.writeFileSync(plannerPath, JSON.stringify(plannerConfig, null, 2));
+
+        // Save Catalog Model
+        let catalogConfig = {};
+        if (fs.existsSync(catalogPath)) catalogConfig = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+        catalogConfig.model = catalog || catalogConfig.model || 'gemini-2.5-flash';
+        fs.writeFileSync(catalogPath, JSON.stringify(catalogConfig, null, 2));
+
+        // Save Orchestrator Model
+        let orchConfig = {};
+        if (fs.existsSync(orchPath)) orchConfig = JSON.parse(fs.readFileSync(orchPath, 'utf8'));
+        orchConfig.model = orchestrator || orchConfig.model || 'gemini-2.5-flash';
+        fs.writeFileSync(orchPath, JSON.stringify(orchConfig, null, 2));
+
+        // Force clear configService cache to reload instantly on next fetch!
+        configService.configs = {}; 
+
+        logger.log('Server', 'System generative models updated dynamically', 'INFO');
+        res.json({ status: 'success', message: 'System agents generative models updated successfully!' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

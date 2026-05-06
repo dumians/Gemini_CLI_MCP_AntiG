@@ -301,8 +301,17 @@ export class MetadataCatalog {
         2. Focus on matching identifiers or concepts that likely represent the same real-world entity.
         3. Output ONLY the JSON array.`;
 
+        let catalogConfig = {};
+        const cPath = path.join(ROOT_DIR, 'config', 'catalog_agent.json');
+        if (fs.existsSync(cPath)) {
+            try {
+                catalogConfig = JSON.parse(fs.readFileSync(cPath, 'utf8'));
+            } catch (e) {}
+        }
+        const modelName = catalogConfig.model || "gemini-2.5-flash";
+
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: modelName,
             systemInstruction,
             generationConfig: { responseMimeType: "application/json" }
         });
