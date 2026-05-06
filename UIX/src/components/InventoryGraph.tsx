@@ -259,9 +259,10 @@ export function InventoryGraph() {
                             const type = node.type || 'entity';
                             const color = domainColors[domain] || '#6366f1';
                             
-                            // Pill size dynamically scalable
-                            const pillWidth = 90 / globalScale;
-                            const pillHeight = 36 / globalScale;
+                            // Pill size dynamically scalable based on node type
+                            const isSource = node.type === 'source';
+                            const pillWidth = (isSource ? 112 : 90) / globalScale;
+                            const pillHeight = (isSource ? 42 : 32) / globalScale;
                             const radius = 6 / globalScale;
                             
                             const isSelected = selectedNode && selectedNode.id === node.id;
@@ -271,7 +272,6 @@ export function InventoryGraph() {
                             // Selected Pulsing Ring Glow Effect
                             if (isSelected) {
                                 const time = Date.now() * 0.003;
-                                const pulseSize = (radius * 1.4) + Math.sin(time) * (2 / globalScale);
                                 ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
                                 ctx.lineWidth = 6 / globalScale;
                                 ctx.beginPath();
@@ -287,31 +287,50 @@ export function InventoryGraph() {
 
                             // Border Outline (Color by Domain)
                             ctx.strokeStyle = isSelected ? '#3b82f6' : color;
-                            ctx.lineWidth = isSelected ? (3 / globalScale) : (1.5 / globalScale);
+                            ctx.lineWidth = isSource ? (2.5 / globalScale) : (1.2 / globalScale);
                             ctx.stroke();
 
-                            // Left Side Domain Marker Strip
+                            // Left Side Domain Marker Strip (Thicker for major sources)
                             ctx.fillStyle = color;
                             ctx.beginPath();
-                            ctx.roundRect(node.x - pillWidth / 2, node.y - pillHeight / 2, 5 / globalScale, pillHeight, [radius, 0, 0, radius]);
+                            ctx.roundRect(node.x - pillWidth / 2, node.y - pillHeight / 2, (isSource ? 8 : 5) / globalScale, pillHeight, [radius, 0, 0, radius]);
                             ctx.fill();
 
-                            // Node Label (Technical Column/Table)
-                            const fontSize = Math.max(6, 9 / globalScale);
+                            // --- Automated Font Autoscaling Algorithm ---
+                            const maxAllowedWidth = pillWidth - (isSource ? 22 : 14);
+                            const baseSize = (isSource ? 11 : 8.5) / globalScale;
+                            const minSize = (isSource ? 7.5 : 6) / globalScale;
+
+                            // 1. Set base size to measure text width
+                            ctx.font = `bold ${baseSize}px Inter, system-ui, sans-serif`;
+                            const textWidth = ctx.measureText(displayName).width;
+
+                            // 2. Adjust font size if text exceeds margins
+                            let fontSize = baseSize;
+                            if (textWidth > maxAllowedWidth) {
+                                const scaleFactor = maxAllowedWidth / textWidth;
+                                fontSize = Math.max(baseSize * scaleFactor, minSize);
+                            }
+
+                            // 3. Apply dynamically scaled font
                             ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
                             ctx.textAlign = 'center';
                             ctx.textBaseline = 'middle';
                             ctx.fillStyle = '#ffffff';
 
+                            // 4. Ellipsis fallback (Only if text still exceeds margins at minimum font size)
                             let displayText = displayName;
-                            const textWidth = ctx.measureText(displayName).width;
-                            if (textWidth > pillWidth - 12) {
-                                displayText = displayName.substring(0, Math.floor(((pillWidth - 12) / textWidth) * displayName.length) - 3) + '...';
+                            const finalWidth = ctx.measureText(displayName).width;
+                            if (finalWidth > maxAllowedWidth) {
+                                const maxCharLength = Math.floor((maxAllowedWidth / finalWidth) * displayName.length) - 3;
+                                if (maxCharLength > 3) {
+                                    displayText = displayName.substring(0, maxCharLength) + '...';
+                                }
                             }
-                            ctx.fillText(displayText, node.x + (2.5 / globalScale), node.y - (pillHeight / 7));
+                            ctx.fillText(displayText, node.x + (2.5 / globalScale), node.y - (pillHeight / 8));
 
                             // Type Indicator Subtitle
-                            const typeFontSize = Math.max(5, 7 / globalScale);
+                            const typeFontSize = Math.max(5, (isSource ? 7.5 : 6.5) / globalScale);
                             ctx.font = `bold ${typeFontSize}px Inter, system-ui, sans-serif`;
                             ctx.fillStyle = isSelected ? '#3b82f6' : '#94a3b8';
                             ctx.fillText(type.toUpperCase(), node.x + (2.5 / globalScale), node.y + (pillHeight / 4));
