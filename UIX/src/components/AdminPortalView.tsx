@@ -318,6 +318,8 @@ export const AdminPortalView = () => {
                       <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                       <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
+                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
                     </select>
                   </div>
 
@@ -332,6 +334,8 @@ export const AdminPortalView = () => {
                       <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                       <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
+                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
                     </select>
                   </div>
 
@@ -346,6 +350,8 @@ export const AdminPortalView = () => {
                       <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                       <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
+                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
                     </select>
                   </div>
                 </div>
@@ -376,6 +382,8 @@ export const AdminPortalView = () => {
                       <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                       <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
+                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">
