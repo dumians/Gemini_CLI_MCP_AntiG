@@ -1,182 +1,224 @@
 {
-    "mode": "local",
-    "sources": {
-        "oracle": {
-            "name": "Oracle ERP",
-            "domain": "Oracle ERP",
-            "connection_type": "JDBC URL",
-            "connection_string": "jdbc:oracle:thin:@//${ORACLE_HOST}:1521/${ORACLE_SERVICE}",
-            "connection": {
-                "user": "${ORACLE_USER}",
-                "password": "${ORACLE_PASSWORD}",
-                "connect_string": "${ORACLE_CONNECT_STRING}"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/oracle-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${ORACLE_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/oracle_schema.sql",
-            "health_check": "/health"
-        },
-        "spanner": {
-            "name": "Spanner Retail",
-            "domain": "Spanner Retail",
-            "connection_type": "Standard URI",
-            "connection_string": "spanner://${GCP_PROJECT_ID}/${SPANNER_INSTANCE_ID}/${SPANNER_DATABASE_ID}",
-            "connection": {
-                "projectId": "${GCP_PROJECT_ID}",
-                "instanceId": "${SPANNER_INSTANCE_ID}",
-                "databaseId": "${SPANNER_DATABASE_ID}"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/spanner-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${SPANNER_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/spanner_schema.sql",
-            "health_check": "/health"
-        },
-        "bigquery": {
-            "name": "BigQuery Analytics",
-            "domain": "BigQuery Analytics",
-            "connection_type": "Standard URI",
-            "connection_string": "bigquery://${GCP_PROJECT_ID}/${BIGQUERY_DATASET_ID}",
-            "connection": {
-                "projectId": "${GCP_PROJECT_ID}",
-                "datasetId": "${BIGQUERY_DATASET_ID}",
-                "location": "${BIGQUERY_LOCATION}"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/bigquery-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${BIGQUERY_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/bigquery_schema.sql",
-            "health_check": "/health"
-        },
-        "alloydb": {
-            "name": "AlloyDB CRM",
-            "domain": "AlloyDB CRM",
-            "connection_type": "Standard URI",
-            "connection_string": "postgresql://${ALLOYDB_USER}:${ALLOYDB_PASSWORD}@${ALLOYDB_HOST}:${ALLOYDB_PORT}/${ALLOYDB_DB}",
-            "connection": {
-                "region": "${ALLOYDB_REGION}",
-                "clusterId": "${ALLOYDB_CLUSTER}",
-                "instanceId": "${ALLOYDB_INSTANCE}",
-                "username": "${ALLOYDB_USER}",
-                "password": "${ALLOYDB_PASSWORD}",
-                "database": "${ALLOYDB_DB}"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/alloydb-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${ALLOYDB_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/alloydb_schema.sql",
-            "health_check": "/health"
-        },
-        "oracle_hr": {
-            "name": "Oracle HR",
-            "domain": "HR",
-            "connection_type": "JDBC URL",
-            "connection_string": "jdbc:oracle:thin:@//${HR_HOST}:1521/${HR_SERVICE}",
-            "connection": {
-                "user": "${HR_USER}",
-                "password": "${HR_PASSWORD}",
-                "connect_string": "${HR_CONNECT_STRING}"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/oracle-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${HR_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/hr_schema.sql",
-            "health_check": "/health"
-        },
-        "catalog": {
-            "name": "Metadata Catalog",
-            "domain": "Catalog",
-            "connection_type": "Standard URI",
-            "connection_string": "bigquery://${GCP_PROJECT_ID}/${CATALOG_DATASET_ID}",
-            "connection": {
-                "projectId": "${GCP_PROJECT_ID}",
-                "datasetId": "${CATALOG_DATASET_ID}",
-                "location": "${CATALOG_LOCATION}"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/catalog-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${CATALOG_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/catalog_metadata.sql",
-            "health_check": "/health"
-        },
-        "api_driven": {
-            "name": "API Driven Source",
-            "domain": "API Domain",
-            "connection_type": "REST API",
-            "connection_string": "https://api.oracle.com/ebs",
-            "connection": {
-                "baseUrl": "https://api.oracle.com/ebs"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/api-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${API_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/flexcube_schema.sql",
-            "health_check": "/health"
-        },
-        "warehouse": {
-            "name": "Warehouse Supply Chain",
-            "domain": "Warehouse",
-            "connection_type": "JDBC URL",
-            "connection_string": "jdbc:oracle:thin:@//${WAREHOUSE_HOST}:1521/${WAREHOUSE_SERVICE}",
-            "connection": {
-                "user": "${WAREHOUSE_USER}",
-                "password": "${WAREHOUSE_PASSWORD}",
-                "connect_string": "${WAREHOUSE_CONNECT_STRING}"
-            },
-            "local": {
-                "command": "node",
-                "args": ["servers/oracle-mcp/index.js"],
-                "transport": "stdio"
-            },
-            "remote": {
-                "url": "${WAREHOUSE_MCP_URL}",
-                "transport": "sse"
-            },
-            "schema_file": "db-schemas/warehouse_schema.sql",
-            "health_check": "/health"
-        }
+  "mode": "local",
+  "sources": {
+    "oracle": {
+      "name": "Oracle ERP",
+      "domain": "Oracle ERP",
+      "connection_type": "JDBC URL",
+      "connection_string": "jdbc:oracle:thin:@//${ORACLE_HOST}:1521/${ORACLE_SERVICE}",
+      "connection": {
+        "user": "${ORACLE_USER}",
+        "password": "${ORACLE_PASSWORD}",
+        "connect_string": "${ORACLE_CONNECT_STRING}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/oracle-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${ORACLE_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/oracle_schema.sql",
+      "health_check": "/health"
+    },
+    "spanner": {
+      "name": "Spanner Retail",
+      "domain": "Spanner Retail",
+      "connection_type": "Standard URI",
+      "connection_string": "spanner://${GCP_PROJECT_ID}/${SPANNER_INSTANCE_ID}/${SPANNER_DATABASE_ID}",
+      "connection": {
+        "projectId": "${GCP_PROJECT_ID}",
+        "instanceId": "${SPANNER_INSTANCE_ID}",
+        "databaseId": "${SPANNER_DATABASE_ID}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/spanner-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${SPANNER_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/spanner_schema.sql",
+      "health_check": "/health"
+    },
+    "bigquery": {
+      "name": "BigQuery Analytics",
+      "domain": "BigQuery Analytics",
+      "connection_type": "Standard URI",
+      "connection_string": "bigquery://${GCP_PROJECT_ID}/${BIGQUERY_DATASET_ID}",
+      "connection": {
+        "projectId": "${GCP_PROJECT_ID}",
+        "datasetId": "${BIGQUERY_DATASET_ID}",
+        "location": "${BIGQUERY_LOCATION}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/bigquery-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${BIGQUERY_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/bigquery_schema.sql",
+      "health_check": "/health"
+    },
+    "alloydb": {
+      "name": "AlloyDB CRM",
+      "domain": "AlloyDB CRM",
+      "connection_type": "Standard URI",
+      "connection_string": "postgresql://${ALLOYDB_USER}:${ALLOYDB_PASSWORD}@${ALLOYDB_HOST}:${ALLOYDB_PORT}/${ALLOYDB_DB}",
+      "connection": {
+        "region": "${ALLOYDB_REGION}",
+        "clusterId": "${ALLOYDB_CLUSTER}",
+        "instanceId": "${ALLOYDB_INSTANCE}",
+        "username": "${ALLOYDB_USER}",
+        "password": "${ALLOYDB_PASSWORD}",
+        "database": "${ALLOYDB_DB}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/alloydb-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${ALLOYDB_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/alloydb_schema.sql",
+      "health_check": "/health"
+    },
+    "oracle_hr": {
+      "name": "Oracle HR",
+      "domain": "HR",
+      "connection_type": "JDBC URL",
+      "connection_string": "jdbc:oracle:thin:@//${HR_HOST}:1521/${HR_SERVICE}",
+      "connection": {
+        "user": "${HR_USER}",
+        "password": "${HR_PASSWORD}",
+        "connect_string": "${HR_CONNECT_STRING}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/oracle-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${HR_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/hr_schema.sql",
+      "health_check": "/health"
+    },
+    "catalog": {
+      "name": "Metadata Catalog",
+      "domain": "Catalog",
+      "connection_type": "Standard URI",
+      "connection_string": "bigquery://${GCP_PROJECT_ID}/${CATALOG_DATASET_ID}",
+      "connection": {
+        "projectId": "${GCP_PROJECT_ID}",
+        "datasetId": "${CATALOG_DATASET_ID}",
+        "location": "${CATALOG_LOCATION}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/catalog-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${CATALOG_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/catalog_metadata.sql",
+      "health_check": "/health"
+    },
+    "api_driven": {
+      "name": "API Driven Source",
+      "domain": "API Domain",
+      "connection_type": "REST API",
+      "connection_string": "https://api.oracle.com/ebs",
+      "connection": {
+        "baseUrl": "https://api.oracle.com/ebs"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/api-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${API_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/flexcube_schema.sql",
+      "health_check": "/health"
+    },
+    "warehouse": {
+      "name": "Warehouse Supply Chain",
+      "domain": "Warehouse",
+      "connection_type": "JDBC URL",
+      "connection_string": "jdbc:oracle:thin:@//${WAREHOUSE_HOST}:1521/${WAREHOUSE_SERVICE}",
+      "connection": {
+        "user": "${WAREHOUSE_USER}",
+        "password": "${WAREHOUSE_PASSWORD}",
+        "connect_string": "${WAREHOUSE_CONNECT_STRING}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/oracle-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${WAREHOUSE_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/warehouse_schema.sql",
+      "health_check": "/health"
+    },
+    "netsuite": {
+      "name": "NetSuite ERP",
+      "domain": "NetSuite ERP",
+      "connection_type": "SuiteTalk REST Web Services",
+      "connection_string": "https://${NETSUITE_ACCOUNT_ID}.suitetalk.api.netsuite.com/services/rest/record/v1",
+      "connection": {
+        "accountId": "${NETSUITE_ACCOUNT_ID}",
+        "consumerKey": "${NETSUITE_CONSUMER_KEY}",
+        "consumerSecret": "${NETSUITE_CONSUMER_SECRET}",
+        "tokenId": "${NETSUITE_TOKEN_ID}",
+        "tokenSecret": "${NETSUITE_TOKEN_SECRET}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/netsuite-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${NETSUITE_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/netsuite_schema.sql",
+      "health_check": "/health"
     }
+  }
 }

@@ -11,7 +11,9 @@
       {
         "name": "oracle",
         "mcpUrl": "process.env.ORACLE_MCP_URL",
-        "serverArgs": ["servers/oracle-mcp/index.js"]
+        "serverArgs": [
+          "servers/oracle-mcp/index.js"
+        ]
       }
     ],
     "groundingDomain": "Finance",
@@ -29,11 +31,14 @@
       {
         "name": "spanner",
         "mcpUrl": "process.env.SPANNER_MCP_URL",
-        "serverArgs": ["servers/spanner-mcp/index.js"]
+        "serverArgs": [
+          "servers/spanner-mcp/index.js"
+        ]
       }
     ],
     "groundingDomain": "Retail",
-    "enabled": true
+    "enabled": true,
+    "model": "gemini-3.1-pro-preview"
   },
   {
     "id": "analytics_agent",
@@ -47,12 +52,16 @@
       {
         "name": "bigquery",
         "mcpUrl": "process.env.BIGQUERY_MCP_URL",
-        "serverArgs": ["servers/bigquery-mcp/index.js"]
+        "serverArgs": [
+          "servers/bigquery-mcp/index.js"
+        ]
       },
       {
         "name": "alloydb",
         "mcpUrl": "process.env.ALLOYDB_MCP_URL",
-        "serverArgs": ["servers/alloydb-mcp/index.js"]
+        "serverArgs": [
+          "servers/alloydb-mcp/index.js"
+        ]
       }
     ],
     "groundingDomain": "Analytics",
@@ -70,7 +79,9 @@
       {
         "name": "oracle_hr",
         "mcpUrl": "process.env.HR_MCP_URL",
-        "serverArgs": ["servers/oracle-mcp/index.js"]
+        "serverArgs": [
+          "servers/oracle-mcp/index.js"
+        ]
       }
     ],
     "groundingDomain": "HR",
@@ -88,7 +99,9 @@
       {
         "name": "alloydb",
         "mcpUrl": "process.env.ALLOYDB_MCP_URL",
-        "serverArgs": ["servers/alloydb-mcp/index.js"]
+        "serverArgs": [
+          "servers/alloydb-mcp/index.js"
+        ]
       }
     ],
     "groundingDomain": "Analytics",
@@ -166,10 +179,32 @@
       {
         "name": "oracle_warehouse",
         "mcpUrl": "process.env.WAREHOUSE_MCP_URL",
-        "serverArgs": ["servers/oracle-mcp/index.js"]
+        "serverArgs": [
+          "servers/oracle-mcp/index.js"
+        ]
       }
     ],
     "groundingDomain": "Warehouse",
+    "enabled": true
+  },
+  {
+    "id": "netsuite_agent",
+    "name": "NetSuiteAgent",
+    "domain": "NetSuite ERP",
+    "specialty": "NetSuite AI Connector, Sales Orders, Inventory, Custom MCP Tools",
+    "toolName": "call_netsuite_agent",
+    "gcpServiceAccount": "netsuite-agent@total-vertex-469513-r8.iam.gserviceaccount.com",
+    "systemInstruction": "You are a NetSuite ERP and AI Connector Specialist Agent. You have access to the NetSuite AI Connector Service and custom MCP record extensions to fetch and analyze financial, inventory, and customer operations.",
+    "mcpServers": [
+      {
+        "name": "netsuite",
+        "mcpUrl": "process.env.NETSUITE_MCP_URL",
+        "serverArgs": [
+          "servers/netsuite-mcp/index.js"
+        ]
+      }
+    ],
+    "groundingDomain": "NetSuite",
     "enabled": true
   }
 ]

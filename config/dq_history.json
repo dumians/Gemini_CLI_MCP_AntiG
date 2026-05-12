@@ -53,5 +53,185 @@
     "fqn": "bigquery:total-vertex-469513-r8.customer_segments.last_interaction",
     "score": 0.8,
     "time": "2026-05-06T16:06:14.430Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.campaign_id",
+    "score": 0.8,
+    "time": "2026-05-06T16:33:16.997Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.segment_name",
+    "score": 0.8,
+    "time": "2026-05-06T16:33:16.998Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.spend",
+    "score": 0.8,
+    "time": "2026-05-06T16:33:16.999Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.impressions",
+    "score": 0.8,
+    "time": "2026-05-06T16:33:16.999Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.conversions",
+    "score": 0.8,
+    "time": "2026-05-06T16:33:16.999Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.date",
+    "score": 0.8,
+    "time": "2026-05-06T16:33:16.999Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.customer_id",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:03.461Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.name",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:03.461Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.email",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:03.462Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.lifetime_value",
+    "score": 0.82,
+    "time": "2026-05-06T16:38:03.462Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.membership_level",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:03.462Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.registration_date",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:03.463Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.customer_id",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:07.369Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.name",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:07.370Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.email",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:07.371Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.lifetime_value",
+    "score": 0.82,
+    "time": "2026-05-06T16:38:07.371Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.membership_level",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:07.371Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.customers.registration_date",
+    "score": 0.8,
+    "time": "2026-05-06T16:38:07.372Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.campaign_id",
+    "score": 0.8,
+    "time": "2026-05-08T09:25:14.793Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.segment_name",
+    "score": 0.8,
+    "time": "2026-05-08T09:25:14.794Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.spend",
+    "score": 0.8,
+    "time": "2026-05-08T09:25:14.794Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.impressions",
+    "score": 0.8,
+    "time": "2026-05-08T09:25:14.795Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.conversions",
+    "score": 0.8,
+    "time": "2026-05-08T09:25:14.795Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.date",
+    "score": 0.8,
+    "time": "2026-05-08T09:25:14.795Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.campaign_id",
+    "score": 0.8,
+    "time": "2026-05-08T15:45:56.819Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.segment_name",
+    "score": 0.8,
+    "time": "2026-05-08T15:45:56.819Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.spend",
+    "score": 0.8,
+    "time": "2026-05-08T15:45:56.819Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.impressions",
+    "score": 0.8,
+    "time": "2026-05-08T15:45:56.820Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.conversions",
+    "score": 0.8,
+    "time": "2026-05-08T15:45:56.820Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.date",
+    "score": 0.8,
+    "time": "2026-05-08T15:45:56.820Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.campaign_id",
+    "score": 0.8,
+    "time": "2026-05-12T09:22:15.739Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.segment_name",
+    "score": 0.8,
+    "time": "2026-05-12T09:22:15.740Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.spend",
+    "score": 0.8,
+    "time": "2026-05-12T09:22:15.741Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.impressions",
+    "score": 0.8,
+    "time": "2026-05-12T09:22:15.741Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.conversions",
+    "score": 0.8,
+    "time": "2026-05-12T09:22:15.742Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.date",
+    "score": 0.8,
+    "time": "2026-05-12T09:22:15.742Z"
   }
 ]

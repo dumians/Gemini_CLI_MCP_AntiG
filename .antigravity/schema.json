@@ -1,0 +1,104 @@
+{
+  "raw_transactions": [
+    "transaction_id",
+    "item_id",
+    "customer_id",
+    "store_id",
+    "quantity_sold",
+    "timestamp",
+    "warehouse_id"
+  ],
+  "marketing_edw.raw_transactions": [
+    "transaction_id",
+    "item_id",
+    "customer_id",
+    "store_id",
+    "quantity_sold",
+    "timestamp",
+    "warehouse_id"
+  ],
+  "total-vertex-469513-r8.marketing_edw.raw_transactions": [
+    "transaction_id",
+    "item_id",
+    "customer_id",
+    "store_id",
+    "quantity_sold",
+    "timestamp",
+    "warehouse_id"
+  ],
+  "`raw_transactions`": [
+    "transaction_id",
+    "item_id",
+    "customer_id",
+    "store_id",
+    "quantity_sold",
+    "timestamp",
+    "warehouse_id"
+  ],
+  "`marketing_edw.raw_transactions`": [
+    "transaction_id",
+    "item_id",
+    "customer_id",
+    "store_id",
+    "quantity_sold",
+    "timestamp",
+    "warehouse_id"
+  ],
+  "`total-vertex-469513-r8.marketing_edw.raw_transactions`": [
+    "transaction_id",
+    "item_id",
+    "customer_id",
+    "store_id",
+    "quantity_sold",
+    "timestamp",
+    "warehouse_id"
+  ],
+  "raw_customers": [
+    "customer_id",
+    "name",
+    "email",
+    "lifetime_value",
+    "support_tier",
+    "created_at"
+  ],
+  "marketing_edw.raw_customers": [
+    "customer_id",
+    "name",
+    "email",
+    "lifetime_value",
+    "support_tier",
+    "created_at"
+  ],
+  "total-vertex-469513-r8.marketing_edw.raw_customers": [
+    "customer_id",
+    "name",
+    "email",
+    "lifetime_value",
+    "support_tier",
+    "created_at"
+  ],
+  "`raw_customers`": [
+    "customer_id",
+    "name",
+    "email",
+    "lifetime_value",
+    "support_tier",
+    "created_at"
+  ],
+  "`marketing_edw.raw_customers`": [
+    "customer_id",
+    "name",
+    "email",
+    "lifetime_value",
+    "support_tier",
+    "created_at"
+  ],
+  "`total-vertex-469513-r8.marketing_edw.raw_customers`": [
+    "customer_id",
+    "name",
+    "email",
+    "lifetime_value",
+    "support_tier",
+    "created_at"
+  ]
+}

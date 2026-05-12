@@ -11,6 +11,14 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
   const [status, setStatus] = React.useState<any>({ agents: [], steps: [] });
   const [metrics, setMetrics] = React.useState<any>({ uptime: {}, latency: {} });
   const [searchText, setSearchText] = React.useState('');
+  const [activeAgents, setActiveAgents] = React.useState<any[]>([
+    { id: 'FinancialAgent', name: 'Financial', mcpServers: [{ name: 'oracle' }] },
+    { id: 'RetailAgent', name: 'Retail', mcpServers: [{ name: 'spanner' }] },
+    { id: 'AnalyticsAgent', name: 'Analytics', mcpServers: [{ name: 'bigquery' }, { name: 'alloydb' }] },
+    { id: 'HRAgent', name: 'HR', mcpServers: [{ name: 'oracle_hr' }] },
+    { id: 'WarehouseAgent', name: 'Warehouse', mcpServers: [{ name: 'oracle_warehouse' }] },
+    { id: 'NetSuiteAgent', name: 'NetSuite', mcpServers: [{ name: 'netsuite' }] }
+  ]);
   const [exampleQueries, setExampleQueries] = React.useState<string[]>([
     "Find cross-domain inventory discrepancies between Spanner and Oracle",
     "Check compliance status for PII data pipelines",
@@ -19,12 +27,19 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
   
   const fetchData = async () => {
     try {
-      const [statusData, metricsData, catalogData] = await Promise.all([
+      const [statusData, metricsData, catalogData, settingsData] = await Promise.all([
         api.get('/api/status'),
         api.get('/api/metrics'),
-        api.get('/api/catalog').catch(() => ({ entities: {}, sources: {} }))
+        api.get('/api/catalog').catch(() => ({ entities: {}, sources: {} })),
+        api.get('/api/settings').catch(() => null)
       ]);
       setStatus(statusData);
+      if (settingsData && Array.isArray(settingsData.agents) && settingsData.agents.length > 0) {
+        setActiveAgents(settingsData.agents.map((a: any) => ({
+          ...a,
+          name: a.name ? a.name.replace('Agent', '') : a.id
+        })));
+      }
       if (metricsData.metrics) {
         setMetrics(metricsData.metrics);
       }
@@ -294,93 +309,93 @@ export const DashboardView = ({ onNavigate }: { onNavigate: (view: View, query?:
       <section className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm dark:shadow-none">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Live Architecture Topology</h3>
         <div className="w-full overflow-x-auto">
-          <svg width="800" height="400" viewBox="0 0 800 400" className="mx-auto">
-            {/* Definitions for glow filters */}
-            <defs>
-              <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
-              <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
-              <filter id="glow-yellow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
-                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-              </filter>
-            </defs>
+          {(() => {
+            const totalAgents = activeAgents.length || 1;
+            const canvasHeight = Math.max(400, totalAgents * 70);
+            const orchY = canvasHeight / 2;
 
-            {/* Orchestrator Node */}
-            <g transform="translate(80, 200)">
-              <circle r="40" className="fill-primary/20 stroke-primary stroke-2" />
-              <text y="5" textAnchor="middle" className="fill-slate-900 dark:fill-white font-bold text-xs">Orchestrator</text>
-            </g>
+            return (
+              <svg width="800" height={canvasHeight} viewBox={`0 0 800 ${canvasHeight}`} className="mx-auto">
+                {/* Definitions for glow filters */}
+                <defs>
+                  <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <filter id="glow-yellow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
 
-            {/* Agents & MCP Servers Mapping */}
-            {(() => {
-              const agents = [
-                { id: 'FinancialAgent', name: 'Financial', y: 50, mcp: ['oracle'] },
-                { id: 'RetailAgent', name: 'Retail', y: 125, mcp: ['spanner'] },
-                { id: 'AnalyticsAgent', name: 'Analytics', y: 200, mcp: ['bigquery', 'alloydb'] },
-                { id: 'HRAgent', name: 'HR', y: 275, mcp: ['oracle_hr'] },
-                { id: 'WarehouseAgent', name: 'Warehouse', y: 350, mcp: ['oracle_warehouse'] }
-              ];
+                {/* Orchestrator Node */}
+                <g transform={`translate(80, ${orchY})`}>
+                  <circle r="40" className="fill-primary/20 stroke-primary stroke-2" />
+                  <text y="5" textAnchor="middle" className="fill-slate-900 dark:fill-white font-bold text-xs">Orchestrator</text>
+                </g>
 
-              return agents.map(agent => {
-                const agentStatus = status.agents?.find((a: any) => a.agent === agent.id)?.status || 'online';
-                const agentColor = agentStatus === 'offline' ? '#ef4444' : agentStatus === 'degraded' ? '#eab308' : '#22c55e';
-                const agentFilter = agentStatus === 'offline' ? 'url(#glow-red)' : agentStatus === 'degraded' ? 'url(#glow-yellow)' : 'url(#glow-green)';
+                {/* Dynamic Agents & MCP Servers Mapping */}
+                {activeAgents.map((agent, index) => {
+                  const agentY = 40 + index * (canvasHeight - 80) / (totalAgents > 1 ? totalAgents - 1 : 1);
+                  const agentStatus = status.agents?.find((a: any) => a.agent === agent.id || a.agent === agent.name)?.status || 'online';
+                  const agentColor = agentStatus === 'offline' ? '#ef4444' : agentStatus === 'degraded' ? '#eab308' : '#22c55e';
+                  const agentFilter = agentStatus === 'offline' ? 'url(#glow-red)' : agentStatus === 'degraded' ? 'url(#glow-yellow)' : 'url(#glow-green)';
+                  const mcpList = Array.isArray(agent.mcpServers) ? agent.mcpServers.map((s: any) => s.name) : [];
 
-                return (
-                  <g key={agent.id}>
-                    {/* Line from Orchestrator to Agent */}
-                    <path 
-                      d={`M 120 200 Q 200 ${(200 + agent.y) / 2} 300 ${agent.y}`} 
-                      fill="none" 
-                      stroke={agentColor} 
-                      strokeWidth="2" 
-                      strokeDasharray="5 5"
-                      className="opacity-50"
-                    />
+                  return (
+                    <g key={agent.id || index}>
+                      {/* Line from Orchestrator to Agent */}
+                      <path 
+                        d={`M 120 ${orchY} Q 200 ${(orchY + agentY) / 2} 300 ${agentY}`} 
+                        fill="none" 
+                        stroke={agentColor} 
+                        strokeWidth="2" 
+                        strokeDasharray="5 5"
+                        className="opacity-50"
+                      />
 
-                    {/* Agent Node */}
-                    <g transform={`translate(320, ${agent.y})`}>
-                      <rect x="-40" y="-20" width="80" height="40" rx="8" className="fill-slate-100 dark:fill-slate-800 stroke-2" stroke={agentColor} filter={agentFilter} />
-                      <text y="5" textAnchor="middle" className="fill-slate-900 dark:fill-white font-semibold text-[10px]">{agent.name}</text>
-                    </g>
+                      {/* Agent Node */}
+                      <g transform={`translate(320, ${agentY})`}>
+                        <rect x="-40" y="-20" width="80" height="40" rx="8" className="fill-slate-100 dark:fill-slate-800 stroke-2" stroke={agentColor} filter={agentFilter} />
+                        <text y="5" textAnchor="middle" className="fill-slate-900 dark:fill-white font-semibold text-[10px]">{agent.name}</text>
+                      </g>
 
-                    {/* MCP Servers */}
-                    {agent.mcp.map((mcpName, idx) => {
-                      const mcpY = agent.mcp.length === 1 ? agent.y : (idx === 0 ? agent.y - 25 : agent.y + 25);
-                      const mcpStatus = status.mcpServerStatuses?.[mcpName] || 'online';
-                      const mcpColor = mcpStatus === 'offline' ? '#ef4444' : '#22c55e';
-                      const mcpFilter = mcpStatus === 'offline' ? 'url(#glow-red)' : 'url(#glow-green)';
+                      {/* MCP Servers */}
+                      {mcpList.map((mcpName: string, idx: number) => {
+                        const mcpY = mcpList.length === 1 ? agentY : (idx === 0 ? agentY - 20 : agentY + 20);
+                        const mcpStatus = status.mcpServerStatuses?.[mcpName] || 'online';
+                        const mcpColor = mcpStatus === 'offline' ? '#ef4444' : '#22c55e';
+                        const mcpFilter = mcpStatus === 'offline' ? 'url(#glow-red)' : 'url(#glow-green)';
 
-                      return (
-                        <g key={mcpName}>
-                          {/* Line from Agent to MCP */}
-                          <line 
-                            x1="360" y1={agent.y} 
-                            x2="580" y2={mcpY} 
-                            stroke={mcpColor} 
-                            strokeWidth="2"
-                            className="opacity-50"
-                          />
+                        return (
+                          <g key={mcpName}>
+                            {/* Line from Agent to MCP */}
+                            <line 
+                              x1="360" y1={agentY} 
+                              x2="580" y2={mcpY} 
+                              stroke={mcpColor} 
+                              strokeWidth="2"
+                              className="opacity-50"
+                            />
 
-                          {/* MCP Node */}
-                          <g transform={`translate(600, ${mcpY})`}>
-                            <circle r="15" className="fill-slate-100 dark:fill-slate-800 stroke-2" stroke={mcpColor} filter={mcpFilter} />
-                            <text y="5" textAnchor="middle" className="fill-slate-700 dark:fill-slate-400 font-medium text-[8px]">{mcpName}</text>
+                            {/* MCP Node */}
+                            <g transform={`translate(600, ${mcpY})`}>
+                              <circle r="15" className="fill-slate-100 dark:fill-slate-800 stroke-2" stroke={mcpColor} filter={mcpFilter} />
+                              <text y="5" textAnchor="middle" className="fill-slate-700 dark:fill-slate-400 font-medium text-[8px]">{mcpName}</text>
+                            </g>
                           </g>
-                        </g>
-                      );
-                    })}
-                  </g>
-                );
-              });
-            })()}
-          </svg>
+                        );
+                      })}
+                    </g>
+                  );
+                })}
+              </svg>
+            );
+          })()}
         </div>
       </section>
     </div>

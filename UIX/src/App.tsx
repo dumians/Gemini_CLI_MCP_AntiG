@@ -14,6 +14,7 @@ import { DataDomainsView } from './components/DataDomainsView';
 import { CrossDomainInventoryView } from './components/CrossDomainInventoryView';
 import { AdminPortalView } from './components/AdminPortalView';
 import { WarehouseDetailView } from './components/WarehouseDetailView';
+import { NetSuiteDetailView } from './components/NetSuiteDetailView';
 import { Login } from './components/Login';
 import { auth } from './utils/auth';
 import type { View } from './types';
@@ -104,6 +105,7 @@ function App() {
             {activeView === 'alloy-detail' && <AlloyDetailView />}
             {activeView === 'domains' && <DataDomainsView />}
             {activeView === 'warehouse-detail' && <WarehouseDetailView />}
+            {activeView === 'netsuite-detail' && <NetSuiteDetailView />}
             {activeView === 'cross-domain-inventory' && <CrossDomainInventoryView onNavigate={handleNavigate} />}
             {activeView === 'admin-portal' && <AdminPortalView />}
           </div>

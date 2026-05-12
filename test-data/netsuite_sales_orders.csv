@@ -1,0 +1,5 @@
+order_id,customer_id,item_id,status,total_amount,fulfillment_status,ai_summary
+SO-1001,CUST-801,ITEM-A1,Billed,12500.00,Fulfilled,AI Connector detected optimal volume threshold met for premium account tier.
+SO-1002,CUST-802,ITEM-B2,Pending Approval,45000.00,Pending Fulfillment,AI Connector flagged delayed cross-subsidiary clearance review required.
+SO-1003,CUST-803,ITEM-C3,Partially Fulfilled,8500.00,Picked,AI Connector identified automatic re-routing sequence to secondary regional warehouse.
+SO-1004,CUST-804,ITEM-D4,Billed,110000.00,Fulfilled,AI Connector matched high-confidence transaction profile with global contract terms.

@@ -43,5 +43,14 @@
     "parent": "projects/governance-agent/locations/europe-west1/glossaries/retail-common-glossary",
     "uid": "c4e61b71-612d-4621-9266-c894db55cc9f",
     "updateTime": "2026-02-06T08:43:45.750447Z"
+  },
+  {
+    "createTime": "2026-05-12T09:13:20.000000Z",
+    "description": "Cloud ERP internal identifier for SuiteTalk web services sales order records.",
+    "displayName": "NetSuite Sales Order ID",
+    "name": "projects/governance-agent/locations/europe-west1/glossaries/netsuite-common-glossary/terms/netsuite-order-id",
+    "parent": "projects/governance-agent/locations/europe-west1/glossaries/netsuite-common-glossary",
+    "uid": "ns-order-term-001",
+    "updateTime": "2026-05-12T09:13:20.000000Z"
   }
 ]

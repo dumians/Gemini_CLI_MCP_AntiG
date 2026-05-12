@@ -54,6 +54,20 @@
       "maskFields": [
         "segment_name"
       ]
+    },
+    {
+      "id": "POL-005",
+      "name": "NetSuite Cloud Ledger Data Governance",
+      "status": "Active",
+      "domain": "NetSuite ERP",
+      "lastUpdated": "Just now",
+      "classification": "HIGH",
+      "dataplexAspect": "quality_aspect",
+      "maskingRule": "redact",
+      "maskFields": [
+        "total_amount",
+        "email"
+      ]
     }
   ]
 }

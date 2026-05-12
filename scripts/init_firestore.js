@@ -33,11 +33,15 @@ async function run() {
 
         try {
             const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-            console.log(`[InitFirestore] Pushing ${key} to StorageProvider...`);
-            await provider.set(key, data);
-            console.log(`[InitFirestore] ✓ Successfully initialized ${key}\n`);
+            console.log(`[InitFirestore] Pushing and overwriting ${key} in StorageProvider...`);
+            if (typeof provider.overwriteInFirestore === 'function') {
+                await provider.overwriteInFirestore(key, data);
+            } else {
+                await provider.set(key, data);
+            }
+            console.log(`[InitFirestore] ✓ Successfully overwrote and initialized ${key}\n`);
         } catch (error) {
-            console.error(`[InitFirestore] ✗ Failed to parse or set ${key}: ${error.message}\n`);
+            console.error(`[InitFirestore] ✗ Failed to parse or overwrite ${key}: ${error.message}\n`);
         }
     }
 

@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../utils/api';
-import { Database, X, Shield, BookOpen, Save, Lock, Key, Sparkles, Check } from 'lucide-react';
+import { Database, X, Shield, BookOpen, Save, Lock, Key, Sparkles, Check, RefreshCw } from 'lucide-react';
 
 const domainColors: { [key: string]: string } = {
     Finance: '#f97316', // orange-500
