@@ -842,7 +842,7 @@ export const GovernanceView = () => {
       alerts={alerts}
       onApprove={async (alertId) => {
         try {
-          const res = await api.post(`/api/governance/compliance-alerts/${alertId}/approve`);
+          const res = await api.post(`/api/governance/compliance-alerts/${alertId}/approve`, {});
           if (res && res.status === 'success') {
             setActionMessage({ text: res.message });
             fetchAlerts(); // Refresh alerts list

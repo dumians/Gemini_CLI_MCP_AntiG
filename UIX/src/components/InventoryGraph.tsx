@@ -167,7 +167,8 @@ export function InventoryGraph() {
             const updatesList: any[] = [];
             const glossaryList: any[] = [];
             
-            Object.entries(formData).forEach(([colName, values]) => {
+            Object.keys(formData).forEach((colName) => {
+                const values = formData[colName];
                 updatesList.push({
                     table: nodeDetails.name,
                     column: colName,
