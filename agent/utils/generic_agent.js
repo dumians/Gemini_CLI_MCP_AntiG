@@ -21,6 +21,7 @@ class GenericAgent {
         this.systemInstruction = config.systemInstruction || "";
         this.mcpServers = config.mcpServers || [];
         this.groundingDomain = config.groundingDomain || config.domain;
+        this.model = config.model || "gemini-2.5-flash";
     }
 
     async process(query, meshContext = {}, traceId = null) {
@@ -80,7 +81,7 @@ class GenericAgent {
         Use this context to enrich your analysis if relevant.`;
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: this.model,
             systemInstruction: finalInstruction,
             tools: geminiTools
         });
