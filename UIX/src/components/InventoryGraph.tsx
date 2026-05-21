@@ -12,9 +12,24 @@ const domainColors: { [key: string]: string } = {
 
 export function InventoryGraph() {
     const containerRef = useRef<HTMLDivElement>(null);
+    const fgRef = useRef<any>(null);
     const [graphData, setGraphData] = useState<any>({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);
     const [dimensions, setDimensions] = useState({ width: 1000, height: 500 });
+
+    // Customize Force Simulation parameters for optimal spacing and layout
+    useEffect(() => {
+        if (!fgRef.current) return;
+        // Increase node repulsion so they spread out more and don't overlap
+        fgRef.current.d3Force('charge').strength(-200);
+        
+        // Configure link distance
+        fgRef.current.d3Force('link').distance((link: any) => {
+            const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+            const isPhysical = sourceId === 'oracle' || sourceId === 'spanner' || sourceId === 'bigquery';
+            return isPhysical ? 100 : 70;
+        });
+    }, [graphData]);
     
     // Selected Node Inspector States
     const [selectedNode, setSelectedNode] = useState<any | null>(null);
@@ -223,12 +238,18 @@ export function InventoryGraph() {
 
                 <div className="flex-1 relative flex items-center justify-center">
                     <ForceGraph2D
+                        ref={fgRef}
                         graphData={graphData}
                         width={dimensions.width}
                         height={500}
                         nodeLabel="label"
                         nodeRelSize={6}
                         onNodeClick={handleNodeClick}
+                        cooldownTicks={100}
+                        minZoom={0.4}
+                        maxZoom={4}
+                        linkDirectionalArrowLength={4.5}
+                        linkDirectionalArrowRelPos={0.95}
                         linkColor={(link: any) => {
                             const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
                             const sourceNode = graphData.nodes.find((n: any) => n.id === sourceId);
@@ -260,81 +281,85 @@ export function InventoryGraph() {
                             const type = node.type || 'entity';
                             const color = domainColors[domain] || '#6366f1';
                             
-                            // Pill size dynamically scalable based on node type
+                            // Pill sizes in canvas coordinates (scales naturally with zoom)
                             const isSource = node.type === 'source';
-                            const pillWidth = (isSource ? 112 : 90) / globalScale;
-                            const pillHeight = (isSource ? 42 : 32) / globalScale;
-                            const radius = 6 / globalScale;
+                            const pillWidth = isSource ? 82 : 68;
+                            const pillHeight = isSource ? 26 : 20;
+                            const radius = 4;
+                            const markerWidth = isSource ? 6 : 4;
                             
                             const isSelected = selectedNode && selectedNode.id === node.id;
 
                             ctx.save();
 
-                            // Selected Pulsing Ring Glow Effect
+                            // Selected Pulsing Glow Effect
                             if (isSelected) {
-                                const time = Date.now() * 0.003;
-                                ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-                                ctx.lineWidth = 6 / globalScale;
+                                ctx.strokeStyle = '#3b82f6';
+                                ctx.lineWidth = 2.5;
                                 ctx.beginPath();
                                 ctx.roundRect(node.x - pillWidth / 2 - 2, node.y - pillHeight / 2 - 2, pillWidth + 4, pillHeight + 4, radius + 2);
                                 ctx.stroke();
                             }
 
                             // Pill Capsule Base
-                            ctx.fillStyle = isSelected ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.8)';
+                            ctx.fillStyle = isSelected ? 'rgba(15, 23, 42, 0.98)' : 'rgba(15, 23, 42, 0.85)';
                             ctx.beginPath();
                             ctx.roundRect(node.x - pillWidth / 2, node.y - pillHeight / 2, pillWidth, pillHeight, radius);
                             ctx.fill();
 
                             // Border Outline (Color by Domain)
                             ctx.strokeStyle = isSelected ? '#3b82f6' : color;
-                            ctx.lineWidth = isSource ? (2.5 / globalScale) : (1.2 / globalScale);
+                            ctx.lineWidth = isSource ? 1.8 : 1.0;
                             ctx.stroke();
 
-                            // Left Side Domain Marker Strip (Thicker for major sources)
+                            // Left Side Domain Marker Strip
                             ctx.fillStyle = color;
                             ctx.beginPath();
-                            ctx.roundRect(node.x - pillWidth / 2, node.y - pillHeight / 2, (isSource ? 8 : 5) / globalScale, pillHeight, [radius, 0, 0, radius]);
+                            ctx.roundRect(node.x - pillWidth / 2, node.y - pillHeight / 2, markerWidth, pillHeight, [radius, 0, 0, radius]);
                             ctx.fill();
 
-                            // --- Automated Font Autoscaling Algorithm ---
-                            const maxAllowedWidth = pillWidth - (isSource ? 22 : 14);
-                            const baseSize = (isSource ? 11 : 8.5) / globalScale;
-                            const minSize = (isSource ? 7.5 : 6) / globalScale;
+                            // Only render text if zoom level is detailed enough (prevent visual noise when zoomed out)
+                            if (globalScale > 0.45) {
+                                const maxAllowedWidth = pillWidth - markerWidth - 8;
+                                const baseSize = isSource ? 9 : 7.5;
+                                const minSize = isSource ? 7 : 6;
 
-                            // 1. Set base size to measure text width
-                            ctx.font = `bold ${baseSize}px Inter, system-ui, sans-serif`;
-                            const textWidth = ctx.measureText(displayName).width;
+                                // 1. Set base size to measure text width
+                                ctx.font = `bold ${baseSize}px Inter, system-ui, sans-serif`;
+                                const textWidth = ctx.measureText(displayName).width;
 
-                            // 2. Adjust font size if text exceeds margins
-                            let fontSize = baseSize;
-                            if (textWidth > maxAllowedWidth) {
-                                const scaleFactor = maxAllowedWidth / textWidth;
-                                fontSize = Math.max(baseSize * scaleFactor, minSize);
-                            }
-
-                            // 3. Apply dynamically scaled font
-                            ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillStyle = '#ffffff';
-
-                            // 4. Ellipsis fallback (Only if text still exceeds margins at minimum font size)
-                            let displayText = displayName;
-                            const finalWidth = ctx.measureText(displayName).width;
-                            if (finalWidth > maxAllowedWidth) {
-                                const maxCharLength = Math.floor((maxAllowedWidth / finalWidth) * displayName.length) - 3;
-                                if (maxCharLength > 3) {
-                                    displayText = displayName.substring(0, maxCharLength) + '...';
+                                // 2. Adjust font size if text exceeds margins
+                                let fontSize = baseSize;
+                                if (textWidth > maxAllowedWidth) {
+                                    fontSize = Math.max(baseSize * (maxAllowedWidth / textWidth), minSize);
                                 }
-                            }
-                            ctx.fillText(displayText, node.x + (2.5 / globalScale), node.y - (pillHeight / 8));
 
-                            // Type Indicator Subtitle
-                            const typeFontSize = Math.max(5, (isSource ? 7.5 : 6.5) / globalScale);
-                            ctx.font = `bold ${typeFontSize}px Inter, system-ui, sans-serif`;
-                            ctx.fillStyle = isSelected ? '#3b82f6' : '#94a3b8';
-                            ctx.fillText(type.toUpperCase(), node.x + (2.5 / globalScale), node.y + (pillHeight / 4));
+                                // 3. Apply dynamically scaled font
+                                ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillStyle = '#ffffff';
+
+                                // 4. Ellipsis fallback (Only if text still exceeds margins at minimum font size)
+                                let displayText = displayName;
+                                const finalWidth = ctx.measureText(displayName).width;
+                                if (finalWidth > maxAllowedWidth) {
+                                    const maxCharLength = Math.floor((maxAllowedWidth / finalWidth) * displayName.length) - 3;
+                                    if (maxCharLength > 3) {
+                                        displayText = displayName.substring(0, maxCharLength) + '...';
+                                    }
+                                }
+
+                                // Center text offset to account for left marker strip
+                                const textX = node.x + markerWidth / 2;
+                                ctx.fillText(displayText, textX, node.y - (pillHeight / 8));
+
+                                // Type Indicator Subtitle
+                                const typeFontSize = isSource ? 6.5 : 5.5;
+                                ctx.font = `bold ${typeFontSize}px Inter, system-ui, sans-serif`;
+                                ctx.fillStyle = isSelected ? '#3b82f6' : '#94a3b8';
+                                ctx.fillText(type.toUpperCase(), textX, node.y + (pillHeight / 4));
+                            }
 
                             ctx.restore();
                         }}
