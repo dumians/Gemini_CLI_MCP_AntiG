@@ -1,6 +1,14 @@
 import { execSync } from 'child_process';
 import dotenv from 'dotenv';
 import { logger } from './logging_service.js';
+import fs from 'fs';
+import path, { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const sessionsFile = join(__dirname, '../../config/sessions.json');
+
 
 dotenv.config();
 
@@ -100,23 +108,110 @@ class MemoryBankService {
      * @param {string} userId The identity to scope this session to.
      * @returns {Promise<string>} The Session Path/ID
      */
-    async createSession(userId) {
-        const response = await this.makeRequest('sessions', 'POST', {});
-        return response.name; // e.g., projects/.../locations/.../reasoningEngines/.../sessions/...
+    _loadSessions() {
+        try {
+            if (fs.existsSync(sessionsFile)) {
+                return JSON.parse(fs.readFileSync(sessionsFile, 'utf8'));
+            }
+        } catch (e) {
+            logger.log('MemoryBank', `Failed to load sessions.json: ${e.message}`, 'WARNING');
+        }
+        return [];
+    }
+
+    _saveSessions(sessions) {
+        try {
+            fs.writeFileSync(sessionsFile, JSON.stringify(sessions, null, 2));
+        } catch (e) {
+            logger.log('MemoryBank', `Failed to save sessions.json: ${e.message}`, 'WARNING');
+        }
     }
 
     /**
-     * Appends an event (message, tool action) to the session.
-     * @param {string} sessionPath Full resource name of the session.
+     * Creates a new session inside the Reasoning Engine and logs it locally.
+     * @param {string} userId The identity to scope this session to.
+     * @returns {Promise<string>} The Session Path/ID
+     */
+    async createSession(userId) {
+        const response = await this.makeRequest('sessions', 'POST', {});
+        const sessionPath = response.name;
+        const sessionId = sessionPath.split('/sessions/').pop();
+
+        const sessions = this._loadSessions();
+        sessions.push({
+            id: sessionId,
+            sessionPath: sessionPath,
+            userId: userId,
+            createdAt: new Date().toISOString(),
+            messages: []
+        });
+        this._saveSessions(sessions);
+
+        return sessionPath;
+    }
+
+    /**
+     * Lists active sessions for a user.
+     */
+    listSessions(userId) {
+        const sessions = this._loadSessions();
+        return sessions.filter(s => s.userId === userId);
+    }
+
+    /**
+     * Deletes a session from file and API context.
+     */
+    async deleteSession(sessionId) {
+        let sessions = this._loadSessions();
+        const session = sessions.find(s => s.id === sessionId);
+        if (session) {
+            sessions = sessions.filter(s => s.id !== sessionId);
+            this._saveSessions(sessions);
+            logger.log('MemoryBank', `Session deleted locally: ${sessionId}`, 'INFO');
+            try {
+                // If the remote endpoint supported delete, we would call it here
+            } catch (err) {
+                logger.log('MemoryBank', `Failed to delete remote session: ${err.message}`, 'WARNING');
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Retrieves session details including message history.
+     */
+    getSession(sessionId) {
+        const sessions = this._loadSessions();
+        return sessions.find(s => s.id === sessionId || s.sessionPath === sessionId);
+    }
+
+    /**
+     * Appends an event (message, tool action) to the session and syncs locally.
+     * @param {string} sessionPath Full resource name of the session or sessionId.
      * @param {Object} event The event data (e.g., text, role).
      */
     async appendEvent(sessionPath, event) {
-        // sessionPath is already fully qualified
-        const path = sessionPath.split(`/reasoningEngines/${this.engineId}/`)[1] + '/events';
-        return await this.makeRequest(path, 'POST', {
+        const pathSuffix = sessionPath.split(`/reasoningEngines/${this.engineId}/`)[1];
+        const apiPath = pathSuffix ? pathSuffix + '/events' : `sessions/${sessionPath}/events`;
+        
+        // Sync locally first
+        const sessions = this._loadSessions();
+        const session = sessions.find(s => s.id === sessionPath || s.sessionPath === sessionPath);
+        if (session) {
+            session.messages.push({
+                role: event.role,
+                text: event.text,
+                timestamp: new Date().toISOString()
+            });
+            this._saveSessions(sessions);
+        }
+
+        return await this.makeRequest(apiPath, 'POST', {
             event: event
         });
     }
+
 
     /**
      * Triggers memory generation based on conversation history.

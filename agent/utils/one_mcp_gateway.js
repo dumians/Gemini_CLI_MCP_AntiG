@@ -3,6 +3,8 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { logger } from "./logging_service.js";
 import dotenv from "dotenv";
+import { verifyAgentToken } from "./identity_service.js";
+
 
 dotenv.config();
 
@@ -68,8 +70,17 @@ class OneMCPGateway {
     /**
      * Lists tools accessible to a specific domain (Zero-Trust Access Control).
      */
-    async listTools(domain, mcpServers = []) {
+    async listTools(domain, mcpServers = [], identityToken = null) {
+        if (identityToken) {
+            const agentContext = verifyAgentToken(identityToken);
+            if (!agentContext) {
+                logger.log("OneMCPGateway", `Identity verification failed: invalid token. Access Denied.`, "ERROR");
+                return [];
+            }
+            logger.log("OneMCPGateway", `Identity verified: Agent '${agentContext.agentName}' (${agentContext.serviceAccount}) listing tools for domain '${domain}'.`, "INFO");
+        }
         const allowedServers = this.domainAccessMap[domain] || [];
+
         const tools = [];
 
         for (const serverConfig of mcpServers) {
@@ -98,8 +109,16 @@ class OneMCPGateway {
         return tools;
     }
 
-    async callTool(tool, args, traceId = null) {
+    async callTool(tool, args, traceId = null, identityToken = null) {
+        if (identityToken) {
+            const agentContext = verifyAgentToken(identityToken);
+            if (!agentContext) {
+                throw new Error(`Security Exception: Access Denied due to invalid or expired Agent Workload Identity token.`);
+            }
+            logger.log("OneMCPGateway", `Identity verified: Agent '${agentContext.agentName}' (${agentContext.serviceAccount}) executing tool '${tool.name}'.`, "INFO", null, traceId);
+        }
         const startTime = Date.now();
+
         logger.log("OneMCPGateway", `Executing tool ${tool.name} via gateway`, "DEBUG", null, traceId);
         try {
             const result = await tool._client.callTool(tool.name, args);

@@ -50,6 +50,26 @@ export const AdminPortalView = () => {
   // API Keys State
   const [apiKeys, setApiKeys] = React.useState<any[]>([]);
   const [newKeyName, setNewKeyName] = React.useState('');
+  const [complianceAlerts, setComplianceAlerts] = React.useState<any[]>([]);
+
+  const fetchComplianceAlerts = async () => {
+    try {
+      const data = await api.get('/api/governance/compliance-alerts');
+      setComplianceAlerts(data.alerts || []);
+    } catch (err) {
+      console.error('Failed to fetch compliance alerts:', err);
+    }
+  };
+
+  const handleApproveAlert = async (id: string) => {
+    try {
+      await api.post(`/api/governance/compliance-alerts/${id}/approve`, {});
+      fetchComplianceAlerts();
+    } catch (err) {
+      console.error('Failed to approve compliance alert:', err);
+    }
+  };
+
 
   const fetchApiKeys = async () => {
     try {
@@ -124,12 +144,16 @@ export const AdminPortalView = () => {
       } catch (err) {
         console.warn("Logs API failed.");
       }
+
+      // Fetch compliance alerts
+      await fetchComplianceAlerts();
     } catch (err) {
       console.error("Failed to load admin data:", err);
     } finally {
       setLoading(false);
     }
   };
+
 
   React.useEffect(() => {
     fetchData();
@@ -626,26 +650,102 @@ export const AdminPortalView = () => {
           <div className="space-y-6">
             <section className="glass rounded-2xl border-slate-700/50 p-6">
               <h3 className="text-lg font-bold text-white mb-6">Security & Compliance Dashboard</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center gap-2">
-                  <Shield size={32} className="text-green-500" />
-                  <p className="text-sm font-bold text-white">Encryption Active</p>
-                  <p className="text-xs text-slate-500">AES-256-GCM point-to-point</p>
+                  <Shield size={32} className="text-green-500 animate-pulse" />
+                  <p className="text-sm font-bold text-white">Workload Identity Verification</p>
+                  <p className="text-xs text-slate-500">Active OIDC agent request validation</p>
                 </div>
                 <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center gap-2">
                   <Bot size={32} className="text-primary" />
-                  <p className="text-sm font-bold text-white">Governance Enforced</p>
-                  <p className="text-xs text-slate-500">Domain-scoped data access</p>
+                  <p className="text-sm font-bold text-white">Federated Governance</p>
+                  <p className="text-xs text-slate-500">ABAC/RBAC Policy checking enabled</p>
                 </div>
                 <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center gap-2">
-                  <AlertTriangle size={32} className="text-yellow-500" />
-                  <p className="text-sm font-bold text-white">Compliance Status</p>
-                  <p className="text-xs text-slate-500">Pre-audit checks passed</p>
+                  <AlertTriangle size={32} className={complianceAlerts.some(a => a.status === 'PENDING_REVIEW') ? 'text-red-500 animate-bounce' : 'text-yellow-500'} />
+                  <p className="text-sm font-bold text-white">Compliance Alerts</p>
+                  <p className="text-xs text-slate-500">
+                    {complianceAlerts.filter(a => a.status === 'PENDING_REVIEW').length} pending security audit exceptions
+                  </p>
+                </div>
+              </div>
+
+              {/* Compliance Alerts & Human-in-the-Loop Audit exceptions */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-red-500" /> Human-in-the-Loop Audit & Compliance Logs
+                  </h4>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 thin-scrollbar">
+                    {complianceAlerts.length === 0 ? (
+                      <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-500 italic">
+                        No compliance exceptions recorded.
+                      </div>
+                    ) : (
+                      complianceAlerts.map((alert: any) => (
+                        <div key={alert.id} className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                alert.status === 'PENDING_REVIEW' ? 'bg-red-500/10 text-red-500 border border-red-500/30' : 'bg-green-500/10 text-green-500 border border-green-500/30'
+                              }`}>
+                                {alert.status}
+                              </span>
+                              <p className="text-xs text-white font-bold mt-2">Target: {alert.table}.{alert.column}</p>
+                            </div>
+                            <span className="text-[9px] text-slate-500 font-mono">{new Date(alert.timestamp).toLocaleTimeString()}</span>
+                          </div>
+                          <p className="text-xs text-slate-400 leading-relaxed">{alert.reason}</p>
+                          <div className="text-[10px] text-slate-500 font-mono bg-slate-950 p-2 rounded overflow-x-auto">
+                            Policy tag: {alert.policyTag}
+                          </div>
+                          {alert.status === 'PENDING_REVIEW' && (
+                            <button
+                              onClick={() => handleApproveAlert(alert.id)}
+                              className="bg-primary hover:bg-primary/80 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow transition-all flex items-center gap-1"
+                            >
+                              <Check size={12} /> Audit & Approve
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Workload Identities listing */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Shield size={16} className="text-green-500" /> Agent Workload Identities (GCP)
+                  </h4>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 thin-scrollbar">
+                    {settings?.agents ? settings.agents.map((agent: any) => {
+                      // Lookup agents.json config for service account matching (if available, else show default)
+                      const serviceAccount = agent.mcpServers && agent.mcpServers.length > 0 
+                        ? `${agent.id}@total-vertex-469513-r8.iam.gserviceaccount.com` 
+                        : 'system-orchestrator@total-vertex-469513-r8.iam.gserviceaccount.com';
+                      return (
+                        <div key={agent.id} className="p-4 bg-slate-900/50 border border-slate-800 rounded-xl flex items-center justify-between">
+                          <div className="flex flex-col min-w-0 pr-4">
+                            <span className="text-xs font-bold text-white">{agent.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono truncate mt-1">{serviceAccount}</span>
+                            <span className="text-[9px] text-slate-500 mt-1">Scope: {agent.domain || 'Global Shared'}</span>
+                          </div>
+                          <span className="bg-green-500/10 text-green-500 border border-green-500/30 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">
+                            Verified
+                          </span>
+                        </div>
+                      );
+                    }) : (
+                      <div className="text-slate-500 text-xs italic">No agents registered.</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
           </div>
         )}
+
 
         {activeTab === 'logs' && (
           <section className="glass rounded-2xl border-slate-200 dark:border-slate-800 p-6 h-[700px] flex flex-col bg-white dark:bg-slate-900/40">

@@ -1,0 +1,67 @@
+[
+  {
+    "id": "simulated-session-1779367788704",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779367788704",
+    "userId": "admin",
+    "createdAt": "2026-05-21T12:49:48.704Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-05-21T12:49:48.705Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779367790000",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779367790000",
+    "userId": "test_user_999",
+    "createdAt": "2026-05-21T12:49:50.001Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-05-21T12:49:50.001Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779368129302",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779368129302",
+    "userId": "admin",
+    "createdAt": "2026-05-21T12:55:29.302Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-05-21T12:55:29.303Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779368130326",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779368130326",
+    "userId": "test_user_999",
+    "createdAt": "2026-05-21T12:55:30.327Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-05-21T12:55:30.327Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779368148322",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779368148322",
+    "userId": "admin",
+    "createdAt": "2026-05-21T12:55:48.322Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Test query to check context return",
+        "timestamp": "2026-05-21T12:55:48.323Z"
+      }
+    ]
+  }
+]

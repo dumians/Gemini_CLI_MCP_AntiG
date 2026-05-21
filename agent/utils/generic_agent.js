@@ -6,6 +6,8 @@ import { ModelArmorClient } from "@google-cloud/modelarmor";
 import { gateway } from "./one_mcp_gateway.js";
 import { mcpToolbox } from "./mcp_toolbox.js";
 import { callAiOperationWithRetry } from "./ai_retry_helper.js";
+import { signAgentToken } from "./identity_service.js";
+
 
 dotenv.config();
 
@@ -22,7 +24,9 @@ class GenericAgent {
         this.mcpServers = config.mcpServers || [];
         this.groundingDomain = config.groundingDomain || config.domain;
         this.model = config.model || "gemini-2.5-flash";
+        this.gcpServiceAccount = config.gcpServiceAccount || null;
     }
+
 
     async process(query, meshContext = {}, traceId = null) {
         logger.log(this.name, `Processing query via One MCP Gateway: ${query}`, "INFO", null, traceId);
@@ -47,8 +51,16 @@ class GenericAgent {
             logger.log(this.name, `Model Armor prompt sanitization failed: ${error.message}`, "WARNING", null, traceId);
         }
 
+        const token = signAgentToken({
+            agentId: this.id,
+            agentName: this.name,
+            serviceAccount: this.gcpServiceAccount,
+            domain: this.domain
+        });
+
         // 2. Retrieve capabilities via One MCP Gateway
-        let allTools = await gateway.listTools(this.domain, this.mcpServers);
+        let allTools = await gateway.listTools(this.domain, this.mcpServers, token);
+
         
         // 3. Inject standardized fallback tools from MCP Toolbox if needed
         allTools = mcpToolbox.injectStandardTools(allTools, this.id, this.domain);
@@ -104,8 +116,9 @@ class GenericAgent {
                 }
 
                 // Execute tool via client reference (Gateway or Toolbox)
-                const toolResult = await tool._client.callTool(call.name, call.args);
+                const toolResult = await gateway.callTool(tool, call.args, traceId, token);
                 const duration = Date.now() - startTime;
+
 
                 let formattedResult = toolResult.content[0].text;
                 logger.logToolResult(this.name, call.name, formattedResult, duration, traceId);

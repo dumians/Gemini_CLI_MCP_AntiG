@@ -114,7 +114,9 @@ async function mapBusinessTerms(query, traceId) {
  * @param {string} userId The user ID for scoping memory.
  * @returns {Promise<{text: string, steps: Array<{agent: string, query: string, result: any}>}>}
  */
-export async function askOrchestrator(query, userId = 'admin') {
+export async function askOrchestrator(query, userId = 'admin', userRole = 'admin', sessionId = null) {
+
+
     const traceId = Math.random().toString(36).substring(2, 10);
     logger.log("Orchestrator", `Received query: ${query} (User: ${userId})`, "INFO", null, traceId);
     
@@ -124,8 +126,8 @@ export async function askOrchestrator(query, userId = 'admin') {
     // 2. Retrieve Horizontal Context (RAG)
     const horizontalContext = kgService.getHorizontalContextSummary();
     
-    // 2b. Retrieve Vertex AI Memories for Personalization
     let vertexMemoriesContext = "";
+    let conversationalContext = "";
     let sessionPath = null;
     try {
         const memories = await memoryBankService.retrieveMemories(userId, query);
@@ -133,11 +135,26 @@ export async function askOrchestrator(query, userId = 'admin') {
             vertexMemoriesContext = `\n\n[VERTEX LONG-TERM MEMORIES]\n` + memories.map(m => `- ${m.fact}`).join('\n');
             logger.log("Orchestrator", `Retrieved ${memories.length} vertex memories`, "INFO", null, traceId);
         }
-        sessionPath = await memoryBankService.createSession(userId);
+
+        if (sessionId) {
+            const session = memoryBankService.getSession(sessionId);
+            if (session) {
+                sessionPath = session.sessionPath;
+                if (session.messages && session.messages.length > 0) {
+                    conversationalContext = `\n\n[CONVERSATION HISTORY]\n` + session.messages.map(m => `${m.role}: ${m.text}`).join('\n');
+                }
+            } else {
+                sessionPath = await memoryBankService.createSession(userId);
+            }
+        } else {
+            sessionPath = await memoryBankService.createSession(userId);
+        }
+
         await memoryBankService.appendEvent(sessionPath, { role: 'USER', text: query });
     } catch (err) {
         logger.log("Orchestrator", `Memory Bank step failed: ${err.message}`, "WARNING", null, traceId);
     }
+
 
     const mapping = await mapBusinessTerms(query, traceId);
     let enrichedQuery = query;
@@ -153,7 +170,8 @@ export async function askOrchestrator(query, userId = 'admin') {
     }
 
     const planContext = `\n\n[STRATEGIC PLAN]\n` + JSON.stringify(plan, null, 2);
-    const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext + planContext;
+    const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext + conversationalContext + planContext;
+
 
     const modelName = config.model || "gemini-2.5-flash";
     const model = ai.getGenerativeModel({
@@ -186,7 +204,8 @@ export async function askOrchestrator(query, userId = 'admin') {
                 const subQuery = call.args.query;
 
                 // --- STEP 4: Governance PEP (Security Improvement) ---
-                if (!governanceAgent.validateAccess("MasterOrchestrator", agentDef.domain, "DELEGATE", traceId)) {
+                if (!governanceAgent.validateAccess("MasterOrchestrator", agentDef.domain, "DELEGATE", traceId, userRole)) {
+
                     toolCallParts.push({
                         functionResponse: {
                             name: call.name,
@@ -221,16 +240,20 @@ export async function askOrchestrator(query, userId = 'admin') {
 
                         // --- STEP 5: Automated Masking (Governance Improvement) ---
                         const agentResult = validateDataProduct(rawResult, agentName, 'MasterOrchestrator');
-                        agentResult.data = governanceAgent.maskPayload(agentDef.domain, agentResult.data);
-                        
-                        // Log success with latency
-                        logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, Date.now() - startTime, traceId);
+                        agentResult.data = governanceAgent.maskPayload(agentDef.domain, agentResult.data, userRole);
 
-                        return { agentName, agentResult, subQuery, callName: call.name, domain: agentDef.domain };
+                        
+                        const durationMs = Date.now() - startTime;
+                        // Log success with latency
+                        logger.logResponse(agentName, agentDef.domain, agentResult.metadata.confidence, durationMs, traceId);
+
+                        return { agentName, agentResult, subQuery, callName: call.name, domain: agentDef.domain, durationMs };
                     } catch (err) {
+                        const durationMs = Date.now() - startTime;
                         logger.log(agentName, `Execution failed: ${err.message}`, "ERROR");
-                        return { agentName, error: err.message, subQuery, callName: call.name };
+                        return { agentName, error: err.message, subQuery, callName: call.name, durationMs };
                     }
+
                 })();
                 promises.push(promise);
             }
@@ -269,8 +292,12 @@ export async function askOrchestrator(query, userId = 'admin') {
                 steps.push({
                     agent: agentName,
                     query: subQuery,
-                    result: agentResult
+                    result: agentResult,
+                    durationMs: res.durationMs || 0,
+                    traceId,
+                    timestamp: new Date().toISOString()
                 });
+
 
                 toolCallParts.push({
                     functionResponse: {
@@ -288,7 +315,7 @@ export async function askOrchestrator(query, userId = 'admin') {
 
         if (sessionPath) {
             try {
-                await memoryBankService.appendEvent(sessionPath, { role: 'MODEL', text: response.text() });
+                await memoryBankService.appendEvent(sessionPath, { role: 'MODEL', text: finalAnswer });
                 // Trigger background memory generation
                 memoryBankService.generateMemories(sessionPath).catch(e => 
                     logger.log("Orchestrator", `Async Memory Gen error: ${e.message}`, "WARNING")
@@ -297,6 +324,7 @@ export async function askOrchestrator(query, userId = 'admin') {
                 logger.log("Orchestrator", `Failed to append MODEL event: ${err.message}`, "WARNING");
             }
         }
+
 
         // Phase 3: Reflection / Self-Correction
         logger.log("Orchestrator", `Reflecting on synthesis...`, "INFO");

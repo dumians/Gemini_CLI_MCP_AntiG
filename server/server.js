@@ -16,6 +16,8 @@ import { gateway } from '../agent/utils/one_mcp_gateway.js';
 import { GovernanceMetadataPropagator } from '../agent/utils/governance_metadata_propagator.js';
 import { governanceAgent } from '../agent/utils/governance_agent.js';
 import { configService } from '../agent/utils/config_service.js';
+import { memoryBankService } from '../agent/utils/memory_bank_service.js';
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: '../.env' });
@@ -172,19 +174,20 @@ app.post('/api/agents', authMiddleware, async (req, res) => {
 
 // --- Mesh Query Endpoint (PROTECTED) ---
 app.post('/api/query', authMiddleware, async (req, res) => {
-    const { query } = req.body;
+    const { query, sessionId } = req.body;
     if (!query) {
         return res.status(400).json({ error: "Query is required" });
     }
 
-    logger.log('Server', `Received query: ${query}`, 'INFO');
+    logger.log('Server', `Received query: ${query} (Session: ${sessionId || 'New'})`, 'INFO');
     currentStatus.state = "processing";
     currentStatus.lastQuery = query;
     currentStatus.steps = [];
 
     try {
         const userId = req.user ? req.user.username : 'admin';
-        const result = await askOrchestrator(query, userId);
+        const userRole = req.user ? req.user.role : 'admin';
+        const result = await askOrchestrator(query, userId, userRole, sessionId);
         currentStatus.state = "completed";
         currentStatus.steps = result.steps;
         currentStatus.context = result.context;
@@ -196,6 +199,56 @@ app.post('/api/query', authMiddleware, async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// --- Agent Sessions Endpoints ---
+
+app.get('/api/sessions', authMiddleware, (req, res) => {
+    try {
+        const userId = req.user ? req.user.username : 'admin';
+        const sessions = memoryBankService.listSessions(userId);
+        res.json(sessions);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/sessions/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    try {
+        const session = memoryBankService.getSession(id);
+        if (!session) {
+            return res.status(404).json({ error: `Session ${id} not found.` });
+        }
+        res.json(session);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/sessions', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user ? req.user.username : 'admin';
+        const sessionPath = await memoryBankService.createSession(userId);
+        const sessionId = sessionPath.split('/sessions/').pop();
+        res.status(201).json({ id: sessionId, sessionPath });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/sessions/:id', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const success = await memoryBankService.deleteSession(id);
+        if (!success) {
+            return res.status(404).json({ error: `Session ${id} not found.` });
+        }
+        res.json({ message: `Session ${id} deleted successfully.` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // --- Catalog & Metadata Endpoints ---
 
