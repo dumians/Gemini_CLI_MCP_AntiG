@@ -34,6 +34,10 @@
         "serverArgs": [
           "servers/spanner-mcp/index.js"
         ]
+      },
+      {
+        "name": "cloud_api_registry",
+        "mcpUrl": "process.env.SPANNER_REGISTRY_URL"
       }
     ],
     "groundingDomain": "Retail",
@@ -62,6 +66,10 @@
         "serverArgs": [
           "servers/alloydb-mcp/index.js"
         ]
+      },
+      {
+        "name": "cloud_api_registry",
+        "mcpUrl": "process.env.BIGQUERY_REGISTRY_URL"
       }
     ],
     "groundingDomain": "Analytics",
@@ -117,7 +125,7 @@
     "systemInstruction": "You are an Ebusiness Suite (EBS) Data Specialist Agent. You have access to the EBS schema.",
     "mcpServers": [],
     "groundingDomain": "EBS",
-    "enabled": true
+    "enabled": false
   },
   {
     "id": "jde_agent",
@@ -129,7 +137,7 @@
     "systemInstruction": "You are a JD Edwards (JDE) Data Specialist Agent. You have access to the JDE schema.",
     "mcpServers": [],
     "groundingDomain": "JDE",
-    "enabled": true
+    "enabled": false
   },
   {
     "id": "siebel_agent",
@@ -141,7 +149,7 @@
     "systemInstruction": "You are a Siebel CRM Data Specialist Agent. You have access to the Siebel schema.",
     "mcpServers": [],
     "groundingDomain": "Siebel",
-    "enabled": true
+    "enabled": false
   },
   {
     "id": "brm_agent",
@@ -153,7 +161,7 @@
     "systemInstruction": "You are an Oracle BRM Data Specialist Agent. You have access to the BRM schema.",
     "mcpServers": [],
     "groundingDomain": "BRM",
-    "enabled": true
+    "enabled": false
   },
   {
     "id": "flexcube_agent",
@@ -165,7 +173,7 @@
     "systemInstruction": "You are an Oracle FlexCube Data Specialist Agent. You have access to the FlexCube schema.",
     "mcpServers": [],
     "groundingDomain": "FlexCube",
-    "enabled": true
+    "enabled": false
   },
   {
     "id": "warehouse_agent",

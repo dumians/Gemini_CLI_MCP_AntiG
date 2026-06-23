@@ -46,6 +46,11 @@
         "url": "${SPANNER_MCP_URL}",
         "transport": "sse"
       },
+      "registry": {
+        "url": "${SPANNER_REGISTRY_URL}",
+        "gcpProject": "total-vertex-469513-r8",
+        "workloadIdentitySA": "retail-agent@total-vertex-469513-r8.iam.gserviceaccount.com"
+      },
       "schema_file": "db-schemas/spanner_schema.sql",
       "health_check": "/health"
     },
@@ -69,6 +74,11 @@
       "remote": {
         "url": "${BIGQUERY_MCP_URL}",
         "transport": "sse"
+      },
+      "registry": {
+        "url": "${BIGQUERY_REGISTRY_URL}",
+        "gcpProject": "total-vertex-469513-r8",
+        "workloadIdentitySA": "analytics-agent@total-vertex-469513-r8.iam.gserviceaccount.com"
       },
       "schema_file": "db-schemas/bigquery_schema.sql",
       "health_check": "/health"
@@ -96,6 +106,11 @@
       "remote": {
         "url": "${ALLOYDB_MCP_URL}",
         "transport": "sse"
+      },
+      "registry": {
+        "url": "${ALLOYDB_REGISTRY_URL}",
+        "gcpProject": "total-vertex-469513-r8",
+        "workloadIdentitySA": "crm-agent@total-vertex-469513-r8.iam.gserviceaccount.com"
       },
       "schema_file": "db-schemas/alloydb_schema.sql",
       "health_check": "/health"
