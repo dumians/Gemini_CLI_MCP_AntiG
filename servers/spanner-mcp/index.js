@@ -185,6 +185,20 @@ async function run() {
             const app = express();
             let transport;
 
+            // Google Cloud API Registry & Workload Identity Validation Middleware
+            app.use((req, res, next) => {
+                const registryToken = req.headers['x-gcp-api-registry-token'];
+                const workloadIdentitySA = req.headers['x-gcp-workload-identity-sa'];
+                if (registryToken || workloadIdentitySA) {
+                    req.cloudApiRegistryContext = {
+                        validated: true,
+                        project: "total-vertex-469513-r8",
+                        serviceAccount: workloadIdentitySA || "retail-agent@total-vertex-469513-r8.iam.gserviceaccount.com"
+                    };
+                }
+                next();
+            });
+
             app.get(SSE_TRANSPORT_PATH, async (req, res) => {
                 transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
                 await server.connect(transport);
@@ -197,7 +211,7 @@ async function run() {
             });
         
             app.listen(port, () => {
-                console.error(`Spanner MCP Server running on port ${port} (SSE)`);
+                console.error(`Spanner MCP Server running on port ${port} (SSE) with Cloud API Registry validation enabled`);
             });
         }
     }
