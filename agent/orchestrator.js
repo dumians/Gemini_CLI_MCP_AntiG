@@ -238,9 +238,22 @@ export async function askOrchestrator(query, userId = 'admin', userRole = 'admin
                             }
                         }
 
-                        // --- STEP 5: Automated Masking (Governance Improvement) ---
-                        const agentResult = validateDataProduct(rawResult, agentName, 'MasterOrchestrator');
+                        // --- STEP 5: Automated Masking (Governance Improvement) & Dataplex Policy Check ---
+                        let agentResult = validateDataProduct(rawResult, agentName, 'MasterOrchestrator');
                         agentResult.data = governanceAgent.maskPayload(agentDef.domain, agentResult.data, userRole);
+
+                        try {
+                            const { DataplexAgent } = await import('./dataplex_agent.js');
+                            const dataplex = new DataplexAgent();
+                            if (agentResult.data && typeof agentResult.data === 'object' && !Array.isArray(agentResult.data)) {
+                                const evalRes = await dataplex.evaluatePolicy(agentDef.domain, agentResult.data, traceId);
+                                if (evalRes.status === "MODIFIED") {
+                                    agentResult.data = evalRes.dataProduct;
+                                }
+                            }
+                        } catch (dpErr) {
+                            logger.log("Orchestrator", `Dataplex policy eval skipped: ${dpErr.message}`, "WARNING", null, traceId);
+                        }
 
                         
                         const durationMs = Date.now() - startTime;

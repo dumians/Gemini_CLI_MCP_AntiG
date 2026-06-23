@@ -78,14 +78,22 @@ export class DataplexAgent {
             return { status: "PASSED", reason: "No specific policy for this domain. Standard policy applied." };
         }
 
-        // Simple check
+        // Advanced policy masking rule enforcement (redact, hash, nullify)
         if (domainRule.maskFields && dataProduct) {
+            const ruleType = domainRule.maskingRule || 'redact';
             domainRule.maskFields.forEach((field) => {
-                if (dataProduct[field]) {
-                    dataProduct[field] = "****MASKED****";
+                if (dataProduct[field] !== undefined && dataProduct[field] !== null) {
+                    if (ruleType === 'hash') {
+                        dataProduct[field] = `[HASHED_${Buffer.from(String(dataProduct[field])).toString('hex').slice(0, 8)}]`;
+                    } else if (ruleType === 'nullify') {
+                        dataProduct[field] = null;
+                    } else {
+                        // default 'redact'
+                        dataProduct[field] = "****MASKED****";
+                    }
                 }
             });
-            return { status: "MODIFIED", reason: `Masked sensitive fields: ${domainRule.maskFields.join(', ')}`, dataProduct };
+            return { status: "MODIFIED", reason: `Applied '${ruleType}' policy masking to sensitive fields: ${domainRule.maskFields.join(', ')}`, dataProduct };
         }
 
         return { status: "PASSED", reason: "All policies satisfied." };
