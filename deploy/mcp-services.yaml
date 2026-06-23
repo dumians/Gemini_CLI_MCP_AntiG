@@ -2,11 +2,18 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: retail-spanner-mcp
+  labels:
+    cloud.googleapis.com/location: europe-west1
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/ingress: internal-and-cloud-load-balancing
+        run.googleapis.com/timeout: "3600"
+        run.googleapis.com/sessionAffinity: "true"
     spec:
       containers:
-      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/spanner-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "spanner-mcp"
@@ -21,11 +28,18 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: analytics-bigquery-mcp
+  labels:
+    cloud.googleapis.com/location: europe-west1
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/ingress: internal-and-cloud-load-balancing
+        run.googleapis.com/timeout: "3600"
+        run.googleapis.com/sessionAffinity: "true"
     spec:
       containers:
-      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/bigquery-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "bigquery-mcp"
@@ -40,11 +54,20 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: crm-alloydb-mcp
+  labels:
+    cloud.googleapis.com/location: europe-west1
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/ingress: internal-and-cloud-load-balancing
+        run.googleapis.com/timeout: "3600"
+        run.googleapis.com/sessionAffinity: "true"
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+        run.googleapis.com/network-interfaces: '[{"network":"default","subnetwork":"default"}]'
     spec:
       containers:
-      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/alloydb-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "alloydb-mcp"
@@ -70,11 +93,20 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: hr-oracle-mcp
+  labels:
+    cloud.googleapis.com/location: europe-west1
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/ingress: internal-and-cloud-load-balancing
+        run.googleapis.com/timeout: "3600"
+        run.googleapis.com/sessionAffinity: "true"
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+        run.googleapis.com/network-interfaces: '[{"network":"default","subnetwork":"default"}]'
     spec:
       containers:
-      - image: gcr.io/PROJECT_ID/mesh-mcp:latest
+      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/oracle-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "oracle-mcp"

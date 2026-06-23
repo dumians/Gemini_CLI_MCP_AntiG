@@ -6,9 +6,12 @@ metadata:
     cloud.googleapis.com/location: europe-west1
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/ingress: all
     spec:
       containers:
-      - image: gcr.io/PROJECT_ID/mesh-orchestrator:latest
+      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/mesh-orchestrator:latest
         ports:
         - containerPort: 8080
         env:
@@ -19,7 +22,6 @@ spec:
             secretKeyRef:
               name: GEMINI_API_KEY
               key: latest
-        # Updated URLs to match the names in mcp-services.yaml
         - name: SPANNER_MCP_URL
           value: "https://retail-spanner-mcp-XYZ-ew.a.run.app"
         - name: BIGQUERY_MCP_URL
@@ -28,7 +30,7 @@ spec:
           value: "https://crm-alloydb-mcp-XYZ-ew.a.run.app"
         - name: ORACLE_MCP_URL
           value: "https://hr-oracle-mcp-XYZ-ew.a.run.app"
-        - name: HR_MCP_URL # Re-using Oracle for HR domain demo
+        - name: HR_MCP_URL
           value: "https://hr-oracle-mcp-XYZ-ew.a.run.app"
 ---
 apiVersion: serving.knative.dev/v1
@@ -39,9 +41,12 @@ metadata:
     cloud.googleapis.com/location: europe-west1
 spec:
   template:
+    metadata:
+      annotations:
+        run.googleapis.com/ingress: all
     spec:
       containers:
-      - image: gcr.io/PROJECT_ID/mesh-webapp:latest
+      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/mesh-webapp:latest
         ports:
         - containerPort: 8080
         env:
