@@ -1,0 +1,26 @@
+{
+  "schemaTypesEnsured": false,
+  "entries": [],
+  "entryGroups": [
+    "domain-finance",
+    "domain-retail",
+    "domain-analytics",
+    "domain-netsuite-erp",
+    "domain-spanner-retail",
+    "domain-oracle-erp",
+    "agentic-mesh-group",
+    "domain-global",
+    "domain-spanner",
+    "domain-bigquery"
+  ],
+  "aspectTypes": [
+    "data-product-v4",
+    "data-contract-v4",
+    "data-policy-v4"
+  ],
+  "entryTypes": [
+    "data-product-v4",
+    "data-contract-v4",
+    "data-policy-v4"
+  ]
+}

@@ -16,19 +16,48 @@ const __dirname = dirname(__filename);
 class DataplexIntegration {
     constructor() {
         this.client = (projectId && process.env.NODE_ENV !== 'test') ? new CatalogServiceClient() : null;
-        this.simulationMode = true;
+        this.simulationMode = (process.env.DATAPLEX_SIMULATION_MODE === 'true' || !projectId || process.env.NODE_ENV === 'test');
         
         if (this.simulationMode) {
-            console.error("DataplexServiceClient not initialized or running in test. Running in simulation mode for Dataplex.");
+            console.error("DataplexServiceClient running in simulation mode for Dataplex.");
+        } else {
+            console.error("DataplexServiceClient initialized. Running in REAL integration mode.");
         }
         
         this.syncStatePath = join(__dirname, '../../config/dataplex_sync_state.json');
-        this.syncState = { schemaTypesEnsured: false, entries: [] };
+        this.syncState = { schemaTypesEnsured: false, entries: [], entryGroups: [], aspectTypes: [], entryTypes: [] };
         if (fs.existsSync(this.syncStatePath)) {
             try {
-                this.syncState = JSON.parse(fs.readFileSync(this.syncStatePath, 'utf8'));
+                const parsed = JSON.parse(fs.readFileSync(this.syncStatePath, 'utf8'));
+                this.syncState = {
+                    schemaTypesEnsured: parsed.schemaTypesEnsured || false,
+                    entries: parsed.entries || [],
+                    entryGroups: parsed.entryGroups || [],
+                    aspectTypes: parsed.aspectTypes || [],
+                    entryTypes: parsed.entryTypes || []
+                };
             } catch (e) {}
         }
+    }
+
+    _getEntryGroupId(domain) {
+        if (!domain) return 'agentic-mesh-group';
+        return `domain-${domain.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    }
+
+    _getSourceDomain(sourceId) {
+        try {
+            const dsPath = join(__dirname, '../../config/data_sources.json');
+            if (fs.existsSync(dsPath)) {
+                const dataSourcesConfig = JSON.parse(fs.readFileSync(dsPath, 'utf8'));
+                if (dataSourcesConfig.sources && dataSourcesConfig.sources[sourceId]) {
+                    return dataSourcesConfig.sources[sourceId].domain;
+                }
+            }
+        } catch (e) {
+            console.error("[Dataplex] Failed to resolve source domain:", e.message);
+        }
+        return 'Analytics'; // Default fallback
     }
 
     _saveSyncState() {
@@ -41,21 +70,29 @@ class DataplexIntegration {
 
     async ensureEntryGroup(entryGroupId) {
         if (this.simulationMode) return;
+        if (this.syncState.entryGroups.includes(entryGroupId)) {
+            console.log(`[Dataplex] Entry Group ${entryGroupId} (cached) already exists.`);
+            return;
+        }
         
         const parent = `projects/${projectId}/locations/${dataplexLocation}`;
-        const entryGroupPath = `${parent}/entryGroups/${entryGroupId}`;
         
         try {
             console.log(`[Dataplex] Checking/Creating Entry Group: ${entryGroupId}`);
-            await this.client.createEntryGroup({
+            const [operation] = await this.client.createEntryGroup({
                 parent: parent,
                 entryGroupId: entryGroupId,
                 entryGroup: {}
             });
+            await operation.promise();
             console.log(`[Dataplex] Created Entry Group: ${entryGroupId}`);
+            this.syncState.entryGroups.push(entryGroupId);
+            this._saveSyncState();
         } catch (error) {
             if (error.code === 6 || error.code === 'ALREADY_EXISTS' || (error.message && error.message.toLowerCase().includes('already exists'))) {
                 console.log(`[Dataplex] Entry Group ${entryGroupId} already exists.`);
+                this.syncState.entryGroups.push(entryGroupId);
+                this._saveSyncState();
             } else {
                 console.error(`[Dataplex] Error creating Entry Group: ${error.message}`);
                 throw error;
@@ -65,8 +102,12 @@ class DataplexIntegration {
 
     async ensureAspectType(aspectTypeId, metadataTemplate) {
         if (this.simulationMode) return;
+        if (this.syncState.aspectTypes.includes(aspectTypeId)) {
+            console.log(`[Dataplex] Aspect Type ${aspectTypeId} (cached) already exists.`);
+            return;
+        }
         
-        const parent = `projects/${projectId}/locations/${dataplexLocation}`;
+        const parent = `projects/${projectId}/locations/global`;
         const aspectTypePath = `${parent}/aspectTypes/${aspectTypeId}`;
         
         try {
@@ -81,6 +122,8 @@ class DataplexIntegration {
             });
             await operation.promise();
             console.log(`[Dataplex] Created Aspect Type: ${aspectTypeId}`);
+            this.syncState.aspectTypes.push(aspectTypeId);
+            this._saveSyncState();
         } catch (error) {
             if (error.code === 6 || error.code === 'ALREADY_EXISTS' || (error.message && error.message.toLowerCase().includes('already exists'))) {
                 console.log(`[Dataplex] Aspect Type ${aspectTypeId} already exists. Attempting update to ensure schema sync.`);
@@ -96,8 +139,9 @@ class DataplexIntegration {
                     console.log(`[Dataplex] Updated Aspect Type: ${aspectTypeId}`);
                 } catch (updateError) {
                     console.error(`[Dataplex] Error updating Aspect Type: ${updateError.message}`);
-                    // Don't throw if update fails (might be no changes or immutable field issues)
                 }
+                this.syncState.aspectTypes.push(aspectTypeId);
+                this._saveSyncState();
             } else {
                 console.error(`[Dataplex] Error creating Aspect Type: ${error.message}`);
                 throw error;
@@ -107,8 +151,12 @@ class DataplexIntegration {
 
     async ensureEntryType(entryTypeId, requiredAspects = []) {
         if (this.simulationMode) return;
+        if (this.syncState.entryTypes.includes(entryTypeId)) {
+            console.log(`[Dataplex] Entry Type ${entryTypeId} (cached) already exists.`);
+            return;
+        }
         
-        const parent = `projects/${projectId}/locations/${dataplexLocation}`;
+        const parent = `projects/${projectId}/locations/global`;
         
         try {
             console.log(`[Dataplex] Checking/Creating Entry Type: ${entryTypeId}`);
@@ -122,9 +170,13 @@ class DataplexIntegration {
             });
             await operation.promise();
             console.log(`[Dataplex] Created Entry Type: ${entryTypeId}`);
+            this.syncState.entryTypes.push(entryTypeId);
+            this._saveSyncState();
         } catch (error) {
             if (error.code === 6 || error.code === 'ALREADY_EXISTS' || (error.message && error.message.toLowerCase().includes('already exists'))) {
                 console.log(`[Dataplex] Entry Type ${entryTypeId} already exists.`);
+                this.syncState.entryTypes.push(entryTypeId);
+                this._saveSyncState();
             } else {
                 console.error(`[Dataplex] Error creating Entry Type: ${error.message}`);
                 throw error;
@@ -133,23 +185,23 @@ class DataplexIntegration {
     }
 
     async createDataProduct(product) {
-        console.log(`[Dataplex] Creating Data Product: ${product.name}`);
+        console.log(`[Dataplex] Creating Data Product: ${product.name} (Domain: ${product.domain})`);
         
         if (this.simulationMode) {
             return { success: true, id: product.id || `dataplex-${Date.now()}`, simulated: true };
         }
         
+        const entryGroupId = this._getEntryGroupId(product.domain);
+        await this.ensureEntryGroup(entryGroupId);
+        
         if (!this.productTypesEnsured) {
-            const entryGroupId = 'agentic-mesh-group';
-            await this.ensureEntryGroup(entryGroupId);
-            
             try {
                 const schemaPath = join(__dirname, '../../db-schemas/data_product_aspect_schema.json');
                 const schemaContent = fs.readFileSync(schemaPath, 'utf8');
                 const schema = JSON.parse(schemaContent);
                 
                 await this.ensureAspectType('data-product-v4', schema.metadataTemplate);
-                await this.ensureEntryType('data-product-v4', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/data-product-v4`]);
+                await this.ensureEntryType('data-product-v4', [`projects/${projectId}/locations/global/aspectTypes/data-product-v4`]);
                 this.productTypesEnsured = true;
             } catch (err) {
                 console.error("[Dataplex] Failed to load schema or ensure types for Data Product:", err.message);
@@ -160,48 +212,56 @@ class DataplexIntegration {
         try {
             const parent = `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}`;
             
-            const [response] = await this.client.createEntry({
+            const request = {
                 parent: parent,
                 entryId: product.id,
                 entry: {
-                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/data-product-v4`,
+                    entryType: `projects/${projectId}/locations/global/entryTypes/data-product-v4`,
                     aspects: {
-                       "data-product-v4": {
-                           "name": product.name,
-                           "description": product.description,
-                           "owner": product.owner
+                       [`${projectId}.global.data-product-v4`]: {
+                           data: toProtobufStruct({
+                               "name": product.name,
+                               "description": product.description,
+                               "owner": product.owner
+                           })
                        }
                     }
                 }
-            });
+            };
+            console.log("[Dataplex Debug] Calling createEntry with request:", JSON.stringify(request, null, 2));
+            const [response] = await this.client.createEntry(request);
             console.log(`[Dataplex] Successfully created entry: ${response.name}`);
             return { success: true, id: response.name };
             
         } catch (error) {
+            if (error.code === 6 || (error.message && error.message.toLowerCase().includes('already exists'))) {
+                console.log(`[Dataplex] Data Product entry ${product.id} already exists.`);
+                return { success: true, id: `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}/entries/${product.id}` };
+            }
             console.error(`Error creating data product in Dataplex: ${error.message}`);
             throw error;
         }
     }
 
     async createDataContract(contract) {
-        console.log(`[Dataplex] Creating Data Contract for product: ${contract.product}`);
+        console.log(`[Dataplex] Creating Data Contract for product: ${contract.product} (Domain: ${contract.domain})`);
         
         if (this.simulationMode) {
             return { success: true, id: contract.id || `contract-${Date.now()}`, simulated: true };
         }
 
+        const entryGroupId = this._getEntryGroupId(contract.domain);
+        await this.ensureEntryGroup(entryGroupId);
+
         try {
             if (!this.contractTypesEnsured) {
-                const entryGroupId = 'agentic-mesh-group';
-                await this.ensureEntryGroup(entryGroupId);
-                
                 try {
                     const schemaPath = join(__dirname, '../../db-schemas/data_contract_aspect_schema.json');
                     const schemaContent = fs.readFileSync(schemaPath, 'utf8');
                     const schema = JSON.parse(schemaContent);
                     
                     await this.ensureAspectType('data-contract-v4', schema.metadataTemplate);
-                    await this.ensureEntryType('data-contract-v4', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/data-contract-v4`]);
+                    await this.ensureEntryType('data-contract-v4', [`projects/${projectId}/locations/global/aspectTypes/data-contract-v4`]);
                     this.contractTypesEnsured = true;
                 } catch (err) {
                     console.error("[Dataplex] Failed to load schema or ensure types for Data Contract:", err.message);
@@ -210,49 +270,55 @@ class DataplexIntegration {
             
             const parent = `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}`;
             
-            const [response] = await this.client.createEntry({
-                parent: parent,
-                entryId: contract.id,
-                entry: {
-                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/data-contract-v4`,
-                    aspects: {
-                       "data-contract-v4": {
-                           "product": contract.product,
-                           "schema": contract.schema_file,
-                           "sla": contract.sla,
-                           "privacy": contract.privacy
-                       }
-                    }
-                }
-            });
-            console.log(`[Dataplex] Successfully created entry: ${response.name}`);
-            return { success: true, id: response.name };
-            
-        } catch (error) {
-            console.error(`Error creating data contract in Dataplex: ${error.message}`);
-            throw error;
-        }
+             const [response] = await this.client.createEntry({
+                 parent: parent,
+                 entryId: contract.id,
+                 entry: {
+                     entryType: `projects/${projectId}/locations/global/entryTypes/data-contract-v4`,
+                     aspects: {
+                        [`${projectId}.global.data-contract-v4`]: {
+                            data: toProtobufStruct({
+                                "product": contract.product,
+                                "schema": contract.schema_file || "composite",
+                                "sla": contract.sla,
+                                "privacy": contract.privacy
+                            })
+                        }
+                     }
+                 }
+             });
+             console.log(`[Dataplex] Successfully created entry: ${response.name}`);
+             return { success: true, id: response.name };
+             
+         } catch (error) {
+             if (error.code === 6 || (error.message && error.message.toLowerCase().includes('already exists'))) {
+                 console.log(`[Dataplex] Data Contract entry ${contract.id} already exists.`);
+                 return { success: true, id: `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}/entries/${contract.id}` };
+             }
+             console.error(`Error creating data contract in Dataplex: ${error.message}`);
+             throw error;
+         }
     }
 
     async createGovernancePolicy(policy) {
-        console.log(`[Dataplex] Creating Governance Policy: ${policy.name}`);
+        console.log(`[Dataplex] Creating Governance Policy: ${policy.name} (Domain: ${policy.domain})`);
         
         if (this.simulationMode) {
             return { success: true, id: policy.id || `policy-${Date.now()}`, simulated: true };
         }
 
+        const entryGroupId = this._getEntryGroupId(policy.domain);
+        await this.ensureEntryGroup(entryGroupId);
+
         try {
             if (!this.policyTypesEnsured) {
-                const entryGroupId = 'agentic-mesh-group';
-                await this.ensureEntryGroup(entryGroupId);
-                
                 try {
                     const schemaPath = join(__dirname, '../../db-schemas/data_policy_aspect_schema.json');
                     const schemaContent = fs.readFileSync(schemaPath, 'utf8');
                     const schema = JSON.parse(schemaContent);
                     
                     await this.ensureAspectType('data-policy-v4', schema.metadataTemplate);
-                    await this.ensureEntryType('data-policy-v4', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/data-policy-v4`]);
+                    await this.ensureEntryType('data-policy-v4', [`projects/${projectId}/locations/global/aspectTypes/data-policy-v4`]);
                     this.policyTypesEnsured = true;
                 } catch (err) {
                     console.error("[Dataplex] Failed to load schema or ensure types for Data Policy:", err.message);
@@ -261,31 +327,37 @@ class DataplexIntegration {
             
             const parent = `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}`;
             
-            const [response] = await this.client.createEntry({
-                parent: parent,
-                entryId: policy.id,
-                entry: {
-                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/data-policy-v4`,
-                    aspects: {
-                       "data-policy-v4": {
-                           "id": policy.id,
-                           "name": policy.name,
-                           "status": policy.status,
-                           "domain": policy.domain,
-                           "classification": policy.classification || 'LOW',
-                           "dataplexAspect": policy.dataplexAspect || 'default',
-                           "maskingRule": policy.maskingRule || 'none'
-                       }
-                    }
-                }
-            });
-            console.log(`[Dataplex] Successfully created entry: ${response.name}`);
-            return { success: true, id: response.name };
-            
-        } catch (error) {
-            console.error(`Error creating data policy in Dataplex: ${error.message}`);
-            throw error;
-        }
+             const [response] = await this.client.createEntry({
+                 parent: parent,
+                 entryId: policy.id,
+                 entry: {
+                     entryType: `projects/${projectId}/locations/global/entryTypes/data-policy-v4`,
+                     aspects: {
+                        [`${projectId}.global.data-policy-v4`]: {
+                            data: toProtobufStruct({
+                                "id": policy.id,
+                                "name": policy.name,
+                                "status": policy.status,
+                                "domain": policy.domain,
+                                "classification": policy.classification || 'LOW',
+                                "dataplexAspect": policy.dataplexAspect || 'default',
+                                "maskingRule": policy.maskingRule || 'none'
+                            })
+                        }
+                     }
+                 }
+             });
+             console.log(`[Dataplex] Successfully created entry: ${response.name}`);
+             return { success: true, id: response.name };
+             
+         } catch (error) {
+             if (error.code === 6 || (error.message && error.message.toLowerCase().includes('already exists'))) {
+                 console.log(`[Dataplex] Governance Policy entry ${policy.id} already exists.`);
+                 return { success: true, id: `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}/entries/${policy.id}` };
+             }
+             console.error(`Error creating data policy in Dataplex: ${error.message}`);
+             throw error;
+         }
     }
 
     async createSchemaEntry(sourceId, entity) {
@@ -294,16 +366,17 @@ class DataplexIntegration {
             return { success: true, id: entryId, cached: true };
         }
 
-        console.log(`[Dataplex] Creating Schema Entry: ${entity.name} (Source: ${sourceId})`);
+        const domain = entity.domain || this._getSourceDomain(sourceId);
+        console.log(`[Dataplex] Creating Schema Entry: ${entity.name} (Source: ${sourceId}, Domain: ${domain})`);
         
         if (this.simulationMode) {
             return { success: true, id: entity.id || `schema-${Date.now()}`, simulated: true };
         }
         
+        const entryGroupId = this._getEntryGroupId(domain);
+        await this.ensureEntryGroup(entryGroupId);
+
         if (!this.syncState.schemaTypesEnsured) {
-            const entryGroupId = 'agentic-mesh-group';
-            await this.ensureEntryGroup(entryGroupId);
-            
             try {
                 const metadataTemplate = {
                     fields: [
@@ -315,7 +388,7 @@ class DataplexIntegration {
                 };
                 
                 await this.ensureAspectType('schema-aspect-v1', metadataTemplate);
-                await this.ensureEntryType('schema-aspect-v1', [`projects/${projectId}/locations/${dataplexLocation}/aspectTypes/schema-aspect-v1`]);
+                await this.ensureEntryType('schema-aspect-v1', [`projects/${projectId}/locations/global/aspectTypes/schema-aspect-v1`]);
                 this.syncState.schemaTypesEnsured = true;
                 this._saveSyncState();
             } catch (err) {
@@ -328,30 +401,38 @@ class DataplexIntegration {
             const attributesJson = JSON.stringify(entity.attributes || []);
             const tags = Array.from(new Set(entity.attributes?.map(a => a.semanticTag))).filter(Boolean);
             
-            const [response] = await this.client.createEntry({
-                parent: parent,
-                entryId: entity.id.replace(/[^a-z0-9-]/g, '-').toLowerCase(),
-                entry: {
-                    entryType: `projects/${projectId}/locations/${dataplexLocation}/entryTypes/schema-aspect-v1`,
-                    aspects: {
-                       "schema-aspect-v1": {
-                           "name": entity.name,
-                           "type": entity.type,
-                           "attributes": attributesJson,
-                           "semantic_tags": JSON.stringify(tags)
-                       }
-                    }
-                }
-            });
-            console.log(`[Dataplex] Successfully created schema entry: ${response.name}`);
-            this.syncState.entries.push(entryId);
-            this._saveSyncState();
-            return { success: true, id: response.name };
-            
-        } catch (error) {
-            console.error(`Error creating schema entry in Dataplex: ${error.message}`);
-            throw error;
-        }
+             const [response] = await this.client.createEntry({
+                 parent: parent,
+                 entryId: entity.id.replace(/[^a-z0-9-]/g, '-').toLowerCase(),
+                 entry: {
+                     entryType: `projects/${projectId}/locations/global/entryTypes/schema-aspect-v1`,
+                     aspects: {
+                        [`${projectId}.global.schema-aspect-v1`]: {
+                            data: toProtobufStruct({
+                                "name": entity.name,
+                                "type": entity.type,
+                                "attributes": attributesJson,
+                                "semantic_tags": JSON.stringify(tags)
+                            })
+                        }
+                     }
+                 }
+             });
+             console.log(`[Dataplex] Successfully created schema entry: ${response.name}`);
+             this.syncState.entries.push(entryId);
+             this._saveSyncState();
+             return { success: true, id: response.name };
+             
+         } catch (error) {
+             if (error.code === 6 || (error.message && error.message.toLowerCase().includes('already exists'))) {
+                 console.log(`[Dataplex] Schema entry ${entryId} already exists.`);
+                 this.syncState.entries.push(entryId);
+                 this._saveSyncState();
+                 return { success: true, id: `projects/${projectId}/locations/${dataplexLocation}/entryGroups/${entryGroupId}/entries/${entryId}` };
+             }
+             console.error(`Error creating schema entry in Dataplex: ${error.message}`);
+             throw error;
+         }
     }
 
     async createLineageProcess(processId, displayName) {
@@ -396,6 +477,35 @@ class DataplexIntegration {
             return { success: true, simulated: true };
         }
     }
+}
+
+function toProtobufStruct(obj) {
+    const fields = {};
+    for (const [key, val] of Object.entries(obj)) {
+        if (val === null || val === undefined) {
+            continue;
+        } else if (typeof val === 'string') {
+            fields[key] = { stringValue: val };
+        } else if (typeof val === 'number') {
+            fields[key] = { numberValue: val };
+        } else if (typeof val === 'boolean') {
+            fields[key] = { boolValue: val };
+        } else if (Array.isArray(val)) {
+            fields[key] = {
+                listValue: {
+                    values: val.map(item => {
+                        if (typeof item === 'string') return { stringValue: item };
+                        if (typeof item === 'number') return { numberValue: item };
+                        if (typeof item === 'boolean') return { boolValue: item };
+                        return {};
+                    })
+                }
+            };
+        } else if (typeof val === 'object') {
+            fields[key] = { structValue: toProtobufStruct(val) };
+        }
+    }
+    return { fields };
 }
 
 export const dataplex = new DataplexIntegration();
