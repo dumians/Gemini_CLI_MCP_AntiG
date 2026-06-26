@@ -168,6 +168,7 @@ export class MetadataCatalog {
         this.relationships = [];
         this.crossDomainLinks = [];
         this.lineage = [];
+        this.contracts = [];
         this._initialized = false;
     }
 
@@ -270,8 +271,25 @@ export class MetadataCatalog {
         // Run correlation inference in background
         this.inferCorrelations().catch(e => console.error("[MetadataCatalog] Background inference failed:", e));
 
+        // Load data contracts
+        let contractsData = { contracts: [] };
+        const contractsPath = path.join(ROOT_DIR, 'config', 'data_contracts.json');
+        if (fs.existsSync(contractsPath)) {
+            try {
+                contractsData = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+            } catch (err) {
+                console.error("[Catalog] Failed to load data contracts:", err.message);
+            }
+        }
+        this.contracts = contractsData.contracts || [];
+
         this._initialized = true;
-        console.log(`[MetadataCatalog] Initialized: ${Object.keys(this.entities).length} entities, ${this.relationships.length} relationships, ${this.crossDomainLinks.length} cross-domain links`);
+        console.log(`[MetadataCatalog] Initialized: ${Object.keys(this.entities).length} entities, ${this.relationships.length} relationships, ${this.contracts.length} data contracts, ${this.crossDomainLinks.length} cross-domain links`);
+    }
+
+    getDataContracts() {
+        this.initialize();
+        return this.contracts;
     }
 
     async inferCorrelations() {

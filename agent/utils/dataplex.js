@@ -477,6 +477,91 @@ class DataplexIntegration {
             return { success: true, simulated: true };
         }
     }
+
+    async listDataContracts() {
+        console.log(`[Dataplex] Listing all Data Contracts from Catalog...`);
+        if (this.simulationMode) {
+            try {
+                const contractsPath = join(__dirname, '../../config/data_contracts.json');
+                if (fs.existsSync(contractsPath)) {
+                    const data = JSON.parse(fs.readFileSync(contractsPath, 'utf8'));
+                    return data.contracts || [];
+                }
+            } catch (err) {
+                console.error("[Dataplex] Simulation: Failed to read local data contracts:", err.message);
+            }
+            return [];
+        }
+
+        try {
+            const name = `projects/${projectId}/locations/europe-west3`;
+            const query = `type=projects/${projectId}/locations/global/entryTypes/data-contract-v4`;
+            console.log(`[Dataplex] Executing search query on ${name}: "${query}"`);
+            
+            const [results] = await this.client.searchEntries({
+                name: name,
+                query: query
+            });
+
+            const entryNames = results
+                .map(r => r.dataplexEntry?.name)
+                .filter(Boolean);
+
+            console.log(`[Dataplex] Found ${entryNames.length} contract entry paths. Fetching details...`);
+
+            const entries = await Promise.all(
+                entryNames.map(async (entryName) => {
+                    try {
+                        const [entry] = await this.client.getEntry({ name: entryName });
+                        return entry;
+                    } catch (e) {
+                        console.error(`[Dataplex] Failed to fetch entry ${entryName}:`, e.message);
+                        return null;
+                    }
+                })
+            );
+
+            const contracts = [];
+            for (const entry of entries) {
+                if (!entry || !entry.name) continue;
+                
+                const parts = entry.name.split('/');
+                const entryId = parts[parts.length - 1];
+                const entryGroupId = parts[parts.length - 3];
+                
+                let domain = 'Analytics';
+                if (entryGroupId && entryGroupId.startsWith('domain-')) {
+                    domain = entryGroupId.substring(7)
+                        .split('-')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                }
+
+                const aspects = entry.aspects || {};
+                const aspectKey = Object.keys(aspects).find(k => k.endsWith('.global.data-contract-v4'));
+                const aspect = aspectKey ? aspects[aspectKey] : {};
+                const data = fromProtobufStruct(aspect.data);
+                
+                contracts.push({
+                    id: entryId,
+                    product: data.product || 'Unknown Product',
+                    domain: domain,
+                    schema_file: data.schema || 'composite',
+                    subscriber: 'Internal Subscribers',
+                    status: 'Active',
+                    sla: data.sla || '99.9%',
+                    privacy: data.privacy || 'Standard'
+                });
+            }
+
+            console.log(`[Dataplex] Successfully retrieved ${contracts.length} Data Contracts.`);
+            return contracts;
+
+        } catch (error) {
+            console.error(`Error listing data contracts from Dataplex: ${error.message}`);
+            throw error;
+        }
+    }
 }
 
 function toProtobufStruct(obj) {
@@ -506,6 +591,32 @@ function toProtobufStruct(obj) {
         }
     }
     return { fields };
+}
+
+function fromProtobufStruct(struct) {
+    if (!struct || !struct.fields) return {};
+    const obj = {};
+    for (const [key, val] of Object.entries(struct.fields)) {
+        if (val.stringValue !== undefined) {
+            obj[key] = val.stringValue;
+        } else if (val.numberValue !== undefined) {
+            obj[key] = val.numberValue;
+        } else if (val.boolValue !== undefined) {
+            obj[key] = val.boolValue;
+        } else if (val.nullValue !== undefined) {
+            obj[key] = null;
+        } else if (val.structValue !== undefined) {
+            obj[key] = fromProtobufStruct(val.structValue);
+        } else if (val.listValue !== undefined && val.listValue.values) {
+            obj[key] = val.listValue.values.map(item => {
+                if (item.stringValue !== undefined) return item.stringValue;
+                if (item.numberValue !== undefined) return item.numberValue;
+                if (item.boolValue !== undefined) return item.boolValue;
+                return null;
+            });
+        }
+    }
+    return obj;
 }
 
 export const dataplex = new DataplexIntegration();

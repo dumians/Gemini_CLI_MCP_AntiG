@@ -45,7 +45,8 @@ class CatalogAgent {
             get_domain_schema: ({ domain }) => metadataCatalog.getSchemaForDomain(domain),
             get_entity_lineage: ({ entityName }) => metadataCatalog.getEntityLineage(entityName),
             get_horizontal_insights: () => kgService.getHorizontalContextSummary(),
-            query_cross_domain_inventory: () => this._queryCrossDomainInventory()
+            query_cross_domain_inventory: () => this._queryCrossDomainInventory(),
+            get_data_contracts: () => metadataCatalog.getDataContracts()
         };
     }
 
@@ -101,6 +102,10 @@ class CatalogAgent {
                     {
                         name: "query_cross_domain_inventory",
                         description: "Finds cross-domain inventory links across dynamic sources including Oracle, Spanner, and BigQuery using the metadata graph."
+                    },
+                    {
+                        name: "get_data_contracts",
+                        description: "Retrieves all registered and proposed Data Product Contracts in the mesh."
                     }
                 ]
             }]
