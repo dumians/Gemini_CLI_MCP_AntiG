@@ -666,6 +666,95 @@ export class MetadataCatalog {
 
         return context;
     }
+
+    /**
+     * Converts the in-memory catalog graph into W3C / Schema.org Linked Data JSON-LD
+     * (Google Open Knowledge Format) for cross-agent semantic interoperability.
+     */
+    getOpenKnowledgeGraph() {
+        this.initialize();
+
+        const jsonLdNodes = [];
+
+        // 1. Map Data Sources as W3C DCAT DataServices
+        for (const source of Object.values(this.sources)) {
+            jsonLdNodes.push({
+                "@id": `urn:mesh:source:${source.id}`,
+                "@type": ["dcat:DataService", "schema:DataCatalog"],
+                "schema:name": source.name,
+                "mesh:domain": source.domain,
+                "dcat:endpointURL": source.schemaFile,
+                "schema:status": source.status
+            });
+        }
+
+        // 2. Map Entities (Tables, Graphs, Vector Indexes) as Schema.org Datasets
+        for (const entity of Object.values(this.entities)) {
+            const node = {
+                "@id": `urn:mesh:entity:${entity.id}`,
+                "@type": entity.type === 'GRAPH' ? ["mesh:PropertyGraph", "schema:Dataset"] : ["schema:Dataset", "dcat:Dataset"],
+                "schema:name": entity.name,
+                "schema:description": entity.description,
+                "mesh:source": `urn:mesh:source:${entity.sourceId}`,
+                "mesh:entityType": entity.type
+            };
+
+            if (entity.attributes && Array.isArray(entity.attributes)) {
+                node["schema:variableMeasured"] = entity.attributes.map(a => ({
+                    "@type": "schema:PropertyValue",
+                    "schema:name": a.name,
+                    "schema:unitText": a.dataType,
+                    "mesh:semanticTag": a.semanticTag
+                }));
+            }
+
+            if (entity.nodes) node["mesh:graphNodes"] = entity.nodes;
+            if (entity.edges) node["mesh:graphEdges"] = entity.edges;
+
+            jsonLdNodes.push(node);
+        }
+
+        // 3. Map Cross-Domain Relationships as Schema.org Links
+        for (const link of this.crossDomainLinks) {
+            jsonLdNodes.push({
+                "@type": "mesh:CrossDomainLink",
+                "mesh:joinKey": link.key,
+                "mesh:sourceA": link.sourceA,
+                "mesh:sourceB": link.sourceB,
+                "schema:confidence": link.confidence
+            });
+        }
+
+        return {
+            "@context": {
+                "schema": "https://schema.org/",
+                "dcat": "http://www.w3.org/ns/dcat#",
+                "mesh": "https://agenticmesh.dev/ns#"
+            },
+            "@graph": jsonLdNodes
+        };
+    }
+
+    /**
+     * Exports DCAT v3 compliant Catalog Overview for GCP Knowledge Catalog / Dataplex synchronization.
+     */
+    exportDcatCatalog() {
+        this.initialize();
+        const openKnowledge = this.getOpenKnowledgeGraph();
+        return {
+            catalogTitle: "Agentic Mesh Autonomous Open Knowledge Catalog",
+            dcatVersion: "3.0",
+            format: "JSON-LD / Schema.org",
+            generatedAt: new Date().toISOString(),
+            datasetCount: Object.keys(this.entities).length,
+            domainServices: Object.values(this.sources).map(s => ({
+                id: s.id,
+                name: s.name,
+                domain: s.domain
+            })),
+            openKnowledgeGraph: openKnowledge
+        };
+    }
 }
 
 

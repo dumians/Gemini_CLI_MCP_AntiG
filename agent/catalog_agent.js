@@ -46,7 +46,9 @@ class CatalogAgent {
             get_entity_lineage: ({ entityName }) => metadataCatalog.getEntityLineage(entityName),
             get_horizontal_insights: () => kgService.getHorizontalContextSummary(),
             query_cross_domain_inventory: () => this._queryCrossDomainInventory(),
-            get_data_contracts: () => metadataCatalog.getDataContracts()
+            get_data_contracts: () => metadataCatalog.getDataContracts(),
+            get_open_knowledge_graph: () => metadataCatalog.getOpenKnowledgeGraph(),
+            export_dcat_catalog: () => metadataCatalog.exportDcatCatalog()
         };
     }
 
@@ -106,6 +108,14 @@ class CatalogAgent {
                     {
                         name: "get_data_contracts",
                         description: "Retrieves all registered and proposed Data Product Contracts in the mesh."
+                    },
+                    {
+                        name: "get_open_knowledge_graph",
+                        description: "Returns the complete data mesh mapped into Google Open Knowledge W3C / Schema.org Linked Data JSON-LD graph."
+                    },
+                    {
+                        name: "export_dcat_catalog",
+                        description: "Exports a W3C DCAT v3 compliant Data Catalog for GCP Dataplex Catalog / Knowledge Catalog synchronization."
                     }
                 ]
             }]

@@ -63,5 +63,317 @@
         "timestamp": "2026-05-21T12:55:48.323Z"
       }
     ]
+  },
+  {
+    "id": "simulated-session-1779882354112",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779882354112",
+    "userId": "admin",
+    "createdAt": "2026-05-27T11:45:54.113Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-05-27T11:45:54.114Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779882374113",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779882374113",
+    "userId": "admin",
+    "createdAt": "2026-05-27T11:46:14.114Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-05-27T11:46:14.114Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779882396388",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779882396388",
+    "userId": "admin",
+    "createdAt": "2026-05-27T11:46:36.388Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Analyze the financial impact of global inventory stockouts on Q2 revenue projections.",
+        "timestamp": "2026-05-27T11:46:36.388Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779882396390",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779882396390",
+    "userId": "admin",
+    "createdAt": "2026-05-27T11:46:36.390Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Analyze the financial impact of global inventory stockouts on Q2 revenue projections.",
+        "timestamp": "2026-05-27T11:46:36.391Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779882521467",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779882521467",
+    "userId": "admin",
+    "createdAt": "2026-05-27T11:48:41.467Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-05-27T11:48:41.468Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779882541471",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779882541471",
+    "userId": "admin",
+    "createdAt": "2026-05-27T11:49:01.472Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-05-27T11:49:01.473Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779883180497",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779883180497",
+    "userId": "admin",
+    "createdAt": "2026-05-27T11:59:40.497Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-05-27T11:59:40.498Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1779883200494",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1779883200494",
+    "userId": "admin",
+    "createdAt": "2026-05-27T12:00:00.495Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-05-27T12:00:00.496Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782220033056",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782220033056",
+    "userId": "admin",
+    "createdAt": "2026-06-23T13:07:13.056Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-06-23T13:07:13.057Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782220034469",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782220034469",
+    "userId": "test_user_999",
+    "createdAt": "2026-06-23T13:07:14.470Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-06-23T13:07:14.471Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458093300",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458093300",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:14:53.300Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Analyze the financial impact of global inventory stockouts on Q2 revenue projections.",
+        "timestamp": "2026-06-26T07:14:53.301Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458093304",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458093304",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:14:53.305Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Analyze the financial impact of global inventory stockouts on Q2 revenue projections.",
+        "timestamp": "2026-06-26T07:14:53.305Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458445892",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458445892",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:20:45.893Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:20:45.894Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458465892",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458465892",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:21:05.892Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:21:05.893Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458469423",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458469423",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:21:09.423Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:21:09.424Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458489423",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458489423",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:21:29.424Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:21:29.425Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458565032",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458565032",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:22:45.033Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:22:45.034Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458585034",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458585034",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:23:05.035Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:23:05.036Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458772598",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458772598",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:26:12.599Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:26:12.600Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782458792600",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782458792600",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:26:32.601Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:26:32.602Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782459034771",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782459034771",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:30:34.771Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:30:34.772Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782459054773",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782459054773",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:30:54.773Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:30:54.774Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782459259892",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782459259892",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:34:19.893Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:34:19.893Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1782459279893",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1782459279893",
+    "userId": "admin",
+    "createdAt": "2026-06-26T07:34:39.893Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-06-26T07:34:39.894Z"
+      }
+    ]
   }
 ]

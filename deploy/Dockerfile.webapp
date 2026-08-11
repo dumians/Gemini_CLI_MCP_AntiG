@@ -2,12 +2,12 @@
 FROM node:20-slim AS build
 WORKDIR /app
 
-# Copy package files from the webapp directory
-COPY webapp/package*.json ./
+# Copy package files from the UIX directory
+COPY UIX/package*.json ./
 RUN npm install
 
-# Copy the rest of the webapp source
-COPY webapp/ .
+# Copy the rest of the UIX source
+COPY UIX/ .
 
 # Build argument for the API URL
 ARG VITE_API_BASE_URL

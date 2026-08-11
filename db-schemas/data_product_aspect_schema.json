@@ -36,6 +36,33 @@
         "annotations": {
           "description": "Owner of the data product"
         }
+      },
+      {
+        "name": "linked_data_uri",
+        "type": "string",
+        "index": 4,
+        "searchable": true,
+        "annotations": {
+          "description": "Schema.org / W3C URI identifying this Open Knowledge domain concept (e.g. https://schema.org/Dataset)"
+        }
+      },
+      {
+        "name": "dcat_type",
+        "type": "string",
+        "index": 5,
+        "searchable": true,
+        "annotations": {
+          "description": "DCAT v3 type classification (Dataset, DataService, AgentDataProduct, GraphTopology)"
+        }
+      },
+      {
+        "name": "semantic_terms",
+        "type": "string",
+        "index": 6,
+        "searchable": true,
+        "annotations": {
+          "description": "Comma-separated business terms mapped to Open Knowledge Vocabularies"
+        }
       }
     ]
   }

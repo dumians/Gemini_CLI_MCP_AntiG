@@ -29,7 +29,8 @@ do
     docker push ${IMAGE_NAME}
     
     # Base Cloud Run flags for MCP microservices
-    FLAGS="--image ${IMAGE_NAME} --platform managed --region ${REGION} --no-allow-unauthenticated --ingress internal-and-cloud-load-balancing --timeout 3600 --session-affinity --set-env-vars=NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID}"
+    # Crucial bugfix: Pass MCP_SERVICE env variable so the generic container runs the correct service
+    FLAGS="--image ${IMAGE_NAME} --platform managed --region ${REGION} --no-allow-unauthenticated --ingress internal-and-cloud-load-balancing --timeout 3600 --session-affinity --set-env-vars=NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},MCP_SERVICE=${server}"
     
     # Attach Direct VPC Egress for private IP databases (AlloyDB and Oracle)
     if [ "${server}" == "alloydb-mcp" ] || [ "${server}" == "oracle-mcp" ]; then
@@ -39,7 +40,14 @@ do
     gcloud run deploy ${server} ${FLAGS}
 done
 
-# 2. Deploy Master Orchestrator (External Ingress, Secret Manager Key)
+# 2. Get deployed MCP service URLs dynamically
+echo "Retrieving deployed MCP service endpoints..."
+SPANNER_MCP_URL=$(gcloud run services describe spanner-mcp --platform managed --region ${REGION} --format="value(status.url)" 2>/dev/null || echo "")
+BIGQUERY_MCP_URL=$(gcloud run services describe bigquery-mcp --platform managed --region ${REGION} --format="value(status.url)" 2>/dev/null || echo "")
+ALLOYDB_MCP_URL=$(gcloud run services describe alloydb-mcp --platform managed --region ${REGION} --format="value(status.url)" 2>/dev/null || echo "")
+ORACLE_MCP_URL=$(gcloud run services describe oracle-mcp --platform managed --region ${REGION} --format="value(status.url)" 2>/dev/null || echo "")
+
+# 3. Deploy Master Orchestrator (External Ingress, Secret Manager Key)
 echo "--- Deploying Master Orchestrator ---"
 ORCH_IMAGE="${ARTIFACT_REGISTRY}/mesh-orchestrator:latest"
 docker build -t ${ORCH_IMAGE} -f deploy/Dockerfile.orchestrator .
@@ -51,10 +59,10 @@ gcloud run deploy mesh-orchestrator \
     --region ${REGION} \
     --allow-unauthenticated \
     --ingress all \
-    --set-env-vars="NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID}" \
+    --set-env-vars="NODE_ENV=production,GCP_PROJECT_ID=${PROJECT_ID},SPANNER_MCP_URL=${SPANNER_MCP_URL}/sse,BIGQUERY_MCP_URL=${BIGQUERY_MCP_URL}/sse,ALLOYDB_MCP_URL=${ALLOYDB_MCP_URL}/sse,ORACLE_MCP_URL=${ORACLE_MCP_URL}/sse,HR_MCP_URL=${ORACLE_MCP_URL}/sse,WAREHOUSE_MCP_URL=${ORACLE_MCP_URL}/sse" \
     --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest"
 
-# 3. Deploy WebApp UIX (External Ingress)
+# 4. Deploy WebApp UIX (External Ingress)
 echo "--- Deploying WebApp UIX ---"
 WEB_IMAGE="${ARTIFACT_REGISTRY}/mesh-webapp:latest"
 ORCH_URL=$(gcloud run services describe mesh-orchestrator --platform managed --region ${REGION} --format="value(status.url)")
