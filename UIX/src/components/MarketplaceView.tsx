@@ -516,9 +516,7 @@ export const MarketplaceView = ({ initialTab = 'products' }: { initialTab?: stri
           <div className="lg:col-span-2 space-y-6">
             <div className="w-full">
               <h4 className="text-sm font-bold text-white mb-2">Contracts & Product Lineage Graph</h4>
-              <div className="h-[400px]">
-                <ContractsLineageGraph products={products} contracts={contracts} />
-              </div>
+              <ContractsLineageGraph products={products} contracts={contracts} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

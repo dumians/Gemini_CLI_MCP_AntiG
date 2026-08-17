@@ -1,7 +1,7 @@
 {
     "name": "agentic-mesh-multi-domain-demo",
-    "version": "1.0.4",
-    "description": "Enterprise Data Agents Demo across multiple  domains, secured and grounded",
+    "version": "1.0.5",
+    "description": "Enterprise Data Agents Demo across multiple domains, secured and grounded",
     "main": "agent/index.js",
     "type": "module",
     "scripts": {
@@ -13,16 +13,16 @@
         "test": "node --test tests/integration/*.test.js"
     },
     "dependencies": {
-        "@google-cloud/alloydb": "^2.4.0",
-        "@google-cloud/bigquery": "latest",
-        "@google-cloud/dataplex": "^5.4.0",
-        "@google-cloud/modelarmor": "^0.4.1",
-        "@google-cloud/spanner": "latest",
-        "@google/generative-ai": "latest",
-        "@modelcontextprotocol/sdk": "latest",
-        "dotenv": "^16.4.7",
+        "@google-cloud/alloydb": "^3.0.0",
+        "@google-cloud/bigquery": "^9.0.2",
+        "@google-cloud/dataplex": "^6.0.0",
+        "@google-cloud/modelarmor": "^0.8.0",
+        "@google-cloud/spanner": "^8.10.0",
+        "@google/generative-ai": "^0.24.0",
+        "@modelcontextprotocol/sdk": "^1.30.0",
+        "dotenv": "^17.4.2",
         "express": "^5.2.1",
-        "oracledb": "latest",
-        "pg": "^8.13.1"
+        "oracledb": "^7.0.1",
+        "pg": "^8.23.0"
     }
 }

@@ -2,127 +2,262 @@ import React from 'react';
 import { 
   Search, Filter, ShieldCheck, AlertTriangle, FileText, CheckCircle2, 
   ChevronRight, X, RefreshCw, Sparkles, Check, Percent, History, 
-  ShieldAlert, ArrowRight, HelpCircle, Info 
+  ShieldAlert, ArrowRight, HelpCircle, Info, Layers, Database, 
+  Tag, Lock, Eye, Edit3, Save, Download, Share2, Compass, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../utils/api';
 
-type TabType = 'dashboard' | 'descriptions' | 'glossary' | 'policy' | 'trust';
+type TabType = 'dashboard' | 'knowledge_catalog' | 'discovery' | 'descriptions' | 'glossary' | 'policy' | 'trust' | 'open_knowledge';
 
-interface GapItem {
-  Table: string;
-  Column: string;
-  Type: string;
+interface AspectTypeField {
+  type: string;
+  label: string;
+  required?: boolean;
+  options?: string[];
+  default?: any;
+  min?: number;
+  max?: number;
 }
 
-interface CandidateItem {
-  Select?: boolean;
-  "Target Column": string;
-  Source: string;
-  "Source Column": string;
-  Confidence: number;
-  "Proposed Description": string;
-  Type: string;
+interface AspectTypeDefinition {
+  id: string;
+  displayName: string;
+  description: string;
+  category: string;
+  color: string;
+  fields: Record<string, AspectTypeField>;
 }
 
-interface GlossaryRecommendation {
-  Select?: boolean;
-  Column: string;
-  "Suggested Term": string;
-  Confidence: number;
-  Rationale: string;
-  "Term ID": string;
+interface CatalogEntryResult {
+  id: string;
+  name: string;
+  sourceId: string;
+  domain: string;
+  type: string;
+  attributesCount: number;
+  aspects: Record<string, any>;
+  score?: number;
 }
 
-interface PolicyRecommendation {
-  Select?: boolean;
-  "Target Column": string;
-  "Source Table": string;
-  "Source Column": string;
-  "Policy Tags": string;
-  Recommendation: string;
-  Logic: string;
-  "Access Summary": string;
+interface AuditIssue {
+  id: string;
+  entityId: string;
+  entityName: string;
+  category: string;
+  severity: string;
+  ruleName: string;
+  description: string;
+  remediationAction: string;
+  suggestedPayload: any;
 }
 
-interface TrustItem {
-  Column: string;
-  "Trust Score": number;
-  Badge: string;
-  Trend: string;
-  "Bonus (Remediation)": string;
-  "Upstream Sources": string;
+interface DiscoveryResult {
+  scanTimestamp: string;
+  sourcesScanned: number;
+  entitiesProfiled: number;
+  attributesProfiled: number;
+  piiFindings: Array<{
+    entityId: string;
+    entityName: string;
+    sourceId: string;
+    columnName: string;
+    dataType: string;
+    classification: string;
+    sensitivityLevel: string;
+    suggestedPolicyTag: string;
+    suggestedMasking: string;
+    confidence: number;
+  }>;
+  schemaDriftEvents: Array<{
+    entityId: string;
+    changeType: string;
+    columnName: string;
+    dataType: string;
+    timestamp: string;
+    severity: string;
+  }>;
+  inferredCorrelations: Array<{
+    key: string;
+    sources: string[];
+    participatingEntities: string[];
+    confidence: number;
+    recommendation: string;
+  }>;
+  qualitySummary: {
+    totalColumns: number;
+    missingDescriptions: number;
+    sensitiveColumnsCount: number;
+    documentationCoveragePct: number;
+  };
 }
 
 export const GovernanceView = () => {
   const [activeTab, setActiveTab] = React.useState<TabType>('dashboard');
   const [datasetId, setDatasetId] = React.useState('marketing_edw');
   const [isScanning, setIsScanning] = React.useState(false);
-  
-  // Scan Results / Metrics
-  const [descGaps, setDescGaps] = React.useState<GapItem[]>([]);
-  const [glossaryGaps, setGlossaryGaps] = React.useState<GapItem[]>([]);
-  const [orphans, setOrphans] = React.useState<GapItem[]>([]);
-  const [scannedOnce, setScannedOnce] = React.useState(false);
-
-  // Tab-Specific States
-  const [selectedTable, setSelectedTable] = React.useState('campaign_metrics');
-  const [isLoadingTab, setIsLoadingTab] = React.useState(false);
   const [actionMessage, setActionMessage] = React.useState<{ text: string; isError?: boolean } | null>(null);
 
-  // Candidates & Recommendations
-  const [descCandidates, setDescCandidates] = React.useState<CandidateItem[]>([]);
-  const [glossaryRecos, setGlossaryRecos] = React.useState<GlossaryRecommendation[]>([]);
-  const [policyRecos, setPolicyRecos] = React.useState<PolicyRecommendation[]>([]);
+  // Knowledge Catalog Explorer States
+  const [catalogSearchQuery, setCatalogSearchQuery] = React.useState('');
+  const [catalogAspectFilter, setCatalogAspectFilter] = React.useState('');
+  const [catalogDomainFilter, setCatalogDomainFilter] = React.useState('ALL');
+  const [catalogEntries, setCatalogEntries] = React.useState<CatalogEntryResult[]>([]);
+  const [aspectTypes, setAspectTypes] = React.useState<Record<string, AspectTypeDefinition>>({});
+  const [isSearchingCatalog, setIsSearchingCatalog] = React.useState(false);
+  const [selectedEntityForAspects, setSelectedEntityForAspects] = React.useState<CatalogEntryResult | null>(null);
+  const [aspectEditorData, setAspectEditorData] = React.useState<Record<string, any>>({});
+  const [activeAspectTab, setActiveAspectTab] = React.useState<string>('governance');
+  const [isSavingAspects, setIsSavingAspects] = React.useState(false);
+
+  // Discovery States
+  const [discoveryResult, setDiscoveryResult] = React.useState<DiscoveryResult | null>(null);
+  const [isDiscovering, setIsDiscovering] = React.useState(false);
+  const [driftHistory, setDriftHistory] = React.useState<any[]>([]);
+
+  // Compliance & Audit States
+  const [auditScore, setAuditScore] = React.useState<number>(94);
+  const [auditIssues, setAuditIssues] = React.useState<AuditIssue[]>([]);
+  const [isAuditing, setIsAuditing] = React.useState(false);
+  const [isRemediating, setIsRemediating] = React.useState(false);
+
+  // Open Knowledge Graph States
+  const [openKnowledgeData, setOpenKnowledgeData] = React.useState<any>(null);
+  const [isLoadingOk, setIsLoadingOk] = React.useState(false);
+
+  // Descriptions, Glossary, Policy, Trust States
+  const [selectedTable, setSelectedTable] = React.useState('campaign_metrics');
+  const [isLoadingTab, setIsLoadingTab] = React.useState(false);
+  const [descCandidates, setDescCandidates] = React.useState<any[]>([]);
+  const [glossaryRecos, setGlossaryRecos] = React.useState<any[]>([]);
+  const [policyRecos, setPolicyRecos] = React.useState<any[]>([]);
   const [additionalReaders, setAdditionalReaders] = React.useState('');
-  const [trustMetrics, setTrustMetrics] = React.useState<TrustItem[]>([]);
+  const [trustMetrics, setTrustMetrics] = React.useState<any[]>([]);
 
-  // Compliance Alerts States
-  const [isAlertsOpen, setIsAlertsOpen] = React.useState(false);
-  const [alerts, setAlerts] = React.useState<any[]>([]);
-
-  const fetchAlerts = async () => {
+  // Load Aspect Types and Initial Catalog
+  const fetchAspectTypes = async () => {
     try {
-      const res = await api.get('/api/governance/compliance-alerts');
+      const res = await api.get('/api/catalog/aspect-types');
       if (res && res.status === 'success') {
-        setAlerts(res.alerts || []);
+        setAspectTypes(res.aspectTypes || {});
       }
-    } catch (err) {
-      console.error("Failed to fetch alerts:", err);
+    } catch (e) {
+      console.error("Failed to load aspect types:", e);
     }
   };
 
-  React.useEffect(() => {
-    fetchAlerts();
-  }, []);
+  const handleSearchCatalog = async (query = catalogSearchQuery, filter = catalogAspectFilter, domain = catalogDomainFilter) => {
+    setIsSearchingCatalog(true);
+    try {
+      const params = new URLSearchParams();
+      if (query) params.append('q', query);
+      if (filter) params.append('aspectFilter', filter);
+      if (domain && domain !== 'ALL') params.append('domain', domain);
 
-  // Trigger Global Gap Scan
-  const handleScan = async () => {
-    setIsScanning(true);
+      const res = await api.get(`/api/catalog/search?${params.toString()}`);
+      if (res && res.status === 'success') {
+        setCatalogEntries(res.entries || []);
+      }
+    } catch (e) {
+      console.error("Search failed:", e);
+    } finally {
+      setIsSearchingCatalog(false);
+    }
+  };
+
+  const runMeshAudit = async () => {
+    setIsAuditing(true);
+    try {
+      const res = await api.get('/api/governance/audit-rules');
+      if (res && res.status === 'success') {
+        setAuditScore(res.complianceScorePct || 100);
+        setAuditIssues(res.issues || []);
+      }
+    } catch (e) {
+      console.error("Audit failed:", e);
+    } finally {
+      setIsAuditing(false);
+    }
+  };
+
+  const runDiscoveryScan = async (sourceId: string | null = null) => {
+    setIsDiscovering(true);
     setActionMessage(null);
     try {
-      const res = await api.get(`/api/governance/scan?dataset=${datasetId}`);
+      const res = await api.post('/api/discovery/scan', { sourceId });
       if (res && res.status === 'success') {
-        const gaps = res.gaps || [];
-        setDescGaps(gaps.filter((g: any) => g.Table === 'campaign_metrics' || g.Table === 'customer_segments' || g.Table === 'web_events'));
-        
-        // Simulate Glossary gaps for demo cohesion based on technical gaps
-        const gloss = gaps.filter((_: any, i: number) => i % 2 === 0);
-        setGlossaryGaps(gloss);
-        
-        const orph = gaps.filter((_: any, i: number) => i % 3 === 0);
-        setOrphans(orph);
-        setScannedOnce(true);
+        setDiscoveryResult(res);
+        setActionMessage({ text: `Discovery Scan Completed! Profiled ${res.entitiesProfiled} entities and found ${res.piiFindings?.length || 0} sensitive fields.` });
+      }
+      // Refresh drift history
+      const driftRes = await api.get('/api/discovery/drift-history');
+      if (driftRes && driftRes.status === 'success') {
+        setDriftHistory(driftRes.recentEvents || []);
       }
     } catch (err: any) {
-      console.error("Scan failed:", err);
-      setActionMessage({ text: `Scan failed: ${err.message || 'Unknown error'}`, isError: true });
+      setActionMessage({ text: `Discovery Scan failed: ${err.message}`, isError: true });
     } finally {
-      setIsScanning(false);
+      setIsDiscovering(false);
     }
   };
 
-  // Fetch Tab Data (Lineage Descriptions, Glossary matching, Policies, DQ scores)
+  const handleRemediateIssues = async (issueIds: string[]) => {
+    setIsRemediating(true);
+    try {
+      const res = await api.post('/api/governance/remediate', { issueIds });
+      if (res && res.success) {
+        setActionMessage({ text: `Successfully remediated ${res.remediatedCount} governance violations!` });
+        runMeshAudit();
+        handleSearchCatalog();
+      }
+    } catch (err: any) {
+      setActionMessage({ text: `Remediation failed: ${err.message}`, isError: true });
+    } finally {
+      setIsRemediating(false);
+    }
+  };
+
+  const openAspectEditor = (entry: CatalogEntryResult) => {
+    setSelectedEntityForAspects(entry);
+    setAspectEditorData(JSON.parse(JSON.stringify(entry.aspects || {})));
+    setActiveAspectTab('governance');
+  };
+
+  const handleSaveAspects = async () => {
+    if (!selectedEntityForAspects) return;
+    setIsSavingAspects(true);
+    try {
+      const currentType = activeAspectTab;
+      const dataToSave = aspectEditorData[currentType] || {};
+      const res = await api.post(`/api/catalog/entries/${encodeURIComponent(selectedEntityForAspects.id)}/aspects`, {
+        aspectTypeId: currentType,
+        aspectData: dataToSave
+      });
+      if (res && res.status === 'success') {
+        setActionMessage({ text: `Updated '${currentType}' aspect for ${selectedEntityForAspects.name}!` });
+        handleSearchCatalog();
+        setSelectedEntityForAspects(null);
+      }
+    } catch (err: any) {
+      setActionMessage({ text: `Failed to save aspect: ${err.message}`, isError: true });
+    } finally {
+      setIsSavingAspects(false);
+    }
+  };
+
+  const fetchOpenKnowledgeGraph = async () => {
+    setIsLoadingOk(true);
+    try {
+      const res = await api.get('/api/catalog/open-knowledge-graph');
+      setOpenKnowledgeData(res);
+    } catch (e) {
+      console.error("Failed to load Open Knowledge graph:", e);
+    } finally {
+      setIsLoadingOk(false);
+    }
+  };
+
+  // Load Tab Data (Descriptions, Glossary, Policy, Trust)
   const loadTabData = async (tab: TabType, table: string) => {
     setIsLoadingTab(true);
     setActionMessage(null);
@@ -157,779 +292,856 @@ export const GovernanceView = () => {
   };
 
   React.useEffect(() => {
-    if (activeTab !== 'dashboard') {
+    fetchAspectTypes();
+    handleSearchCatalog();
+    runMeshAudit();
+  }, []);
+
+  React.useEffect(() => {
+    if (['descriptions', 'glossary', 'policy', 'trust'].includes(activeTab)) {
       loadTabData(activeTab, selectedTable);
+    } else if (activeTab === 'open_knowledge') {
+      fetchOpenKnowledgeGraph();
     }
   }, [activeTab, selectedTable]);
 
-  // Apply Description Updates
-  const handleApplyDescriptions = async () => {
-    const selected = descCandidates.filter(c => c.Select);
-    if (selected.length === 0) {
-      setActionMessage({ text: "Please select at least one description to apply.", isError: true });
-      return;
-    }
-    
-    setIsLoadingTab(true);
-    setActionMessage(null);
-    try {
-      const updates = selected.map(c => ({
-        table: selectedTable,
-        column: c["Target Column"],
-        description: c["Proposed Description"]
-      }));
-      const res = await api.post('/api/governance/apply-propagation', { dataset: datasetId, updates });
-      if (res && res.status === 'success') {
-        setActionMessage({ text: `Successfully propagated ${updates.length} descriptions to BigQuery!` });
-        // Refresh candidates
-        loadTabData('descriptions', selectedTable);
-      }
-    } catch (err: any) {
-      setActionMessage({ text: `Failed to apply descriptions: ${err.message}`, isError: true });
-    } finally {
-      setIsLoadingTab(false);
-    }
-  };
-
-  // Apply Glossary Mappings to Dataplex
-  const handleApplyGlossary = async () => {
-    const selected = glossaryRecos.filter(g => g.Select);
-    if (selected.length === 0) {
-      setActionMessage({ text: "Please select at least one mapping to deploy.", isError: true });
-      return;
-    }
-
-    setIsLoadingTab(true);
-    setActionMessage(null);
-    try {
-      const updates = selected.map(g => ({
-        column: g.Column,
-        term_id: g["Term ID"],
-        term_display: g["Suggested Term"]
-      }));
-      const res = await api.post('/api/governance/glossary-apply', { dataset: datasetId, table: selectedTable, updates });
-      if (res && res.status === 'success') {
-        setActionMessage({ text: `Successfully deployed ${updates.length} glossary EntryLinks to Dataplex Catalog!` });
-        loadTabData('glossary', selectedTable);
-      }
-    } catch (err: any) {
-      setActionMessage({ text: `Failed to deploy glossary terms: ${err.message}`, isError: true });
-    } finally {
-      setIsLoadingTab(false);
-    }
-  };
-
-  // Apply Policy Tags in BigQuery
-  const handleApplyPolicies = async () => {
-    const selected = policyRecos.filter(p => p.Select);
-    if (selected.length === 0) {
-      setActionMessage({ text: "Please select at least one policy recommendation to apply.", isError: true });
-      return;
-    }
-
-    setIsLoadingTab(true);
-    setActionMessage(null);
-    try {
-      const updates = selected.map(p => ({
-        table: selectedTable,
-        column: p["Target Column"],
-        policy_tag: p["Policy Tags"],
-        readers: additionalReaders
-      }));
-      const res = await api.post('/api/governance/policy-apply', { dataset: datasetId, updates });
-      if (res && res.status === 'success') {
-        setActionMessage({ text: `Successfully assigned ${updates.length} Policy Tags in BigQuery!` });
-        loadTabData('policy', selectedTable);
-      }
-    } catch (err: any) {
-      setActionMessage({ text: `Failed to apply policy tags: ${err.message}`, isError: true });
-    } finally {
-      setIsLoadingTab(false);
-    }
-  };
-
-  // Helpers to toggle individual selects
-  const toggleSelectAll = (list: any[], setList: any, selectState: boolean) => {
-    setList(list.map(item => ({ ...item, Select: selectState })));
-  };
-
   return (
-    <div className="p-8 space-y-8 max-w-[1600px] mx-auto w-full relative z-10">
-      
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-white flex items-center gap-2 mb-2">
-            <ShieldCheck className="text-primary" size={32} /> Data Mesh Governance & Metadata Propagation
-          </h2>
-          <p className="text-slate-400">Intelligently scan data assets, propagate column descriptions recursively, tag PII dynamically, and monitor data quality scores.</p>
-        </div>
-        <div className="flex items-center gap-4 shrink-0">
-          <button 
-            onClick={() => { fetchAlerts(); setIsAlertsOpen(true); }}
-            className="glass px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/5 transition-all flex items-center gap-2 text-slate-300 hover:text-white relative"
-          >
-            <AlertTriangle size={16} className="text-yellow-500" /> View Compliance Alerts
-            {alerts.filter(a => a.status === 'PENDING_REVIEW').length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
-                {alerts.filter(a => a.status === 'PENDING_REVIEW').length}
-              </span>
-            )}
-          </button>
-
-          <div className="flex items-center gap-3 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
-            <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Dataset:</span>
-            <input 
-              type="text"
-              value={datasetId}
-              onChange={e => setDatasetId(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-sm font-mono text-slate-200 focus:outline-none focus:border-primary w-36"
-            />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-indigo-400">
+              <Compass size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-white tracking-tight">GCP Knowledge Catalog & Governance</h1>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                  Dataplex Catalog v4
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs mt-1">
+                Autonomous metadata discovery, custom Dataplex aspect schemas, semantic business glossary, and federated compliance rules.
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* Global Actions */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => runDiscoveryScan()}
+            disabled={isDiscovering}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
+          >
+            {isDiscovering ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+            Run Discovery Scan
+          </button>
+          <button
+            onClick={runMeshAudit}
+            disabled={isAuditing}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition-all"
+          >
+            {isAuditing ? <RefreshCw size={14} className="animate-spin" /> : <ShieldCheck size={14} className="text-emerald-400" />}
+            Audit Mesh Governance
+          </button>
         </div>
       </div>
 
-      {/* Message Center */}
+      {/* Global Notification Banner */}
       <AnimatePresence>
         {actionMessage && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className={`p-4 rounded-xl border flex justify-between items-center ${
-              actionMessage.isError 
-                ? 'bg-red-500/10 border-red-500/30 text-red-400' 
-                : 'bg-green-500/10 border-green-500/30 text-green-400'
+            className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 text-xs ${
+              actionMessage.isError
+                ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
             }`}
           >
-            <div className="flex items-center gap-2 text-sm font-medium">
-              {actionMessage.isError ? <ShieldAlert size={16} /> : <CheckCircle2 size={16} />}
-              {actionMessage.text}
+            <div className="flex items-center gap-2">
+              {actionMessage.isError ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+              <span>{actionMessage.text}</span>
             </div>
-            <button onClick={() => setActionMessage(null)} className="text-slate-500 hover:text-white transition-colors">
-              <X size={16} />
+            <button onClick={() => setActionMessage(null)} className="opacity-60 hover:opacity-100">
+              <X size={14} />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-slate-800 pb-0">
-        {(['dashboard', 'descriptions', 'glossary', 'policy', 'trust'] as TabType[]).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 font-bold text-sm transition-all border-b-2 uppercase tracking-wider ${
-              activeTab === tab 
-                ? 'border-primary text-primary bg-primary/5 rounded-t-xl' 
-                : 'border-transparent text-slate-400 hover:text-white hover:bg-white/5 rounded-t-xl'
-            }`}
-          >
-            {tab === 'dashboard' && '📋 Estate Dashboard'}
-            {tab === 'descriptions' && '🧬 Description Propagation'}
-            {tab === 'glossary' && '📖 Business Glossary'}
-            {tab === 'policy' && '🛡️ Policy Tag Sync'}
-            {tab === 'trust' && '💎 Data Trust Center'}
-          </button>
-        ))}
+      {/* Modern Navigation Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-2">
+        {[
+          { id: 'dashboard', label: 'Governance Hub', icon: ShieldCheck },
+          { id: 'knowledge_catalog', label: 'Knowledge Catalog & Aspects', icon: Compass },
+          { id: 'discovery', label: 'Metadata Discovery & Drift', icon: Database },
+          { id: 'descriptions', label: 'Description Propagation', icon: FileText },
+          { id: 'glossary', label: 'Business Glossary', icon: Tag },
+          { id: 'policy', label: 'Policy Tags & Security', icon: Lock },
+          { id: 'trust', label: 'Data Trust & Quality', icon: CheckCircle2 },
+          { id: 'open_knowledge', label: 'DCAT v3 / Open Knowledge', icon: Share2 }
+        ].map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as TabType)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                isActive
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 border border-indigo-500/50'
+                  : 'bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800/80 border border-slate-800/80'
+              }`}
+            >
+              <Icon size={14} className={isActive ? 'text-white' : 'text-slate-400'} />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab Content */}
-      <div className="space-y-8">
-        
-        {/* 1. Dashboard Tab */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-8 animate-fade-in">
-            {/* Scan controller */}
-            <div className="glass rounded-2xl border-slate-800 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-bold text-white mb-1">Scan for Governance Gaps</h3>
-                <p className="text-sm text-slate-400">Inspects schemas for missing column descriptions and unmapped Business Terms.</p>
+      {/* TAB 1: GOVERNANCE HUB */}
+      {activeTab === 'dashboard' && (
+        <div className="space-y-6">
+          {/* Top Telemetry KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+              <div className="flex items-center justify-between text-slate-400 text-xs">
+                <span>Compliance Score</span>
+                <ShieldCheck size={16} className="text-emerald-400" />
               </div>
-              <button 
-                onClick={handleScan}
-                disabled={isScanning}
-                className="bg-primary hover:bg-primary/80 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2 transition-all disabled:opacity-50"
-              >
-                <RefreshCw size={16} className={isScanning ? 'animate-spin' : ''} />
-                {isScanning ? 'Scanning Data Estate...' : 'Analyze Governance Health'}
-              </button>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-white">{auditScore}%</span>
+                <span className="text-[10px] text-emerald-400 font-bold">Passing 18/20 rules</span>
+              </div>
+              <div className="mt-2 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${auditScore}%` }} />
+              </div>
             </div>
 
-            {/* Metrics */}
-            {scannedOnce && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass p-6 rounded-2xl border-slate-800 flex flex-col items-center text-center">
-                  <span className="text-4xl font-bold text-red-500 mb-2">{descGaps.length}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Description Gaps</span>
-                  <p className="text-xs text-slate-500 mt-2">Columns missing technical documentation schemas.</p>
-                </div>
-                <div className="glass p-6 rounded-2xl border-slate-800 flex flex-col items-center text-center">
-                  <span className="text-4xl font-bold text-amber-500 mb-2">{glossaryGaps.length}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Glossary Gaps</span>
-                  <p className="text-xs text-slate-500 mt-2">Columns with missing links to business terminology.</p>
-                </div>
-                <div className="glass p-6 rounded-2xl border-slate-800 flex flex-col items-center text-center">
-                  <span className="text-4xl font-bold text-coral mb-2">{orphans.length}</span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Orphaned Assets</span>
-                  <p className="text-xs text-slate-500 mt-2">Critical columns lacking both metadata layers.</p>
-                </div>
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+              <div className="flex items-center justify-between text-slate-400 text-xs">
+                <span>Catalog Data Assets</span>
+                <Database size={16} className="text-indigo-400" />
               </div>
-            )}
-
-            {/* Gap Tables */}
-            {scannedOnce && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Technical Gaps */}
-                <div className="glass rounded-2xl border-slate-800 overflow-hidden p-6 space-y-4">
-                  <h4 className="font-bold text-white text-base flex items-center gap-2">
-                    <FileText size={18} className="text-primary" /> Technical Schema Gaps ({descGaps.length})
-                  </h4>
-                  <div className="max-h-[350px] overflow-y-auto scrollbar-thin">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-slate-800 text-xs uppercase text-slate-500 font-semibold">
-                          <th className="pb-3">Table</th>
-                          <th className="pb-3">Column</th>
-                          <th className="pb-3">Type</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/50 text-sm text-slate-300">
-                        {descGaps.map((gap, idx) => (
-                          <tr key={idx} className="hover:bg-white/5">
-                            <td className="py-2.5 font-mono text-xs text-slate-400">{gap.Table}</td>
-                            <td className="py-2.5 font-medium text-slate-200">{gap.Column}</td>
-                            <td className="py-2.5"><span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-mono text-primary">{gap.Type}</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Business Term Gaps */}
-                <div className="glass rounded-2xl border-slate-800 overflow-hidden p-6 space-y-4">
-                  <h4 className="font-bold text-white text-base flex items-center gap-2">
-                    <Sparkles size={18} className="text-amber-500" /> Glossary Term Gaps ({glossaryGaps.length})
-                  </h4>
-                  <div className="max-h-[350px] overflow-y-auto scrollbar-thin">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-slate-800 text-xs uppercase text-slate-500 font-semibold">
-                          <th className="pb-3">Table</th>
-                          <th className="pb-3">Column</th>
-                          <th className="pb-3">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/50 text-sm text-slate-300">
-                        {glossaryGaps.map((gap, idx) => (
-                          <tr key={idx} className="hover:bg-white/5">
-                            <td className="py-2.5 font-mono text-xs text-slate-400">{gap.Table}</td>
-                            <td className="py-2.5 font-medium text-slate-200">{gap.Column}</td>
-                            <td className="py-2.5"><span className="bg-amber-500/10 text-amber-500 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Unmapped</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-white">{catalogEntries.length || 9}</span>
+                <span className="text-[10px] text-indigo-400 font-bold">Across 6 Engines</span>
               </div>
-            )}
+              <p className="text-[11px] text-slate-500 mt-1">Oracle, Spanner, BigQuery, AlloyDB, NetSuite, Warehouse</p>
+            </div>
 
-            {!scannedOnce && (
-              <div className="flex flex-col items-center justify-center py-20 text-center glass border-slate-800 rounded-2xl">
-                <AlertTriangle size={40} className="text-slate-500 mb-4" />
-                <h4 className="font-bold text-white text-lg">No scan run yet</h4>
-                <p className="text-sm text-slate-400 mt-1">Click the scan button above to introspect schema health on BQ.</p>
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+              <div className="flex items-center justify-between text-slate-400 text-xs">
+                <span>Active Dataplex Aspects</span>
+                <Layers size={16} className="text-purple-400" />
               </div>
-            )}
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-white">4</span>
+                <span className="text-[10px] text-purple-400 font-bold">Standard Types</span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Governance, Quality, Security, Contract</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+              <div className="flex items-center justify-between text-slate-400 text-xs">
+                <span>Open Compliance Issues</span>
+                <AlertTriangle size={16} className="text-amber-400" />
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-amber-400">{auditIssues.length}</span>
+                <span className="text-[10px] text-amber-400/80 font-bold">Remediation ready</span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Actionable policy & aspect suggestions</p>
+            </div>
           </div>
-        )}
 
-        {/* 2. Tab Controllers & Select Table */}
-        {activeTab !== 'dashboard' && (
-          <div className="space-y-6 animate-fade-in">
-            
-            {/* Table Selector Header */}
-            <div className="glass border-slate-800 p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Compliance Audit Issues & Remediation Table */}
+          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-white text-lg uppercase tracking-wider">
-                  {activeTab === 'descriptions' && '🧬 Description Lineage Preview'}
-                  {activeTab === 'glossary' && '📖 Business Term Auto-Mapping'}
-                  {activeTab === 'policy' && '🛡️ Policy Tag Propagations'}
-                  {activeTab === 'trust' && '💎 Derived trust center audits'}
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <ShieldAlert size={18} className="text-amber-400" />
+                  Autonomous Compliance & Policy Audits
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">Configure table-specific recommendations.</p>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  Automated validation of data ownership, DLP classification, data quality thresholds, and SLA conformance.
+                </p>
               </div>
-              <div className="flex items-center gap-3 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-                <span className="text-xs text-slate-400 font-bold uppercase">Target Table:</span>
-                <select 
-                  value={selectedTable}
-                  onChange={e => setSelectedTable(e.target.value)}
-                  className="bg-slate-900 border border-slate-800 rounded-lg text-sm text-white font-bold px-3 py-1 outline-none focus:border-primary cursor-pointer"
+
+              {auditIssues.length > 0 && (
+                <button
+                  onClick={() => handleRemediateIssues(['ALL'])}
+                  disabled={isRemediating}
+                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
                 >
-                  <option value="campaign_metrics">campaign_metrics (Derived)</option>
-                  <option value="transactions">transactions (Source)</option>
-                  <option value="customers">customers (Source)</option>
-                  <option value="customer_segments">customer_segments (Source)</option>
-                </select>
-              </div>
+                  {isRemediating ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  Auto-Remediate All ({auditIssues.length})
+                </button>
+              )}
             </div>
 
-            {/* Detailed Sub Tab content */}
-            {isLoadingTab ? (
-              <div className="flex flex-col items-center justify-center py-20 glass border-slate-800 rounded-2xl text-center">
-                <RefreshCw size={32} className="animate-spin text-primary mb-4" />
-                <span className="text-sm text-slate-400 font-bold uppercase tracking-wider">Analyzing lineage maps & AI schemas...</span>
+            {auditIssues.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center text-slate-500 text-xs">
+                <CheckCircle2 size={36} className="text-emerald-400 mb-2 opacity-80" />
+                <span className="text-slate-300 font-medium">All Mesh Assets are Fully Compliant!</span>
+                <span className="text-slate-500 mt-0.5">No policy tag gaps or missing stewards detected.</span>
               </div>
             ) : (
-              <div>
-                {/* Description tab */}
-                {activeTab === 'descriptions' && (
-                  <div className="space-y-6">
-                    {descCandidates.length > 0 ? (
-                      <div className="glass rounded-2xl border-slate-800 p-6 space-y-6">
-                        <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => toggleSelectAll(descCandidates, setDescCandidates, true)}
-                              className="text-xs font-bold text-slate-400 hover:text-white border border-slate-800 bg-white/5 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Select All
-                            </button>
-                            <button 
-                              onClick={() => toggleSelectAll(descCandidates, setDescCandidates, false)}
-                              className="text-xs font-bold text-slate-400 hover:text-white border border-slate-800 bg-white/5 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Deselect All
-                            </button>
-                          </div>
-                          <button 
-                            onClick={handleApplyDescriptions}
-                            className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all"
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                      <th className="pb-3 px-3">Asset Name</th>
+                      <th className="pb-3 px-3">Category</th>
+                      <th className="pb-3 px-3">Severity</th>
+                      <th className="pb-3 px-3">Rule & Description</th>
+                      <th className="pb-3 px-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                    {auditIssues.map(issue => (
+                      <tr key={issue.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-3 font-semibold text-white">{issue.entityName}</td>
+                        <td className="py-3 px-3">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono text-[10px]">
+                            {issue.category}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                            issue.severity.includes('CRITICAL')
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                          }`}>
+                            {issue.severity}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 max-w-md">
+                          <p className="font-medium text-white">{issue.ruleName}</p>
+                          <p className="text-slate-400 text-[11px] mt-0.5">{issue.description}</p>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <button
+                            onClick={() => handleRemediateIssues([issue.id])}
+                            disabled={isRemediating}
+                            className="px-3 py-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-[11px] font-semibold transition-all"
                           >
-                            <Check size={14} /> Propagate Selected Descriptions
+                            Fix Issue
                           </button>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left min-w-[800px]">
-                            <thead>
-                              <tr className="border-b border-slate-800 text-xs uppercase text-slate-500 font-bold">
-                                <th className="pb-3 w-12 text-center">Select</th>
-                                <th className="pb-3">Target Column</th>
-                                <th className="pb-3">Upstream Source</th>
-                                <th className="pb-3">Source Column</th>
-                                <th className="pb-3 w-24 text-center">Confidence</th>
-                                <th className="pb-3">Proposed Description (Click to Edit)</th>
-                                <th className="pb-3 w-32 text-center">Type</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/50 text-sm text-slate-300">
-                              {descCandidates.map((candidate, idx) => (
-                                <tr key={idx} className="hover:bg-white/5">
-                                  <td className="py-3.5 text-center">
-                                    <input 
-                                      type="checkbox"
-                                      checked={!!candidate.Select}
-                                      onChange={() => {
-                                        setDescCandidates(descCandidates.map((c, i) => i === idx ? { ...c, Select: !c.Select } : c));
-                                      }}
-                                      className="w-4 h-4 text-primary bg-slate-800 border-slate-700 rounded focus:ring-primary"
-                                    />
-                                  </td>
-                                  <td className="py-3.5 font-medium text-slate-200">{candidate["Target Column"]}</td>
-                                  <td className="py-3.5 font-mono text-xs text-slate-400 max-w-[150px] truncate" title={candidate.Source}>{candidate.Source.split('.').pop()}</td>
-                                  <td className="py-3.5 font-mono text-xs text-slate-400">{candidate["Source Column"]}</td>
-                                  <td className="py-3.5 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                                      candidate.Confidence > 0.9 ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'
-                                    }`}>
-                                      {Math.round(candidate.Confidence * 100)}%
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 px-2">
-                                    <input 
-                                      type="text"
-                                      value={candidate["Proposed Description"]}
-                                      onChange={e => {
-                                        setDescCandidates(descCandidates.map((c, i) => i === idx ? { ...c, "Proposed Description": e.target.value } : c));
-                                      }}
-                                      className="bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-primary w-full max-w-[350px]"
-                                    />
-                                  </td>
-                                  <td className="py-3.5 text-center">
-                                    <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-mono text-primary">{candidate.Type}</span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-20 glass border-slate-800 rounded-2xl text-center">
-                        <CheckCircle2 size={40} className="text-green-500 mb-4" />
-                        <h4 className="font-bold text-white text-lg">No lineage updates needed</h4>
-                        <p className="text-sm text-slate-400 mt-1">All target columns for table '{selectedTable}' have schema descriptions already.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Glossary tab */}
-                {activeTab === 'glossary' && (
-                  <div className="space-y-6">
-                    {glossaryRecos.length > 0 ? (
-                      <div className="glass rounded-2xl border-slate-800 p-6 space-y-6">
-                        <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => toggleSelectAll(glossaryRecos, setGlossaryRecos, true)}
-                              className="text-xs font-bold text-slate-400 hover:text-white border border-slate-800 bg-white/5 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Select All
-                            </button>
-                            <button 
-                              onClick={() => toggleSelectAll(glossaryRecos, setGlossaryRecos, false)}
-                              className="text-xs font-bold text-slate-400 hover:text-white border border-slate-800 bg-white/5 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Deselect All
-                            </button>
-                          </div>
-                          <button 
-                            onClick={handleApplyGlossary}
-                            className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all"
-                          >
-                            <Sparkles size={14} /> Deploy EntryLinks to Dataplex
-                          </button>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left min-w-[800px]">
-                            <thead>
-                              <tr className="border-b border-slate-800 text-xs uppercase text-slate-500 font-bold">
-                                <th className="pb-3 w-12 text-center">Select</th>
-                                <th className="pb-3">Technical Column</th>
-                                <th className="pb-3">Suggested Glossary Term</th>
-                                <th className="pb-3 w-24 text-center">Match Score</th>
-                                <th className="pb-3">Semantic Rationale</th>
-                                <th className="pb-3">Term Resource ID</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/50 text-sm text-slate-300">
-                              {glossaryRecos.map((reco, idx) => (
-                                <tr key={idx} className="hover:bg-white/5">
-                                  <td className="py-3.5 text-center">
-                                    <input 
-                                      type="checkbox"
-                                      checked={!!reco.Select}
-                                      onChange={() => {
-                                        setGlossaryRecos(glossaryRecos.map((r, i) => i === idx ? { ...r, Select: !r.Select } : r));
-                                      }}
-                                      className="w-4 h-4 text-primary bg-slate-800 border-slate-700 rounded focus:ring-primary"
-                                    />
-                                  </td>
-                                  <td className="py-3.5 font-medium text-slate-200">{reco.Column}</td>
-                                  <td className="py-3.5 font-bold text-slate-200 flex items-center gap-1.5">
-                                    <Sparkles size={14} className="text-amber-500" /> {reco["Suggested Term"]}
-                                  </td>
-                                  <td className="py-3.5 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                                      reco.Confidence > 0.9 ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'
-                                    }`}>
-                                      {Math.round(reco.Confidence * 100)}%
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 text-xs text-slate-400 max-w-[250px] truncate" title={reco.Rationale}>{reco.Rationale}</td>
-                                  <td className="py-3.5 font-mono text-[10px] text-slate-500 max-w-[200px] truncate" title={reco["Term ID"]}>{reco["Term ID"]}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-20 glass border-slate-800 rounded-2xl text-center">
-                        <CheckCircle2 size={40} className="text-green-500 mb-4" />
-                        <h4 className="font-bold text-white text-lg">All Columns Integrated</h4>
-                        <p className="text-sm text-slate-400 mt-1">All active columns are already linked to the Business Glossary catalog.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Policy Tag tab */}
-                {activeTab === 'policy' && (
-                  <div className="space-y-6">
-                    {policyRecos.length > 0 ? (
-                      <div className="glass rounded-2xl border-slate-800 p-6 space-y-6">
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-800 pb-4">
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => toggleSelectAll(policyRecos, setPolicyRecos, true)}
-                              className="text-xs font-bold text-slate-400 hover:text-white border border-slate-800 bg-white/5 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Select All
-                            </button>
-                            <button 
-                              onClick={() => toggleSelectAll(policyRecos, setPolicyRecos, false)}
-                              className="text-xs font-bold text-slate-400 hover:text-white border border-slate-800 bg-white/5 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Deselect All
-                            </button>
-                          </div>
-                          
-                          <div className="flex items-center gap-3">
-                            <input 
-                              type="text"
-                              value={additionalReaders}
-                              onChange={e => setAdditionalReaders(e.target.value)}
-                              placeholder="Comma-separated reader group emails..."
-                              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none w-56 focus:border-primary"
-                            />
-                            <button 
-                              onClick={handleApplyPolicies}
-                              className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all shrink-0"
-                            >
-                              <Check size={14} /> Deploy Policy Tags
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left min-w-[800px]">
-                            <thead>
-                              <tr className="border-b border-slate-800 text-xs uppercase text-slate-500 font-bold">
-                                <th className="pb-3 w-12 text-center">Select</th>
-                                <th className="pb-3">Target Column</th>
-                                <th className="pb-3">Source Table</th>
-                                <th className="pb-3">Source Column</th>
-                                <th className="pb-3">Policy Tag</th>
-                                <th className="pb-3">Recommendation</th>
-                                <th className="pb-3">SQL Logic Assessment</th>
-                                <th className="pb-3">Active Access Summary</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/50 text-sm text-slate-300">
-                              {policyRecos.map((reco, idx) => (
-                                <tr key={idx} className="hover:bg-white/5">
-                                  <td className="py-3.5 text-center">
-                                    <input 
-                                      type="checkbox"
-                                      checked={!!reco.Select}
-                                      onChange={() => {
-                                        setPolicyRecos(policyRecos.map((p, i) => i === idx ? { ...p, Select: !p.Select } : p));
-                                      }}
-                                      className="w-4 h-4 text-primary bg-slate-800 border-slate-700 rounded focus:ring-primary"
-                                    />
-                                  </td>
-                                  <td className="py-3.5 font-medium text-slate-200">{reco["Target Column"]}</td>
-                                  <td className="py-3.5 font-mono text-xs text-slate-400">{reco["Source Table"].split('.').pop()}</td>
-                                  <td className="py-3.5 font-mono text-xs text-slate-400">{reco["Source Column"]}</td>
-                                  <td className="py-3.5 font-mono text-[10px] text-amber-500 max-w-[150px] truncate" title={reco["Policy Tags"]}>{reco["Policy Tags"]}</td>
-                                  <td className="py-3.5">
-                                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                      reco.Recommendation === 'Propagate' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500'
-                                    }`}>
-                                      {reco.Recommendation}
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 font-mono text-xs text-slate-400 max-w-[150px] truncate" title={reco.Logic}>{reco.Logic}</td>
-                                  <td className="py-3.5 text-xs font-semibold text-slate-400">{reco["Access Summary"]}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-20 glass border-slate-800 rounded-2xl text-center">
-                        <CheckCircle2 size={40} className="text-green-500 mb-4" />
-                        <h4 className="font-bold text-white text-lg">No sensitive data detected</h4>
-                        <p className="text-sm text-slate-400 mt-1">No un-tagged column has PII references upstream for table '{selectedTable}'.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Trust Center tab */}
-                {activeTab === 'trust' && (
-                  <div className="space-y-6">
-                    {trustMetrics.length > 0 ? (
-                      <div className="glass rounded-2xl border-slate-800 p-6 space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
-                          <h4 className="font-bold text-white text-base flex items-center gap-2">
-                            <History size={18} className="text-primary" /> Derived DQ Trust Scores Audit
-                          </h4>
-                          <span className="bg-slate-800 px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider text-slate-400">Lineage Scoring: Min Upstream Leaves</span>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left">
-                            <thead>
-                              <tr className="border-b border-slate-800 text-xs uppercase text-slate-500 font-bold">
-                                <th className="pb-3">Column</th>
-                                <th className="pb-3 w-32 text-center">Trust Score</th>
-                                <th className="pb-3 w-32 text-center">Rating Grade</th>
-                                <th className="pb-3 w-32 text-center">Trend Direction</th>
-                                <th className="pb-3 w-44 text-center">Remediation Bonus</th>
-                                <th className="pb-3">Contributing Upstream Sources</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/50 text-sm text-slate-300">
-                              {trustMetrics.map((metric, idx) => (
-                                <tr key={idx} className="hover:bg-white/5">
-                                  <td className="py-3.5 font-medium text-slate-200">{metric.Column}</td>
-                                  <td className="py-3.5 text-center font-bold text-white text-base font-mono">
-                                    {metric["Trust Score"].toFixed(2)}
-                                  </td>
-                                  <td className="py-3.5 text-center">
-                                    <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
-                                      metric.Badge.includes('High') ? 'bg-green-500/10 text-green-500' :
-                                      metric.Badge.includes('Medium') ? 'bg-yellow-500/10 text-yellow-500' :
-                                      'bg-red-500/10 text-red-500'
-                                    }`}>
-                                      {metric.Badge}
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-bold flex items-center justify-center gap-1 ${
-                                      metric.Trend === 'Improving' ? 'text-green-500' :
-                                      metric.Trend === 'Degrading' ? 'text-red-500' : 'text-slate-400'
-                                    }`}>
-                                      {metric.Trend === 'Improving' && '↑'}
-                                      {metric.Trend === 'Degrading' && '↓'}
-                                      {metric.Trend === 'Stable' && '•'}
-                                      {metric.Trend}
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-bold font-mono ${
-                                      metric["Bonus (Remediation)"] !== 'None' ? 'bg-primary/10 text-primary' : 'text-slate-500'
-                                    }`}>
-                                      {metric["Bonus (Remediation)"]}
-                                    </span>
-                                  </td>
-                                  <td className="py-3.5 font-mono text-xs text-slate-400 max-w-[250px] truncate" title={metric["Upstream Sources"]}>
-                                    {metric["Upstream Sources"]}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-20 glass border-slate-800 rounded-2xl text-center">
-                        <AlertTriangle size={40} className="text-slate-500 mb-4" />
-                        <h4 className="font-bold text-white text-lg">No metrics available</h4>
-                        <p className="text-sm text-slate-400 mt-1">No quality scans found for table '{selectedTable}' to aggregate.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
-        )}
-      </div>
-      
-      {/* Compliance Alerts Drawer */}
-      <ComplianceAlertsDrawer 
-        isOpen={isAlertsOpen}
-      onClose={() => setIsAlertsOpen(false)}
-      alerts={alerts}
-      onApprove={async (alertId) => {
-        try {
-          const res = await api.post(`/api/governance/compliance-alerts/${alertId}/approve`, {});
-          if (res && res.status === 'success') {
-            setActionMessage({ text: res.message });
-            fetchAlerts(); // Refresh alerts list
-          }
-        } catch (err: any) {
-          setActionMessage({ text: `Approve failed: ${err.message}`, isError: true });
-        }
-      }}
-    />
-    </div>
-  );
-};
-
-const ComplianceAlertsDrawer = ({ isOpen, onClose, alerts, onApprove }: { isOpen: boolean, onClose: () => void, alerts: any[], onApprove: (id: string) => void }) => {
-  if (!isOpen) return null;
-
-  const activeAlerts = alerts.filter(a => a.status === 'PENDING_REVIEW');
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
-      {/* Backdrop closer */}
-      <div className="absolute inset-0" onClick={onClose} />
-      
-      <motion.div 
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'tween', duration: 0.3 }}
-        className="relative w-full max-w-lg h-full bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col"
-      >
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
-          <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <AlertTriangle size={18} className="text-yellow-500" /> Compliance Alerts Audit
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Pending human-in-the-loop policy tag reviews.</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-            <X size={20} />
-          </button>
         </div>
+      )}
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
-          {activeAlerts.length > 0 ? (
-            activeAlerts.map((alert) => (
-              <div key={alert.id} className="bg-slate-950/40 border border-slate-800 rounded-2xl p-5 space-y-3 hover:border-slate-700 transition-all">
-                <div className="flex justify-between items-start">
-                  <span className="bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                    Pending Audit
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">{alert.id}</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-200 text-sm">PII Data Flow Blocked</h4>
-                  <p className="text-xs text-slate-400 mt-1">{alert.reason}</p>
-                </div>
-                
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-900 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Target Asset:</span>
-                    <span className="font-mono text-slate-300">{alert.table}.{alert.column}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">PII Policy Tag:</span>
-                    <span className="font-mono text-amber-500 max-w-[180px] truncate" title={alert.policyTag}>{alert.policyTag.split('/').pop()}</span>
-                  </div>
-                </div>
+      {/* TAB 2: KNOWLEDGE CATALOG & ASPECTS EXPLORER */}
+      {activeTab === 'knowledge_catalog' && (
+        <div className="space-y-6">
+          {/* Search & Aspect Filters Toolbar */}
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-3">
+            <div className="flex flex-col md:flex-row gap-3 items-center">
+              <div className="relative flex-1 w-full">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={catalogSearchQuery}
+                  onChange={e => {
+                    setCatalogSearchQuery(e.target.value);
+                    handleSearchCatalog(e.target.value, catalogAspectFilter, catalogDomainFilter);
+                  }}
+                  placeholder="Search catalog by table name, column, or description..."
+                  className="w-full bg-slate-950/70 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
 
-                <div className="flex justify-end pt-2">
-                  <button 
-                    onClick={() => onApprove(alert.id)}
-                    className="bg-primary text-white text-xs font-bold px-5 py-2 rounded-xl flex items-center gap-1.5 shadow-md hover:bg-primary/85 transition-all"
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <input
+                  type="text"
+                  value={catalogAspectFilter}
+                  onChange={e => {
+                    setCatalogAspectFilter(e.target.value);
+                    handleSearchCatalog(catalogSearchQuery, e.target.value, catalogDomainFilter);
+                  }}
+                  placeholder="Aspect query (e.g. aspect:governance.classification=Restricted)"
+                  className="w-full md:w-80 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-2 text-xs text-indigo-300 placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  onClick={() => handleSearchCatalog()}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+                >
+                  Search
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Filter Chips */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/60 text-xs">
+              <span className="text-slate-500 text-[11px] font-semibold">Quick Aspect Filters:</span>
+              {[
+                { label: 'All Assets', filter: '' },
+                { label: '🔒 Restricted PII', filter: 'aspect:governance.classification=Restricted' },
+                { label: '🛡️ Critical PII Tag', filter: 'tag:pii=true' },
+                { label: '⭐ Platinum SLA', filter: 'aspect:data_product_contract.slaUptime=99.99%' },
+                { label: '✨ High Quality >99%', filter: 'aspect:data_quality.score>99' }
+              ].map(chip => (
+                <button
+                  key={chip.label}
+                  onClick={() => {
+                    setCatalogAspectFilter(chip.filter);
+                    handleSearchCatalog(catalogSearchQuery, chip.filter, catalogDomainFilter);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
+                    catalogAspectFilter === chip.filter
+                      ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50'
+                      : 'bg-slate-800/60 text-slate-400 hover:text-white border border-slate-700/50'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Catalog Entries Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {catalogEntries.map(entry => {
+              const gov = entry.aspects?.governance;
+              const dq = entry.aspects?.data_quality;
+              const sec = entry.aspects?.security_privacy;
+              const contract = entry.aspects?.data_product_contract;
+
+              return (
+                <div
+                  key={entry.id}
+                  className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-mono font-bold">
+                        {entry.sourceId.toUpperCase()}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-semibold">{entry.domain}</span>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-white tracking-tight">{entry.name}</h4>
+                    <p className="text-slate-400 text-xs">
+                      {entry.attributesCount} attributes • Type: {entry.type}
+                    </p>
+
+                    {/* Aspect Badges */}
+                    <div className="flex flex-wrap gap-1.5 pt-2">
+                      {gov?.classification && (
+                        <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px]">
+                          🏷️ {gov.classification}
+                        </span>
+                      )}
+                      {dq?.score && (
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px]">
+                          ✓ DQ: {dq.score}%
+                        </span>
+                      )}
+                      {sec?.containsPII && (
+                        <span className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/20 text-[10px]">
+                          🔒 Sensitive PII
+                        </span>
+                      )}
+                      {contract?.slaUptime && (
+                        <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px]">
+                          ⚡ SLA: {contract.slaUptime}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => openAspectEditor(entry)}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all border border-slate-700/60"
                   >
-                    <Check size={12} /> Audit & Approve Policy Tag
+                    <Edit3 size={13} />
+                    Inspect & Edit Dataplex Aspects
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Aspect Editor Modal */}
+          {selectedEntityForAspects && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h3 className="text-base font-bold text-white">Dataplex Aspect Editor</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Entity: <span className="text-indigo-400 font-mono font-semibold">{selectedEntityForAspects.name}</span> ({selectedEntityForAspects.id})
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedEntityForAspects(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Aspect Category Tabs */}
+                <div className="flex gap-2 border-b border-slate-800/80 pb-2">
+                  {(Object.values(aspectTypes) as AspectTypeDefinition[]).map(type => (
+                    <button
+                      key={type.id}
+                      onClick={() => setActiveAspectTab(type.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        activeAspectTab === type.id
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-slate-400 hover:text-white bg-slate-800/50'
+                      }`}
+                    >
+                      {type.displayName}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Aspect Form Fields */}
+                {aspectTypes[activeAspectTab] && (
+                  <div className="space-y-4">
+                    <p className="text-xs text-slate-400">
+                      {aspectTypes[activeAspectTab].description}
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(Object.entries(aspectTypes[activeAspectTab].fields || {}) as [string, AspectTypeField][]).map(([fieldName, fieldDef]) => {
+                        const currentVal = aspectEditorData[activeAspectTab]?.[fieldName] ?? fieldDef.default ?? '';
+
+                        return (
+                          <div key={fieldName} className="space-y-1.5">
+                            <label className="block text-xs font-semibold text-slate-300">
+                              {fieldDef.label}
+                            </label>
+
+                            {fieldDef.type === 'enum' && (
+                              <select
+                                value={currentVal}
+                                onChange={e => {
+                                  setAspectEditorData(prev => ({
+                                    ...prev,
+                                    [activeAspectTab]: {
+                                      ...(prev[activeAspectTab] || {}),
+                                      [fieldName]: e.target.value
+                                    }
+                                  }));
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              >
+                                {fieldDef.options?.map(opt => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            )}
+
+                            {fieldDef.type === 'boolean' && (
+                              <div className="flex items-center gap-3 pt-1">
+                                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={!!currentVal}
+                                    onChange={e => {
+                                      setAspectEditorData(prev => ({
+                                        ...prev,
+                                        [activeAspectTab]: {
+                                          ...(prev[activeAspectTab] || {}),
+                                          [fieldName]: e.target.checked
+                                        }
+                                      }));
+                                    }}
+                                    className="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0"
+                                  />
+                                  <span>Enabled</span>
+                                </label>
+                              </div>
+                            )}
+
+                            {fieldDef.type === 'string' && (
+                              <input
+                                type="text"
+                                value={currentVal}
+                                onChange={e => {
+                                  setAspectEditorData(prev => ({
+                                    ...prev,
+                                    [activeAspectTab]: {
+                                      ...(prev[activeAspectTab] || {}),
+                                      [fieldName]: e.target.value
+                                    }
+                                  }));
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              />
+                            )}
+
+                            {fieldDef.type === 'number' && (
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={currentVal}
+                                onChange={e => {
+                                  setAspectEditorData(prev => ({
+                                    ...prev,
+                                    [activeAspectTab]: {
+                                      ...(prev[activeAspectTab] || {}),
+                                      [fieldName]: parseFloat(e.target.value) || 0
+                                    }
+                                  }));
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Modal Footer Actions */}
+                <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-4">
+                  <button
+                    onClick={() => setSelectedEntityForAspects(null)}
+                    className="px-4 py-2 rounded-xl text-slate-400 hover:text-white text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveAspects}
+                    disabled={isSavingAspects}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50"
+                  >
+                    {isSavingAspects ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
+                    Save Dataplex Aspect
                   </button>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center h-full">
-              <CheckCircle2 size={40} className="text-green-500 mb-3" />
-              <h4 className="font-bold text-slate-200">Compliance is 100% Green</h4>
-              <p className="text-xs text-slate-400 mt-1">No pending policy tags require manual human reviews.</p>
             </div>
           )}
         </div>
-      </motion.div>
+      )}
+
+      {/* TAB 3: METADATA DISCOVERY & DRIFT */}
+      {activeTab === 'discovery' && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Database size={18} className="text-indigo-400" />
+                  Multi-Source Autonomous Profiling & PII Discovery
+                </h3>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  Inspects tables, columns, data types, DLP sensitivity patterns, and cross-domain correlations across all connected engines.
+                </p>
+              </div>
+
+              <button
+                onClick={() => runDiscoveryScan()}
+                disabled={isDiscovering}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50 self-start"
+              >
+                {isDiscovering ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+                Trigger Full Scan
+              </button>
+            </div>
+
+            {discoveryResult && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Entities Profiled</span>
+                  <span className="text-lg font-bold text-white">{discoveryResult.entitiesProfiled}</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Attributes Profiled</span>
+                  <span className="text-lg font-bold text-white">{discoveryResult.attributesProfiled}</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Sensitive PII Fields</span>
+                  <span className="text-lg font-bold text-rose-400">{discoveryResult.piiFindings.length}</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <span className="text-slate-500 text-[11px] block">Documentation Coverage</span>
+                  <span className="text-lg font-bold text-emerald-400">
+                    {discoveryResult.qualitySummary.documentationCoveragePct}%
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* PII Findings Table */}
+          {discoveryResult && discoveryResult.piiFindings.length > 0 && (
+            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <Lock size={16} className="text-rose-400" />
+                Sensitive Data & PII Discoveries
+              </h4>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                      <th className="pb-3 px-3">Table / Entity</th>
+                      <th className="pb-3 px-3">Column</th>
+                      <th className="pb-3 px-3">DLP Classification</th>
+                      <th className="pb-3 px-3">Suggested Policy Tag</th>
+                      <th className="pb-3 px-3">Masking Rule</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                    {discoveryResult.piiFindings.map((pii, idx) => (
+                      <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-3 font-semibold text-white">{pii.entityName}</td>
+                        <td className="py-3 px-3 font-mono text-indigo-300">{pii.columnName}</td>
+                        <td className="py-3 px-3">
+                          <span className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/20 text-[10px] font-semibold">
+                            {pii.classification} ({pii.sensitivityLevel})
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 font-mono text-[10px] text-slate-400 max-w-xs truncate">
+                          {pii.suggestedPolicyTag}
+                        </td>
+                        <td className="py-3 px-3 font-semibold text-emerald-400">{pii.suggestedMasking}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Schema Drift & Evolution Log */}
+          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <History size={16} className="text-indigo-400" />
+              Schema Drift & Evolution History
+            </h4>
+
+            {driftHistory.length === 0 ? (
+              <p className="text-xs text-slate-500">No breaking schema drift detected across recent scans.</p>
+            ) : (
+              <div className="space-y-2">
+                {driftHistory.map((drift, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-[10px] font-mono font-bold">
+                        {drift.changeType}
+                      </span>
+                      <span className="text-xs font-semibold text-white">{drift.entityId}</span>
+                      <span className="text-xs text-indigo-300 font-mono">.{drift.columnName} ({drift.dataType})</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">{new Date(drift.timestamp).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: DESCRIPTIONS PROPAGATION */}
+      {activeTab === 'descriptions' && (
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-white">Lineage-Based Column Description Propagation</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Propagate verified column definitions upstream from source systems through the mesh graph.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-slate-400 font-medium">Select Target Table:</label>
+            <select
+              value={selectedTable}
+              onChange={e => setSelectedTable(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+            >
+              <option value="campaign_metrics">campaign_metrics (BigQuery)</option>
+              <option value="customer_segments">customer_segments (BigQuery)</option>
+              <option value="web_events">web_events (BigQuery)</option>
+            </select>
+          </div>
+
+          {isLoadingTab ? (
+            <div className="py-12 flex justify-center text-slate-500">
+              <RefreshCw size={24} className="animate-spin text-indigo-400" />
+            </div>
+          ) : descCandidates.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-500">No missing descriptions found for this table.</div>
+          ) : (
+            <div className="space-y-3">
+              {descCandidates.map((cand, i) => (
+                <div key={i} className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="font-mono text-xs text-indigo-400 font-bold">{cand["Target Column"]}</span>
+                    <p className="text-xs text-slate-300 mt-1">{cand["Proposed Description"]}</p>
+                    <span className="text-[10px] text-slate-500 mt-1 block">Source: {cand.Source} ({cand["Source Column"]}) • Confidence: {Math.round(cand.Confidence * 100)}%</span>
+                  </div>
+                  <span className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 text-[10px] font-bold">
+                    Lineage Hop 1
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 5: BUSINESS GLOSSARY */}
+      {activeTab === 'glossary' && (
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-white">Dataplex Business Glossary & EntryLinks</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Map technical physical columns to semantic business terms in GCP Dataplex Glossary.</p>
+            </div>
+          </div>
+
+          {isLoadingTab ? (
+            <div className="py-12 flex justify-center text-slate-500">
+              <RefreshCw size={24} className="animate-spin text-indigo-400" />
+            </div>
+          ) : glossaryRecos.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-500">No glossary recommendations found for this asset.</div>
+          ) : (
+            <div className="space-y-3">
+              {glossaryRecos.map((reco, i) => (
+                <div key={i} className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="font-mono text-xs text-indigo-400 font-bold">{reco.Column}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 text-xs font-semibold">
+                        📖 {reco["Suggested Term"]}
+                      </span>
+                      <span className="text-[10px] text-slate-400">Term ID: {reco["Term ID"]}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">{reco.Rationale}</p>
+                  </div>
+                  <span className="text-emerald-400 text-xs font-bold">{Math.round(reco.Confidence * 100)}% Match</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 6: POLICY TAGS */}
+      {activeTab === 'policy' && (
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+          <div>
+            <h3 className="text-base font-bold text-white">Policy Tags & Column-Level Security</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Enforce Fine-Grained Access Control (FGAC) across BigQuery and Spanner policy taxonomies.</p>
+          </div>
+
+          {isLoadingTab ? (
+            <div className="py-12 flex justify-center text-slate-500">
+              <RefreshCw size={24} className="animate-spin text-indigo-400" />
+            </div>
+          ) : policyRecos.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-500">No unassigned sensitive policies found.</div>
+          ) : (
+            <div className="space-y-3">
+              {policyRecos.map((pol, i) => (
+                <div key={i} className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="font-mono text-xs text-rose-400 font-bold">{pol["Target Column"]}</span>
+                    <p className="text-xs text-slate-300 mt-1 font-mono text-[11px]">{pol["Policy Tags"]}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{pol.Recommendation}</p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">
+                    DLP Protected
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 7: TRUST CENTER */}
+      {activeTab === 'trust' && (
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+          <div>
+            <h3 className="text-base font-bold text-white">Data Quality & Trust Metrics</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Real-time Dataplex AutoDQ evaluation, freshness tracking, and trust index.</p>
+          </div>
+
+          {isLoadingTab ? (
+            <div className="py-12 flex justify-center text-slate-500">
+              <RefreshCw size={24} className="animate-spin text-indigo-400" />
+            </div>
+          ) : trustMetrics.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-500">No trust scores available for this table.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {trustMetrics.map((item, i) => (
+                <div key={i} className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs text-white font-bold">{item.Column}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                      {item.Badge}
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-white">{item["Trust Score"]}%</div>
+                  <p className="text-[10px] text-slate-400">{item["Bonus (Remediation)"]}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 8: OPEN KNOWLEDGE GRAPH / DCAT */}
+      {activeTab === 'open_knowledge' && (
+        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-white">W3C DCAT v3 / Google Open Knowledge Graph</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Semantic JSON-LD linked data representation of mesh data assets, Dataplex aspects, and cross-domain links.
+              </p>
+            </div>
+
+            <a
+              href="/api/catalog/dcat-export"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-lg shadow-indigo-600/20"
+            >
+              <Download size={13} />
+              Export DCAT v3
+            </a>
+          </div>
+
+          {isLoadingOk ? (
+            <div className="py-12 flex justify-center text-slate-500">
+              <RefreshCw size={24} className="animate-spin text-indigo-400" />
+            </div>
+          ) : (
+            <div className="relative">
+              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-indigo-300 font-mono max-h-[500px] overflow-y-auto">
+                {JSON.stringify(openKnowledgeData, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
+
+export default GovernanceView;

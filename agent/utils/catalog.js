@@ -689,14 +689,24 @@ export class MetadataCatalog {
         }
 
         // 2. Map Entities (Tables, Graphs, Vector Indexes) as Schema.org Datasets
+        let catalogAspects = {};
+        try {
+            const aspectsPath = path.join(ROOT_DIR, 'config', 'catalog_aspects.json');
+            if (fs.existsSync(aspectsPath)) {
+                catalogAspects = JSON.parse(fs.readFileSync(aspectsPath, 'utf8')).aspects || {};
+            }
+        } catch (e) {}
+
         for (const entity of Object.values(this.entities)) {
+            const aspects = catalogAspects[entity.id] || {};
             const node = {
                 "@id": `urn:mesh:entity:${entity.id}`,
                 "@type": entity.type === 'GRAPH' ? ["mesh:PropertyGraph", "schema:Dataset"] : ["schema:Dataset", "dcat:Dataset"],
                 "schema:name": entity.name,
                 "schema:description": entity.description,
                 "mesh:source": `urn:mesh:source:${entity.sourceId}`,
-                "mesh:entityType": entity.type
+                "mesh:entityType": entity.type,
+                "mesh:dataplexAspects": aspects
             };
 
             if (entity.attributes && Array.isArray(entity.attributes)) {

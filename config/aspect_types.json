@@ -1,0 +1,62 @@
+{
+  "aspectTypes": {
+    "governance": {
+      "id": "governance",
+      "displayName": "Data Governance & Stewardship",
+      "description": "Stewardship, ownership, data classification, and regulatory compliance standards.",
+      "category": "Governance",
+      "color": "#3b82f6",
+      "fields": {
+        "dataOwner": { "type": "string", "label": "Data Owner / Steward", "required": true, "default": "data-governance-team@mesh.internal" },
+        "classification": { "type": "enum", "label": "Data Classification", "options": ["Public", "Internal", "Confidential", "Restricted", "Highly Restricted PII"], "default": "Internal" },
+        "retentionPeriod": { "type": "enum", "label": "Retention Policy", "options": ["90 Days", "1 Year", "3 Years", "7 Years", "Indefinite"], "default": "7 Years" },
+        "complianceFrameworks": { "type": "array", "label": "Regulatory Regimes", "options": ["GDPR", "HIPAA", "PCI-DSS", "CCPA", "SOC2", "SOX"], "default": ["GDPR", "SOC2"] },
+        "lifecycleStage": { "type": "enum", "label": "Lifecycle Stage", "options": ["Raw Ingestion", "Staging", "Conformed Master", "Analytical Consumption", "Deprecated"], "default": "Conformed Master" }
+      }
+    },
+    "data_quality": {
+      "id": "data_quality",
+      "displayName": "Data Quality & Trust Metrics",
+      "description": "Automated Dataplex data quality scores, validation rules, and freshness SLAs.",
+      "category": "Quality",
+      "color": "#10b981",
+      "fields": {
+        "score": { "type": "number", "label": "Composite Quality Score (%)", "min": 0, "max": 100, "default": 98.5 },
+        "completeness": { "type": "number", "label": "Completeness Rate (%)", "min": 0, "max": 100, "default": 99.2 },
+        "uniqueness": { "type": "number", "label": "Uniqueness Rate (%)", "min": 0, "max": 100, "default": 100.0 },
+        "validity": { "type": "number", "label": "Schema Conformance (%)", "min": 0, "max": 100, "default": 98.8 },
+        "freshnessSLA": { "type": "string", "label": "Freshness Target", "default": "< 1 Hour" },
+        "profilingEngine": { "type": "string", "label": "Profiling Engine", "default": "Dataplex AutoDQ Service" },
+        "lastProfiled": { "type": "datetime", "label": "Last Profiled Timestamp", "default": "2026-08-17T12:00:00Z" }
+      }
+    },
+    "security_privacy": {
+      "id": "security_privacy",
+      "displayName": "Security, DLP & Policy Tags",
+      "description": "Sensitive data classification, column masking, and BigQuery / Spanner policy taxonomies.",
+      "category": "Security",
+      "color": "#ec4899",
+      "fields": {
+        "containsPII": { "type": "boolean", "label": "Contains Sensitive PII", "default": false },
+        "sensitivityLevel": { "type": "enum", "label": "DLP Sensitivity Tier", "options": ["None", "Low", "Moderate", "High", "Critical"], "default": "None" },
+        "policyTaxonomyTag": { "type": "string", "label": "GCP Policy Tag URI", "default": "" },
+        "maskingRule": { "type": "enum", "label": "Masking Rule", "options": ["None", "SHA256 Hash", "Partial Masking", "Redact / Nullify"], "default": "None" },
+        "encryptionRequired": { "type": "boolean", "label": "CMEK Encryption Required", "default": true }
+      }
+    },
+    "data_product_contract": {
+      "id": "data_product_contract",
+      "displayName": "Data Product & SLA Contract",
+      "description": "Mesh data product specification, contractual uptime, and consumption protocols.",
+      "category": "Contract",
+      "color": "#8b5cf6",
+      "fields": {
+        "slaUptime": { "type": "enum", "label": "Availability SLA", "options": ["99.0%", "99.9%", "99.95%", "99.99%"], "default": "99.9%" },
+        "latencySLO": { "type": "string", "label": "Max Query Latency", "default": "< 250ms" },
+        "protocol": { "type": "enum", "label": "Access Protocol", "options": ["MCP Agent Gateway", "BigQuery Authorized View", "REST SSE", "JDBC TCPS"], "default": "MCP Agent Gateway" },
+        "version": { "type": "string", "label": "Contract Version", "default": "v1.4.0" },
+        "contractStatus": { "type": "enum", "label": "Contract Status", "options": ["Draft", "Active", "Deprecated"], "default": "Active" }
+      }
+    }
+  }
+}

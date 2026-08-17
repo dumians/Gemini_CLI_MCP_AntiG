@@ -1,0 +1,522 @@
+{
+  "aspects": {
+    "oracle.suppliers": {
+      "governance": {
+        "dataOwner": "oracle-stewards@mesh.corp",
+        "classification": "Confidential",
+        "retentionPeriod": "7 Years",
+        "complianceFrameworks": [
+          "SOX",
+          "GDPR",
+          "SOC2"
+        ],
+        "lifecycleStage": "Conformed Master",
+        "updatedAt": "2026-08-17T19:33:41.517Z"
+      },
+      "data_quality": {
+        "score": 99.4,
+        "completeness": 100,
+        "uniqueness": 100,
+        "validity": 98.8,
+        "freshnessSLA": "< 1 Hour",
+        "profilingEngine": "Dataplex AutoDQ Service",
+        "lastProfiled": "2026-08-17T14:30:00Z"
+      },
+      "security_privacy": {
+        "containsPII": true,
+        "sensitivityLevel": "High",
+        "policyTaxonomyTag": "projects/mesh/taxonomies/financial_pii/policyTags/supplier_confidential",
+        "maskingRule": "Partial Masking",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.95%",
+        "latencySLO": "< 200ms",
+        "protocol": "JDBC TCPS",
+        "version": "v2.1.0",
+        "contractStatus": "Active"
+      }
+    },
+    "oracle.purchase_orders": {
+      "governance": {
+        "dataOwner": "oracle-stewards@mesh.corp",
+        "classification": "Restricted",
+        "retentionPeriod": "7 Years",
+        "complianceFrameworks": [
+          "SOX",
+          "SOC2"
+        ],
+        "lifecycleStage": "Conformed Master",
+        "updatedAt": "2026-08-17T19:28:48.039Z"
+      },
+      "data_quality": {
+        "score": 98.1,
+        "completeness": 99.1,
+        "uniqueness": 99.5,
+        "validity": 97.8,
+        "freshnessSLA": "< 30 Min",
+        "profilingEngine": "Dataplex AutoDQ Service",
+        "lastProfiled": "2026-08-17T14:30:00Z"
+      },
+      "security_privacy": {
+        "containsPII": false,
+        "sensitivityLevel": "Low",
+        "policyTaxonomyTag": "projects/mesh/taxonomies/financial/policyTags/ledger_restricted",
+        "maskingRule": "None",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.9%",
+        "latencySLO": "< 300ms",
+        "protocol": "MCP Agent Gateway",
+        "version": "v1.8.0",
+        "contractStatus": "Active"
+      }
+    },
+    "spanner.global_inventory": {
+      "governance": {
+        "dataOwner": "spanner-stewards@mesh.corp",
+        "classification": "Internal",
+        "retentionPeriod": "3 Years",
+        "complianceFrameworks": [
+          "SOC2"
+        ],
+        "lifecycleStage": "Analytical Consumption",
+        "updatedAt": "2026-08-17T19:28:48.040Z"
+      },
+      "data_quality": {
+        "score": 99.8,
+        "completeness": 99.9,
+        "uniqueness": 100,
+        "validity": 99.5,
+        "freshnessSLA": "Real-Time (< 5s)",
+        "profilingEngine": "Dataplex StreamProfiler",
+        "lastProfiled": "2026-08-17T15:00:00Z"
+      },
+      "security_privacy": {
+        "containsPII": false,
+        "sensitivityLevel": "None",
+        "policyTaxonomyTag": "",
+        "maskingRule": "None",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.99%",
+        "latencySLO": "< 50ms",
+        "protocol": "BigQuery Authorized View",
+        "version": "v3.0.0",
+        "contractStatus": "Active"
+      }
+    },
+    "spanner.stores": {
+      "governance": {
+        "dataOwner": "spanner-stewards@mesh.corp",
+        "classification": "Public",
+        "retentionPeriod": "Indefinite",
+        "complianceFrameworks": [
+          "SOC2"
+        ],
+        "lifecycleStage": "Conformed Master",
+        "updatedAt": "2026-08-17T19:28:48.039Z"
+      },
+      "data_quality": {
+        "score": 100,
+        "completeness": 100,
+        "uniqueness": 100,
+        "validity": 100,
+        "freshnessSLA": "Daily (< 24h)",
+        "profilingEngine": "Dataplex AutoDQ Service",
+        "lastProfiled": "2026-08-17T10:00:00Z"
+      },
+      "security_privacy": {
+        "containsPII": false,
+        "sensitivityLevel": "None",
+        "policyTaxonomyTag": "",
+        "maskingRule": "None",
+        "encryptionRequired": false
+      },
+      "data_product_contract": {
+        "slaUptime": "99.9%",
+        "latencySLO": "< 100ms",
+        "protocol": "REST SSE",
+        "version": "v1.2.0",
+        "contractStatus": "Active"
+      }
+    },
+    "bigquery.customer_segments": {
+      "governance": {
+        "dataOwner": "bigquery-stewards@mesh.corp",
+        "classification": "Highly Restricted PII",
+        "retentionPeriod": "7 Years",
+        "complianceFrameworks": [
+          "GDPR",
+          "CCPA",
+          "HIPAA",
+          "SOC2"
+        ],
+        "lifecycleStage": "Analytical Consumption",
+        "updatedAt": "2026-08-17T19:28:48.041Z"
+      },
+      "data_quality": {
+        "score": 97.6,
+        "completeness": 98.4,
+        "uniqueness": 98.9,
+        "validity": 96.5,
+        "freshnessSLA": "< 6 Hours",
+        "profilingEngine": "Dataplex AutoDQ Service",
+        "lastProfiled": "2026-08-17T13:15:00Z"
+      },
+      "security_privacy": {
+        "containsPII": true,
+        "sensitivityLevel": "Critical",
+        "policyTaxonomyTag": "projects/mesh/taxonomies/customer_data/policyTags/pii_sensitive",
+        "maskingRule": "SHA256 Hash",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.95%",
+        "latencySLO": "< 400ms",
+        "protocol": "MCP Agent Gateway",
+        "version": "v2.4.0",
+        "contractStatus": "Active"
+      }
+    },
+    "bigquery.sales_forecasting": {
+      "governance": {
+        "dataOwner": "ai-modeling@mesh.internal",
+        "classification": "Internal",
+        "retentionPeriod": "3 Years",
+        "complianceFrameworks": [
+          "SOC2"
+        ],
+        "lifecycleStage": "Analytical Consumption"
+      },
+      "data_quality": {
+        "score": 98.9,
+        "completeness": 99.5,
+        "uniqueness": 99,
+        "validity": 98.5,
+        "freshnessSLA": "Daily (< 24h)",
+        "profilingEngine": "Dataplex ML Readiness Scanner",
+        "lastProfiled": "2026-08-17T12:00:00Z"
+      },
+      "security_privacy": {
+        "containsPII": false,
+        "sensitivityLevel": "Low",
+        "policyTaxonomyTag": "",
+        "maskingRule": "None",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.9%",
+        "latencySLO": "< 350ms",
+        "protocol": "MCP Agent Gateway",
+        "version": "v1.5.0",
+        "contractStatus": "Active"
+      }
+    },
+    "alloydb.customers": {
+      "governance": {
+        "dataOwner": "alloydb-stewards@mesh.corp",
+        "classification": "Highly Restricted PII",
+        "retentionPeriod": "7 Years",
+        "complianceFrameworks": [
+          "GDPR",
+          "CCPA",
+          "PCI-DSS"
+        ],
+        "lifecycleStage": "Conformed Master",
+        "updatedAt": "2026-08-17T19:28:48.042Z"
+      },
+      "data_quality": {
+        "score": 99.1,
+        "completeness": 97.8,
+        "uniqueness": 98.2,
+        "validity": 95.8,
+        "freshnessSLA": "Real-Time (< 1m)",
+        "profilingEngine": "Dataplex AutoDQ Service",
+        "lastProfiled": "2026-08-17T19:28:48.042Z",
+        "updatedAt": "2026-08-17T19:28:48.042Z"
+      },
+      "security_privacy": {
+        "containsPII": true,
+        "sensitivityLevel": "Critical",
+        "policyTaxonomyTag": "projects/mesh/taxonomies/crm_data/policyTags/customer_pii",
+        "maskingRule": "Partial Masking",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.99%",
+        "latencySLO": "< 80ms",
+        "protocol": "MCP Agent Gateway",
+        "version": "v2.0.0",
+        "contractStatus": "Active"
+      }
+    },
+    "netsuite.sales_orders": {
+      "governance": {
+        "dataOwner": "erp-operations@mesh.internal",
+        "classification": "Restricted",
+        "retentionPeriod": "7 Years",
+        "complianceFrameworks": [
+          "SOX",
+          "SOC2"
+        ],
+        "lifecycleStage": "Conformed Master"
+      },
+      "data_quality": {
+        "score": 98.4,
+        "completeness": 99.2,
+        "uniqueness": 100,
+        "validity": 98,
+        "freshnessSLA": "< 15 Min",
+        "profilingEngine": "Dataplex AutoDQ Service",
+        "lastProfiled": "2026-08-17T14:20:00Z"
+      },
+      "security_privacy": {
+        "containsPII": false,
+        "sensitivityLevel": "Moderate",
+        "policyTaxonomyTag": "projects/mesh/taxonomies/erp_orders/policyTags/orders_restricted",
+        "maskingRule": "None",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.9%",
+        "latencySLO": "< 250ms",
+        "protocol": "REST SSE",
+        "version": "v1.1.0",
+        "contractStatus": "Active"
+      }
+    },
+    "warehouse.warehouse_master": {
+      "governance": {
+        "dataOwner": "warehouse-stewards@mesh.corp",
+        "classification": "Internal",
+        "retentionPeriod": "5 Years",
+        "complianceFrameworks": [
+          "SOC2"
+        ],
+        "lifecycleStage": "Conformed Master",
+        "updatedAt": "2026-08-17T19:28:48.045Z"
+      },
+      "data_quality": {
+        "score": 99.1,
+        "completeness": 98,
+        "uniqueness": 99.1,
+        "validity": 96,
+        "freshnessSLA": "< 2 Hours",
+        "profilingEngine": "Dataplex AutoDQ Service",
+        "lastProfiled": "2026-08-17T19:28:48.045Z",
+        "updatedAt": "2026-08-17T19:28:48.045Z"
+      },
+      "security_privacy": {
+        "containsPII": false,
+        "sensitivityLevel": "None",
+        "policyTaxonomyTag": "",
+        "maskingRule": "None",
+        "encryptionRequired": true
+      },
+      "data_product_contract": {
+        "slaUptime": "99.9%",
+        "latencySLO": "< 300ms",
+        "protocol": "JDBC TCPS",
+        "version": "v1.0.0",
+        "contractStatus": "Active"
+      }
+    },
+    "oracle.invoices": {
+      "governance": {
+        "dataOwner": "oracle-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.039Z"
+      }
+    },
+    "oracle.erp_supply_graph": {
+      "governance": {
+        "dataOwner": "oracle-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.039Z"
+      }
+    },
+    "oracle.invoice_meta_idx": {
+      "governance": {
+        "dataOwner": "oracle-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.039Z"
+      }
+    },
+    "spanner.realtime_transactions": {
+      "governance": {
+        "dataOwner": "spanner-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.040Z"
+      }
+    },
+    "spanner.RetailGraph": {
+      "governance": {
+        "dataOwner": "spanner-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.040Z"
+      }
+    },
+    "spanner.product_similarity_idx": {
+      "governance": {
+        "dataOwner": "spanner-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.040Z"
+      }
+    },
+    "bigquery.campaign_metrics": {
+      "governance": {
+        "dataOwner": "bigquery-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.041Z"
+      }
+    },
+    "bigquery.web_events": {
+      "governance": {
+        "dataOwner": "bigquery-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.041Z"
+      }
+    },
+    "bigquery.marketing_graph": {
+      "governance": {
+        "dataOwner": "bigquery-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.042Z"
+      }
+    },
+    "alloydb.support_tickets": {
+      "governance": {
+        "dataOwner": "alloydb-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.042Z"
+      }
+    },
+    "oracle_hr.hr_departments": {
+      "governance": {
+        "dataOwner": "oracle_hr-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.042Z"
+      }
+    },
+    "oracle_hr.hr_employees": {
+      "governance": {
+        "dataOwner": "oracle_hr-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.043Z"
+      },
+      "security_privacy": {
+        "policyTaxonomyTag": "projects/mesh/taxonomies/oracle_hr_pii/policyTags/pii_restricted",
+        "containsPII": true,
+        "sensitivityLevel": "Critical",
+        "maskingRule": "Partial Masking",
+        "updatedAt": "2026-08-17T19:28:48.043Z"
+      }
+    },
+    "oracle_hr.hr_recruitment": {
+      "governance": {
+        "dataOwner": "oracle_hr-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.043Z"
+      }
+    },
+    "catalog.catalog_sources": {
+      "governance": {
+        "dataOwner": "catalog-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.044Z"
+      }
+    },
+    "catalog.catalog_entities": {
+      "governance": {
+        "dataOwner": "catalog-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.044Z"
+      }
+    },
+    "catalog.catalog_attributes": {
+      "governance": {
+        "dataOwner": "catalog-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.044Z"
+      }
+    },
+    "catalog.catalog_relationships": {
+      "governance": {
+        "dataOwner": "catalog-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.044Z"
+      }
+    },
+    "catalog.catalog_lineage": {
+      "governance": {
+        "dataOwner": "catalog-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.045Z"
+      }
+    },
+    "api_driven.flexcube_transactions": {
+      "governance": {
+        "dataOwner": "api_driven-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.045Z"
+      }
+    },
+    "warehouse.product_master": {
+      "governance": {
+        "dataOwner": "warehouse-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.046Z"
+      }
+    },
+    "warehouse.inventory_levels": {
+      "governance": {
+        "dataOwner": "warehouse-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.046Z"
+      }
+    },
+    "warehouse.supplier_master": {
+      "governance": {
+        "dataOwner": "warehouse-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.046Z"
+      }
+    },
+    "warehouse.supply_network_edges": {
+      "governance": {
+        "dataOwner": "warehouse-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.046Z"
+      }
+    },
+    "warehouse.spatial_risk_hotspots": {
+      "governance": {
+        "dataOwner": "warehouse-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.047Z"
+      }
+    },
+    "warehouse.supply_chain_graph": {
+      "governance": {
+        "dataOwner": "warehouse-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.047Z"
+      }
+    },
+    "netsuite.netsuite_customers": {
+      "governance": {
+        "dataOwner": "netsuite-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.047Z"
+      },
+      "security_privacy": {
+        "policyTaxonomyTag": "projects/mesh/taxonomies/netsuite_pii/policyTags/pii_restricted",
+        "containsPII": true,
+        "sensitivityLevel": "Critical",
+        "maskingRule": "Partial Masking",
+        "updatedAt": "2026-08-17T19:28:48.047Z"
+      }
+    },
+    "netsuite.netsuite_inventory_items": {
+      "governance": {
+        "dataOwner": "netsuite-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.048Z"
+      }
+    },
+    "netsuite.netsuite_sales_orders": {
+      "governance": {
+        "dataOwner": "netsuite-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.048Z"
+      }
+    },
+    "netsuite.netsuite_erp_graph": {
+      "governance": {
+        "dataOwner": "netsuite-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.048Z"
+      }
+    },
+    "netsuite.netsuite_ai_idx": {
+      "governance": {
+        "dataOwner": "netsuite-stewards@mesh.corp",
+        "updatedAt": "2026-08-17T19:28:48.048Z"
+      }
+    }
+  }
+}

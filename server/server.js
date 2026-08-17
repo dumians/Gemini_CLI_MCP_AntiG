@@ -17,6 +17,8 @@ import { GovernanceMetadataPropagator } from '../agent/utils/governance_metadata
 import { governanceAgent } from '../agent/utils/governance_agent.js';
 import { configService } from '../agent/utils/config_service.js';
 import { memoryBankService } from '../agent/utils/memory_bank_service.js';
+import { knowledgeCatalogService } from '../agent/utils/knowledge_catalog_service.js';
+import { discoveryService } from '../agent/utils/discovery_service.js';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -292,8 +294,35 @@ app.get('/api/catalog/entities/:id', authMiddleware, (req, res) => {
     }
 });
 
+app.get('/api/catalog/sources/:id', authMiddleware, (req, res) => {
+    const { id } = req.params;
+    try {
+        if (!metadataCatalog._initialized) metadataCatalog.initialize();
+        const catalog = metadataCatalog.getCatalog();
+        const src = catalog.sources[id];
+        if (!src) return res.status(404).json({ error: `Source ${id} not found in catalog.` });
+        
+        const entities = Object.values(catalog.entities).filter(e => e.sourceId === id);
+        
+        res.json({
+            ...src,
+            entitiesCount: entities.length,
+            entities: entities.map(e => ({
+                id: e.id,
+                name: e.name,
+                type: e.type,
+                attributesCount: (e.attributes || []).length,
+                primaryKeys: (e.attributes || []).filter(a => a.isPrimaryKey).map(a => a.name)
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/catalog/graph', authMiddleware, (req, res) => {
     try {
+        if (!metadataCatalog._initialized) metadataCatalog.initialize();
         const catalog = metadataCatalog.getCatalog();
         const graphData = { nodes: [], links: [] };
 
@@ -304,7 +333,13 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
                 id: srcId, 
                 label: src.name, 
                 group: 'source', 
-                val: 15,
+                type: 'source',
+                domain: src.domain || 'Unified',
+                sourceId: srcId,
+                schemaFile: src.schemaFile,
+                mode: src.mode || 'local',
+                status: src.status || 'active',
+                val: 18,
                 color: '#4f46e5' // Primary Indigo
             });
         });
@@ -313,12 +348,20 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
         Object.keys(catalog.entities).forEach(entId => {
             const ent = catalog.entities[entId];
             const isGraph = ent.type === 'PROPERTY_GRAPH';
+            const parentSrc = catalog.sources[ent.sourceId];
+            const domain = ent.domain || (parentSrc ? parentSrc.domain : 'Unified');
             
             graphData.nodes.push({
                 id: entId,
                 label: ent.name,
                 group: isGraph ? 'graph' : 'table',
-                val: isGraph ? 12 : 8,
+                type: isGraph ? 'graph' : 'table',
+                domain: domain,
+                sourceId: ent.sourceId,
+                attributesCount: (ent.attributes || []).length,
+                primaryKeys: (ent.attributes || []).filter(a => a.isPrimaryKey).map(a => a.name),
+                hasSensitive: (ent.attributes || []).some(a => ['card_number', 'email', 'salary', 'phone', 'employee_id', 'customer_id'].includes((a.name || '').toLowerCase()) || a.isSensitive),
+                val: isGraph ? 12 : 9,
                 color: isGraph ? '#ec4899' : '#10b981' // Pink for Graph, Emerald for Table
             });
 
@@ -327,7 +370,9 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
                 graphData.links.push({
                     source: ent.sourceId,
                     target: entId,
-                    label: 'owns'
+                    type: 'ownership',
+                    label: 'owns',
+                    color: '#6366f1'
                 });
             }
         });
@@ -337,7 +382,9 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
             graphData.links.push({
                 source: rel.sourceEntity,
                 target: rel.targetEntity,
-                label: rel.type
+                type: 'relationship',
+                label: rel.type || 'relates',
+                color: '#06b6d4'
             });
         });
 
@@ -347,8 +394,10 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
                 graphData.links.push({
                     source: link.sourceA,
                     target: link.sourceB,
+                    type: 'cross_domain',
                     label: `correlates (${link.key})`,
-                    color: '#f59e0b' // Amber/Orange or another distinct color
+                    key: link.key,
+                    color: '#f59e0b' // Amber/Orange
                 });
             });
         }
@@ -1325,6 +1374,135 @@ app.post('/api/governance/compliance-alerts/:id/approve', authMiddleware, async 
         fs.writeFileSync(alertsPath, JSON.stringify(alerts, null, 2));
 
         res.json({ status: 'success', message: `Compliance alert ${id} successfully audited and approved! Policy tag applied.` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// GCP KNOWLEDGE CATALOG & METADATA DISCOVERY
+// ==========================================
+
+// 1. Get all registered Dataplex Aspect Types
+app.get('/api/catalog/aspect-types', authMiddleware, (req, res) => {
+    try {
+        const aspectTypes = knowledgeCatalogService.getAspectTypes();
+        res.json({ status: 'success', aspectTypes });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 2. Get all aspects across all entities
+app.get('/api/catalog/aspects', authMiddleware, (req, res) => {
+    try {
+        const aspects = knowledgeCatalogService.getAllAspects();
+        res.json({ status: 'success', aspects });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 3. Get aspects for a specific entity
+app.get('/api/catalog/entries/:id/aspects', authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const aspects = knowledgeCatalogService.getEntityAspects(id);
+        res.json({ status: 'success', entityId: id, aspects });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 4. Update / Attach an aspect to an entity
+app.post('/api/catalog/entries/:id/aspects', authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+        const { aspectTypeId, aspectData } = req.body;
+        if (!aspectTypeId || !aspectData) {
+            return res.status(400).json({ error: "aspectTypeId and aspectData are required." });
+        }
+        const result = knowledgeCatalogService.updateEntityAspect(id, aspectTypeId, aspectData);
+        res.json({ status: 'success', entityId: id, ...result });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 5. Advanced Knowledge Catalog Search with aspect and tag filter syntax
+app.get('/api/catalog/search', authMiddleware, (req, res) => {
+    try {
+        const { q, aspectFilter, domain, source, limit } = req.query;
+        const results = knowledgeCatalogService.searchCatalog({
+            query: q,
+            aspectFilter,
+            domain,
+            source,
+            limit: limit ? parseInt(limit, 10) : 50
+        });
+        res.json({ status: 'success', ...results });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 6. Trigger Autonomous Multi-Source Metadata Discovery & PII Scan
+app.post('/api/discovery/scan', authMiddleware, async (req, res) => {
+    try {
+        const { sourceId } = req.body || {};
+        const scanResults = await discoveryService.runDiscoveryScan(sourceId);
+        res.json({ status: 'success', ...scanResults });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 7. Get Schema Drift & Evolution History
+app.get('/api/discovery/drift-history', authMiddleware, (req, res) => {
+    try {
+        const driftData = discoveryService.getDriftHistory();
+        res.json({ status: 'success', ...driftData });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 8. Run Federated Governance Compliance Audit
+app.get('/api/governance/audit-rules', authMiddleware, (req, res) => {
+    try {
+        const audit = knowledgeCatalogService.auditMeshGovernance();
+        res.json({ status: 'success', ...audit });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 9. Execute Automated Governance Remediation
+app.post('/api/governance/remediate', authMiddleware, async (req, res) => {
+    try {
+        const { issueIds } = req.body || {};
+        const result = await knowledgeCatalogService.executeRemediation(issueIds);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 10. Open Knowledge Graph (W3C JSON-LD / Schema.org)
+app.get('/api/catalog/open-knowledge-graph', authMiddleware, (req, res) => {
+    try {
+        const graph = metadataCatalog.getOpenKnowledgeGraph();
+        res.json(graph);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 11. DCAT v3 Data Catalog Export
+app.get('/api/catalog/dcat-export', authMiddleware, (req, res) => {
+    try {
+        const dcat = metadataCatalog.exportDcatCatalog();
+        res.json(dcat);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

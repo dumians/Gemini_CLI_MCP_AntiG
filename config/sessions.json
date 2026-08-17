@@ -375,5 +375,83 @@
         "timestamp": "2026-06-26T07:34:39.894Z"
       }
     ]
+  },
+  {
+    "id": "simulated-session-1786971563615",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1786971563615",
+    "userId": "admin",
+    "createdAt": "2026-08-17T12:59:23.615Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-17T12:59:23.616Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1786971563796",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1786971563796",
+    "userId": "admin",
+    "createdAt": "2026-08-17T12:59:23.796Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-17T12:59:23.796Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1786972095829",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1786972095829",
+    "userId": "admin",
+    "createdAt": "2026-08-17T13:08:15.831Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-08-17T13:08:15.832Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1786972097990",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1786972097990",
+    "userId": "test_user_999",
+    "createdAt": "2026-08-17T13:08:17.990Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-08-17T13:08:17.991Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1786994892566",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1786994892566",
+    "userId": "admin",
+    "createdAt": "2026-08-17T19:28:12.567Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-08-17T19:28:12.569Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1786994894914",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1786994894914",
+    "userId": "test_user_999",
+    "createdAt": "2026-08-17T19:28:14.916Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-08-17T19:28:14.918Z"
+      }
+    ]
   }
 ]

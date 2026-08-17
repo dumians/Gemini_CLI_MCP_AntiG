@@ -8,6 +8,8 @@ import { metadataCatalog, validateDataProduct } from "./utils/catalog.js";
 import { logger } from "./utils/logging_service.js";
 import { groundWithCatalogContext, groundingInstructions } from "./utils/grounding.js";
 import { kgService } from "./utils/kg_service.js";
+import { knowledgeCatalogService } from "./utils/knowledge_catalog_service.js";
+import { discoveryService } from "./utils/discovery_service.js";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -31,10 +33,10 @@ class CatalogAgent {
             model: this.config.model,
             systemInstruction: `${this.config.system_instruction_prefix}\n\n` +
                 `Your mission is to map the Agentic Data Mesh. You have access to a logical Metadata Catalog.\n` +
-                `You answer questions about WHERE data is, WHAT schemas look like, and HOW entities relate across domains.\n` +
-                `You also identify 'data contracts' and lineage.\n\n` +
-                `You do NOT have access to live business data (rows), but you know all table structures.\n` +
-                `Always use the shared MetadataCatalog tools provided below.\n` +
+                `You answer questions about WHERE data is, WHAT schemas look like, HOW entities relate across domains, and Dataplex Aspects.\n` +
+                `You also perform automated metadata discovery, PII profiling, and governance compliance audits.\n\n` +
+                `You do NOT have access to live business data (rows), but you know all table structures and metadata aspects.\n` +
+                `Always use the shared MetadataCatalog and KnowledgeCatalog tools provided below.\n` +
                 domainKnowledge + `\n\n` +
                 groundingInstructions
         });
@@ -48,7 +50,13 @@ class CatalogAgent {
             query_cross_domain_inventory: () => this._queryCrossDomainInventory(),
             get_data_contracts: () => metadataCatalog.getDataContracts(),
             get_open_knowledge_graph: () => metadataCatalog.getOpenKnowledgeGraph(),
-            export_dcat_catalog: () => metadataCatalog.exportDcatCatalog()
+            export_dcat_catalog: () => metadataCatalog.exportDcatCatalog(),
+            search_knowledge_catalog: (args) => knowledgeCatalogService.searchCatalog(args || {}),
+            run_metadata_discovery: async (args) => await discoveryService.runDiscoveryScan(args?.sourceId),
+            get_entity_aspects: ({ entityId }) => knowledgeCatalogService.getEntityAspects(entityId),
+            update_entity_aspect: ({ entityId, aspectTypeId, aspectData }) => knowledgeCatalogService.updateEntityAspect(entityId, aspectTypeId, aspectData),
+            audit_mesh_governance: () => knowledgeCatalogService.auditMeshGovernance(),
+            auto_remediate_governance: async ({ issueIds }) => await knowledgeCatalogService.executeRemediation(issueIds || ['ALL'])
         };
     }
 
@@ -116,6 +124,38 @@ class CatalogAgent {
                     {
                         name: "export_dcat_catalog",
                         description: "Exports a W3C DCAT v3 compliant Data Catalog for GCP Dataplex Catalog / Knowledge Catalog synchronization."
+                    },
+                    {
+                        name: "search_knowledge_catalog",
+                        description: "Searches Dataplex Knowledge Catalog using text, aspect queries (e.g. aspect:governance.classification=Restricted), domain, or tag filters.",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                query: { type: "string", description: "Search query text" },
+                                aspectFilter: { type: "string", description: "Aspect filter syntax, e.g. aspect:governance.classification=Restricted" },
+                                domain: { type: "string", description: "Target domain filter" },
+                                source: { type: "string", description: "Source engine filter" }
+                            }
+                        }
+                    },
+                    {
+                        name: "run_metadata_discovery",
+                        description: "Executes automated multi-source metadata discovery, column profiling, PII detection, and schema drift evaluation.",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                sourceId: { type: "string", description: "Optional specific source ID (oracle, spanner, bigquery, alloydb, netsuite, warehouse)" }
+                            }
+                        }
+                    },
+                    {
+                        name: "get_entity_aspects",
+                        description: "Retrieves all Dataplex aspect metadata (governance, quality, security, contract) attached to an entity.",
+                        parameters: { type: "object", properties: { entityId: { type: "string" } }, required: ["entityId"] }
+                    },
+                    {
+                        name: "audit_mesh_governance",
+                        description: "Runs an automated federated governance compliance audit across all mesh assets to detect PII gaps, missing stewards, and SLA violations."
                     }
                 ]
             }]
