@@ -6,6 +6,26 @@ import { SourceModal } from './SourceModal';
 
 type TabType = 'general' | 'agents' | 'mcp' | 'api' | 'security' | 'logs';
 
+export const AVAILABLE_GEMINI_MODELS = [
+  { id: 'gemini-3.6-pro', name: 'Gemini 3.6 Pro (Next-Gen Reasoning)' },
+  { id: 'gemini-3.6-pro-preview', name: 'Gemini 3.6 Pro Preview' },
+  { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Ultra Fast & Multimodal)' },
+  { id: 'gemini-3.6-flash-preview', name: 'Gemini 3.6 Flash Preview' },
+  { id: 'gemini-3.5-pro', name: 'Gemini 3.5 Pro (Deep Analytics & Synthesis)' },
+  { id: 'gemini-3.5-pro-preview', name: 'Gemini 3.5 Pro Preview' },
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash (High-Throughput Agentic)' },
+  { id: 'gemini-3.5-flash-preview', name: 'Gemini 3.5 Flash Preview' },
+  { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro' },
+  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' },
+  { id: 'gemini-3.1-flash', name: 'Gemini 3.1 Flash' },
+  { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite' },
+  { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+  { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+];
+
 export const AdminPortalView = () => {
   const [activeTab, setActiveTab] = React.useState<TabType>('general');
   const [loading, setLoading] = React.useState(false);
@@ -14,7 +34,7 @@ export const AdminPortalView = () => {
   const [togglingMode, setTogglingMode] = React.useState(false);
 
   // System Agents Models State
-  const [systemModels, setSystemModels] = React.useState({ planner: 'gemini-2.5-flash', catalog: 'gemini-2.5-flash', orchestrator: 'gemini-2.5-flash' });
+  const [systemModels, setSystemModels] = React.useState({ planner: 'gemini-3.5-flash', catalog: 'gemini-3.5-flash', orchestrator: 'gemini-3.5-flash' });
 
   const fetchSystemModels = async () => {
     try {
@@ -367,15 +387,9 @@ export const AdminPortalView = () => {
                       onChange={(e) => handleSaveSystemModels('planner', e.target.value)}
                       className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary cursor-pointer"
                     >
-                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                      <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                      <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
-                      <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
-                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
-                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                      {AVAILABLE_GEMINI_MODELS.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -386,15 +400,9 @@ export const AdminPortalView = () => {
                       onChange={(e) => handleSaveSystemModels('catalog', e.target.value)}
                       className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary cursor-pointer"
                     >
-                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                      <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                      <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
-                      <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
-                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
-                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                      {AVAILABLE_GEMINI_MODELS.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -405,15 +413,9 @@ export const AdminPortalView = () => {
                       onChange={(e) => handleSaveSystemModels('orchestrator', e.target.value)}
                       className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary cursor-pointer"
                     >
-                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                      <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                      <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
-                      <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
-                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
-                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                      {AVAILABLE_GEMINI_MODELS.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -438,17 +440,11 @@ export const AdminPortalView = () => {
                     <select 
                       value={agFormData.model}
                       onChange={(e) => setAgFormData({ ...agFormData, model: e.target.value })}
-                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary cursor-pointer"
                     >
-                      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                      <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                      <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-                      <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
-                      <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
-                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview</option>
-                      <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                      {AVAILABLE_GEMINI_MODELS.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="flex flex-col gap-1.5">

@@ -1171,6 +1171,28 @@ app.get('/api/settings', authMiddleware, (req, res) => {
     }
 });
 
+app.get('/api/config/available-models', authMiddleware, (req, res) => {
+    res.json([
+        { id: 'gemini-3.6-pro', name: 'Gemini 3.6 Pro (Next-Gen Reasoning)', category: 'pro' },
+        { id: 'gemini-3.6-pro-preview', name: 'Gemini 3.6 Pro Preview', category: 'pro' },
+        { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Ultra Fast & Multimodal)', category: 'flash' },
+        { id: 'gemini-3.6-flash-preview', name: 'Gemini 3.6 Flash Preview', category: 'flash' },
+        { id: 'gemini-3.5-pro', name: 'Gemini 3.5 Pro (Deep Analytics & Synthesis)', category: 'pro' },
+        { id: 'gemini-3.5-pro-preview', name: 'Gemini 3.5 Pro Preview', category: 'pro' },
+        { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash (High-Throughput Agentic)', category: 'flash' },
+        { id: 'gemini-3.5-flash-preview', name: 'Gemini 3.5 Flash Preview', category: 'flash' },
+        { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro', category: 'pro' },
+        { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', category: 'pro' },
+        { id: 'gemini-3.1-flash', name: 'Gemini 3.1 Flash', category: 'flash' },
+        { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', category: 'flash' },
+        { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', category: 'flash' },
+        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', category: 'pro' },
+        { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', category: 'flash' },
+        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', category: 'pro' },
+        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', category: 'flash' }
+    ]);
+});
+
 app.get('/api/config/system-models', authMiddleware, (req, res) => {
     try {
         const plannerPath = path.join(__dirname, '../config/planner_agent.json');

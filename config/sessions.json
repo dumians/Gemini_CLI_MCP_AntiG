@@ -999,5 +999,44 @@
         "timestamp": "2026-08-18T21:28:11.181Z"
       }
     ]
+  },
+  {
+    "id": "simulated-session-1787088673538",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787088673538",
+    "userId": "admin",
+    "createdAt": "2026-08-18T21:31:13.538Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T21:31:13.539Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787088673713",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787088673713",
+    "userId": "admin",
+    "createdAt": "2026-08-18T21:31:13.714Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T21:31:13.714Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787089084651",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787089084651",
+    "userId": "admin",
+    "createdAt": "2026-08-18T21:38:04.658Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T21:38:04.659Z"
+      }
+    ]
   }
 ]
