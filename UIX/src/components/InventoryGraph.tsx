@@ -193,13 +193,24 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
     // Force simulation parameters & tuning
     useEffect(() => {
         if (!fgRef.current) return;
-        fgRef.current.d3Force('charge')?.strength(-260);
-        fgRef.current.d3Force('link')?.distance((link: any) => {
-            if (link.type === 'cross_domain') return 140;
-            if (link.type === 'ownership') return 70;
-            return 95;
-        });
-        fgRef.current.d3VelocityDecay(0.35);
+        try {
+            if (typeof fgRef.current.d3Force === 'function') {
+                const charge = fgRef.current.d3Force('charge');
+                if (charge && typeof charge.strength === 'function') {
+                    charge.strength(-260);
+                }
+                const link = fgRef.current.d3Force('link');
+                if (link && typeof link.distance === 'function') {
+                    link.distance((l: any) => {
+                        if (l && l.type === 'cross_domain') return 140;
+                        if (l && l.type === 'ownership') return 70;
+                        return 95;
+                    });
+                }
+            }
+        } catch (err) {
+            console.warn("Force simulation tuning warning:", err);
+        }
     }, [graphData]);
 
     // Zoom & Focus Handlers
@@ -509,6 +520,8 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
                             height={dimensions.height}
                             nodeLabel="label"
                             nodeRelSize={6}
+                            d3VelocityDecay={0.35}
+                            d3AlphaDecay={0.02}
                             onNodeClick={handleNodeClick}
                             onNodeHover={(node: any) => setHoverNode(node || null)}
                             cooldownTicks={120}

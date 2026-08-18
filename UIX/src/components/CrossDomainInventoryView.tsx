@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar, Cell } from 'recharts';
 import { InventoryGraph } from './InventoryGraph';
+import { ErrorBoundary } from './ErrorBoundary';
 import { getDomainStyle } from '../utils/graphTheme';
 import { api } from '../utils/api';
 
@@ -266,7 +267,9 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
             Click any node to inspect schemas, Knowledge Catalog glossary links, or source properties.
           </span>
         </div>
-        <InventoryGraph onSelectEntity={handleEntitySelectFromGraph} />
+        <ErrorBoundary name="Mesh Graph Topology Visualizer">
+          <InventoryGraph onSelectEntity={handleEntitySelectFromGraph} />
+        </ErrorBoundary>
       </div>
 
       {/* Cross-Domain Stock Distribution Chart */}
