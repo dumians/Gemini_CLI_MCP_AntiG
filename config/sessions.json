@@ -765,5 +765,200 @@
         "timestamp": "2026-08-18T19:24:26.184Z"
       }
     ]
+  },
+  {
+    "id": "simulated-session-1787081328625",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787081328625",
+    "userId": "admin",
+    "createdAt": "2026-08-18T19:28:48.626Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T19:28:48.627Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787081328811",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787081328811",
+    "userId": "admin",
+    "createdAt": "2026-08-18T19:28:48.811Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T19:28:48.812Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787082824744",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787082824744",
+    "userId": "admin",
+    "createdAt": "2026-08-18T19:53:44.745Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-08-18T19:53:44.746Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787082827238",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787082827238",
+    "userId": "test_user_999",
+    "createdAt": "2026-08-18T19:53:47.239Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-08-18T19:53:47.240Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787083055004",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787083055004",
+    "userId": "admin",
+    "createdAt": "2026-08-18T19:57:35.005Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T19:57:35.006Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787083055181",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787083055181",
+    "userId": "admin",
+    "createdAt": "2026-08-18T19:57:35.182Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T19:57:35.182Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787083152807",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787083152807",
+    "userId": "admin",
+    "createdAt": "2026-08-18T19:59:12.808Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T19:59:12.808Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787083152988",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787083152988",
+    "userId": "admin",
+    "createdAt": "2026-08-18T19:59:12.988Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T19:59:12.989Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787084097328",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787084097328",
+    "userId": "admin",
+    "createdAt": "2026-08-18T20:14:57.329Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T20:14:57.330Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787084097516",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787084097516",
+    "userId": "admin",
+    "createdAt": "2026-08-18T20:14:57.517Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T20:14:57.517Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787085430944",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787085430944",
+    "userId": "admin",
+    "createdAt": "2026-08-18T20:37:10.946Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T20:37:10.946Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787085431116",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787085431116",
+    "userId": "admin",
+    "createdAt": "2026-08-18T20:37:11.116Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T20:37:11.117Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787085464875",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787085464875",
+    "userId": "admin",
+    "createdAt": "2026-08-18T20:37:44.875Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T20:37:44.876Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787085464995",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787085464995",
+    "userId": "admin",
+    "createdAt": "2026-08-18T20:37:44.996Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T20:37:44.996Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787085613696",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787085613696",
+    "userId": "admin",
+    "createdAt": "2026-08-18T20:40:13.704Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-18T20:40:13.705Z"
+      }
+    ]
   }
 ]
