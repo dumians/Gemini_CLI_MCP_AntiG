@@ -29,6 +29,12 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA']
 
+# 2b. Build & Push GCP One-MCP Unified Service
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.one-mcp', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA']
+
 # 3. Build & Push Master Orchestrator
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA', '-f', 'deploy/Dockerfile.orchestrator', '.']
@@ -66,5 +72,9 @@ images:
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA'
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA'
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA'
+- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA'
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA'
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

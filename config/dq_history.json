@@ -353,5 +353,35 @@
     "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.date",
     "score": 0.8,
     "time": "2026-08-17T13:32:37.421Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.campaign_id",
+    "score": 0.8,
+    "time": "2026-08-17T20:19:50.824Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.segment_name",
+    "score": 0.8,
+    "time": "2026-08-17T20:19:50.826Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.spend",
+    "score": 0.8,
+    "time": "2026-08-17T20:19:50.826Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.impressions",
+    "score": 0.8,
+    "time": "2026-08-17T20:19:50.827Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.conversions",
+    "score": 0.8,
+    "time": "2026-08-17T20:19:50.827Z"
+  },
+  {
+    "fqn": "bigquery:total-vertex-469513-r8.campaign_metrics.date",
+    "score": 0.8,
+    "time": "2026-08-17T20:19:50.828Z"
   }
 ]

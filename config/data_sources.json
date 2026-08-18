@@ -234,6 +234,30 @@
       },
       "schema_file": "db-schemas/netsuite_schema.sql",
       "health_check": "/health"
+    },
+    "gcp_one_mcp": {
+      "name": "GCP One MCP Unified Gateway",
+      "domain": "Universal",
+      "connection_type": "Unified Multi-Engine MCP",
+      "connection_string": "gcp-one-mcp://${GCP_PROJECT_ID}",
+      "connection": {
+        "projectId": "${GCP_PROJECT_ID}",
+        "mode": "${ONE_MCP_MODE}",
+        "enabled": "${GCP_ONE_MCP_ENABLED}"
+      },
+      "local": {
+        "command": "node",
+        "args": [
+          "servers/one-mcp/index.js"
+        ],
+        "transport": "stdio"
+      },
+      "remote": {
+        "url": "${ONE_MCP_URL}",
+        "transport": "sse"
+      },
+      "schema_file": "db-schemas/catalog_metadata.sql",
+      "health_check": "/health"
     }
   }
 }

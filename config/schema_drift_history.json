@@ -1,5 +1,5 @@
 {
-  "lastScan": "2026-08-17T19:33:41.558Z",
+  "lastScan": "2026-08-18T09:54:40.426Z",
   "latestSnapshot": {
     "oracle.suppliers": [
       {
@@ -493,6 +493,36 @@
         "name": "ai_embedding",
         "dataType": "vector"
       }
+    ],
+    "gcp_one_mcp.catalog_sources": [
+      {
+        "name": "source_id",
+        "dataType": "VARCHAR(50"
+      }
+    ],
+    "gcp_one_mcp.catalog_entities": [
+      {
+        "name": "entity_id",
+        "dataType": "VARCHAR(100"
+      }
+    ],
+    "gcp_one_mcp.catalog_attributes": [
+      {
+        "name": "attribute_id",
+        "dataType": "VARCHAR(150"
+      }
+    ],
+    "gcp_one_mcp.catalog_relationships": [
+      {
+        "name": "relationship_id",
+        "dataType": "VARCHAR(200"
+      }
+    ],
+    "gcp_one_mcp.catalog_lineage": [
+      {
+        "name": "lineage_id",
+        "dataType": "VARCHAR(200"
+      }
     ]
   },
   "recentEvents": [
@@ -501,7 +531,7 @@
       "changeType": "COLUMN_ADDED",
       "columnName": "loyalty_tier_score",
       "dataType": "NUMERIC",
-      "timestamp": "2026-08-16T19:33:41.558Z",
+      "timestamp": "2026-08-17T09:54:40.426Z",
       "severity": "INFO"
     },
     {
@@ -509,7 +539,7 @@
       "changeType": "INDEX_OPTIMIZED",
       "columnName": "sku_store_composite_idx",
       "dataType": "INDEX",
-      "timestamp": "2026-08-15T19:33:41.558Z",
+      "timestamp": "2026-08-16T09:54:40.426Z",
       "severity": "INFO"
     }
   ]

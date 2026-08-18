@@ -1,0 +1,28 @@
+# Dockerfile.one-mcp
+# Enterprise Dockerfile for deploying GCP One-MCP Unified Service to Cloud Run.
+
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy root package.json for workspace dependencies
+COPY package*.json ./
+RUN npm install --production
+
+# Copy servers, agents, config, and shared utilities
+COPY servers/ ./servers/
+COPY agent/ ./agent/
+COPY config/ ./config/
+COPY test-data/ ./test-data/
+
+# Default port for Cloud Run
+EXPOSE 8080
+
+ENV PORT=8080
+ENV NODE_ENV=production
+ENV GCP_ONE_MCP_ENABLED=true
+ENV ONE_MCP_MODE=unified
+ENV ONE_MCP_TRANSPORT=sse
+
+# Start the GCP One-MCP Unified Server on Cloud Run port 8080
+CMD ["node", "servers/one-mcp/index.js", "--sse", "--port", "8080"]

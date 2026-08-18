@@ -6,6 +6,7 @@
     "type": "module",
     "scripts": {
         "start": "node agent/index.js",
+        "start-one-mcp": "node servers/one-mcp/index.js",
         "start-oracle-mcp": "node servers/oracle-mcp/index.js",
         "start-spanner-mcp": "node servers/spanner-mcp/index.js",
         "start-bigquery-mcp": "node servers/bigquery-mcp/index.js",

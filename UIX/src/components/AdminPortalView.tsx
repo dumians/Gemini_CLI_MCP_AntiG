@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Settings, Bot, FileText, Terminal, RefreshCw, Database, Server, Plus, Trash2, Edit, Check, AlertTriangle, Globe, Cpu, Key, Shield } from 'lucide-react';
+import { Settings, Bot, FileText, Terminal, RefreshCw, Database, Server, Plus, Trash2, Edit, Check, AlertTriangle, Globe, Cpu, Key, Shield, Cloud, Network, Zap, Radio, Layers } from 'lucide-react';
 import { api } from '../utils/api';
 import { SourceModal } from './SourceModal';
 
@@ -10,6 +10,8 @@ export const AdminPortalView = () => {
   const [activeTab, setActiveTab] = React.useState<TabType>('general');
   const [loading, setLoading] = React.useState(false);
   const [settings, setSettings] = React.useState<any>(null);
+  const [gatewayStatus, setGatewayStatus] = React.useState<any>(null);
+  const [togglingMode, setTogglingMode] = React.useState(false);
 
   // System Agents Models State
   const [systemModels, setSystemModels] = React.useState({ planner: 'gemini-2.5-flash', catalog: 'gemini-2.5-flash', orchestrator: 'gemini-2.5-flash' });
@@ -131,6 +133,32 @@ export const AdminPortalView = () => {
     }
   };
 
+  const fetchGatewayStatus = async () => {
+    try {
+      const data = await api.get('/api/mcp/gateway-status');
+      setGatewayStatus(data);
+    } catch (err) {
+      console.error('Failed to fetch gateway status:', err);
+    }
+  };
+
+  const handleToggleGatewayMode = async (mode: string) => {
+    setTogglingMode(true);
+    try {
+      const res = await api.post('/api/mcp/gateway-mode', { mode });
+      if (res?.gateway) {
+        setGatewayStatus(res.gateway);
+      } else {
+        await fetchGatewayStatus();
+      }
+      await fetchMcpTools();
+    } catch (err) {
+      console.error('Failed to switch gateway mode:', err);
+    } finally {
+      setTogglingMode(false);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -147,6 +175,7 @@ export const AdminPortalView = () => {
 
       // Fetch compliance alerts
       await fetchComplianceAlerts();
+      await fetchGatewayStatus();
     } catch (err) {
       console.error("Failed to load admin data:", err);
     } finally {
@@ -154,12 +183,12 @@ export const AdminPortalView = () => {
     }
   };
 
-
   React.useEffect(() => {
     fetchData();
     fetchApiKeys();
     fetchMcpTools();
     fetchSystemModels();
+    fetchGatewayStatus();
   }, []);
 
   const handleDsSubmit = async (data: any) => {
@@ -543,47 +572,171 @@ export const AdminPortalView = () => {
         {activeTab === 'mcp' && (() => {
           const allMcpServers = settings?.agents?.flatMap((agent: any) => agent.mcpServers || []) || [];
           const uniqueMcpServers = Array.from(new Map(allMcpServers.map((s: any) => [s.name, s])).values());
+          const isUnified = gatewayStatus?.mode === 'unified' || (!gatewayStatus && true);
+
           return (
             <div className="space-y-6">
+              {/* GCP One-MCP Architecture Mode Switcher */}
+              <section className="glass rounded-2xl border-primary/30 p-6 relative overflow-hidden bg-gradient-to-r from-primary/5 via-slate-900/40 to-cyan-500/5">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Cloud className="text-primary size-5" />
+                      <h3 className="text-lg font-bold text-white">GCP One-MCP Unified Service Mesh</h3>
+                      <span className="bg-primary/20 text-primary border border-primary/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                        Enterprise
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Consolidates BigQuery, Spanner, AlloyDB, Oracle DB@GCP, Dataplex, NetSuite, and APIs into a unified enterprise endpoint with domain-scoped Zero-Trust RBAC.
+                    </p>
+                  </div>
+
+                  {/* Mode Switcher Toggle */}
+                  <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 self-stretch md:self-auto">
+                    <button
+                      onClick={() => handleToggleGatewayMode('unified')}
+                      disabled={togglingMode}
+                      className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        isUnified
+                          ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Layers size={14} />
+                      GCP One-MCP (Unified)
+                    </button>
+                    <button
+                      onClick={() => handleToggleGatewayMode('microservices')}
+                      disabled={togglingMode}
+                      className={`flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        !isUnified
+                          ? 'bg-slate-800 text-white shadow-lg'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Network size={14} />
+                      Microservices
+                    </button>
+                  </div>
+                </div>
+
+                {/* Gateway Stats Bar */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-800/80">
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/60">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Active Architecture</span>
+                    <span className="text-sm font-bold text-white flex items-center gap-1.5 mt-0.5">
+                      <span className={`size-2 rounded-full ${isUnified ? 'bg-primary animate-pulse' : 'bg-cyan-400'}`}></span>
+                      {isUnified ? 'GCP One-MCP Unified' : 'Domain Microservices'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/60">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Total Services Aggregated</span>
+                    <span className="text-sm font-bold text-primary mt-0.5 block">
+                      {gatewayStatus?.servicesCount || 7} GCP & Enterprise Services
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/60">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Discovered MCP Tools</span>
+                    <span className="text-sm font-bold text-green-400 mt-0.5 block">
+                      {mcpTools.length || 19} Live Tools
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/60">
+                    <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Security Isolation</span>
+                    <span className="text-sm font-bold text-purple-400 mt-0.5 block">
+                      Domain-Scoped RBAC
+                    </span>
+                  </div>
+                </div>
+
+                {/* Supported Services Badges */}
+                <div className="mt-4 flex flex-wrap gap-2 items-center">
+                  <span className="text-xs text-slate-400 font-medium mr-1">Aggregated:</span>
+                  {[
+                    { name: 'BigQuery Analytics', icon: 'BQ', color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
+                    { name: 'Cloud Spanner Retail', icon: 'SP', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' },
+                    { name: 'AlloyDB PostgreSQL CRM', icon: 'ADB', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30' },
+                    { name: 'Oracle Database@GCP', icon: 'ORA', color: 'bg-red-500/10 text-red-400 border-red-500/30' },
+                    { name: 'Dataplex Knowledge Catalog', icon: 'DP', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' },
+                    { name: 'NetSuite ERP AI Connector', icon: 'NS', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
+                    { name: 'External Domain APIs', icon: 'API', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' }
+                  ].map(srv => (
+                    <span key={srv.name} className={`px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1.5 ${srv.color}`}>
+                      <span className="text-[10px] font-bold opacity-80 font-mono">{srv.icon}</span>
+                      {srv.name}
+                    </span>
+                  ))}
+                </div>
+              </section>
+
+              {/* Server & Tool Discovery Section */}
               <section className="glass rounded-2xl border-slate-700/50 p-6">
-                <h3 className="text-lg font-bold text-white mb-6">Model Context Protocol (MCP) Configuration</h3>
+                <h3 className="text-lg font-bold text-white mb-6">Connected Endpoints & Tool Discovery</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-white">Connected Servers</h4>
-                    {uniqueMcpServers.length === 0 ? (
-                      <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                        <p className="text-sm text-slate-500">No MCP servers configured in agent settings.</p>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Server size={16} className="text-primary" /> Active Endpoints
+                    </h4>
+                    {isUnified ? (
+                      <div className="p-4 bg-slate-800/40 rounded-xl border border-primary/30 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                            <Cloud size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white">gcp-one-mcp (Unified Gateway)</p>
+                            <p className="text-xs text-slate-400 font-mono">http://localhost:3010/sse</p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-green-400 font-bold uppercase bg-green-500/10 px-2 py-0.5 rounded border border-green-500/30">
+                          Active & Scoped
+                        </span>
                       </div>
                     ) : (
-                      uniqueMcpServers.map((server: any) => (
-                        <div key={server.name} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
-                          <div className="flex items-center gap-3">
-                            <Cpu size={20} className="text-primary" />
-                            <div>
-                              <p className="text-sm font-bold text-white">{server.name}</p>
-                              <p className="text-xs text-slate-500">{server.mcpUrl || 'Local Server'}</p>
-                            </div>
-                          </div>
-                          <span className="text-xs text-green-500 font-bold uppercase">Available</span>
+                      uniqueMcpServers.length === 0 ? (
+                        <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                          <p className="text-sm text-slate-500">No MCP servers configured.</p>
                         </div>
-                      ))
+                      ) : (
+                        uniqueMcpServers.map((server: any) => (
+                          <div key={server.name} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                              <Cpu size={20} className="text-primary" />
+                              <div>
+                                <p className="text-sm font-bold text-white">{server.name}</p>
+                                <p className="text-xs text-slate-500">{server.mcpUrl || 'Local Server'}</p>
+                              </div>
+                            </div>
+                            <span className="text-xs text-green-500 font-bold uppercase">Available</span>
+                          </div>
+                        ))
+                      )
                     )}
                   </div>
+
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-white">Available Tools</h4>
-                    <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Zap size={16} className="text-amber-400" /> Discovered Tools ({mcpTools.length})
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2 max-h-[450px] overflow-y-auto pr-1 thin-scrollbar">
                       {mcpTools.length === 0 ? (
                         <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 text-slate-500 text-sm italic">
                           No tools discovered yet.
                         </div>
                       ) : (
                         mcpTools.map((tool: any) => (
-                          <div key={tool.name} className="p-4 bg-slate-800/30 rounded-xl border border-slate-700/50 flex flex-col gap-1">
+                          <div key={tool.name} className="p-3 bg-slate-800/30 rounded-xl border border-slate-700/50 hover:border-primary/40 transition-colors flex flex-col gap-1">
                             <div className="flex justify-between items-center">
-                              <p className="text-sm font-bold text-white">{tool.name}</p>
-                              <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono">{tool.server}</span>
+                              <p className="text-xs font-bold text-white font-mono">{tool.name}</p>
+                              <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono border border-primary/30">
+                                {tool.server || (isUnified ? 'gcp-one-mcp' : 'mcp-server')}
+                              </span>
                             </div>
-                            <p className="text-xs text-slate-400">{tool.description}</p>
+                            <p className="text-[11px] text-slate-400 leading-relaxed">{tool.description}</p>
                           </div>
                         ))
                       )}

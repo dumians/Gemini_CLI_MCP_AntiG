@@ -37,12 +37,15 @@ const server = new Server(
 );
 
 const getConnection = async () => {
-    if (dbConfig.user && dbConfig.password && dbConfig.connectString && process.env.NODE_ENV !== 'test') {
+    if (dbConfig.user && dbConfig.password && dbConfig.connectString && process.env.NODE_ENV !== 'test' && process.env.USE_REAL_CONNECTIONS === 'true') {
         try {
             if (process.env.ORACLE_WALLET) {
                 process.env.TNS_ADMIN = process.env.ORACLE_WALLET;
             }
-            return await oracledb.getConnection(dbConfig);
+            return await oracledb.getConnection({
+                ...dbConfig,
+                expireTime: 3
+            });
         } catch (e) {
             console.error("Oracle Connection Error:", e.message);
             return null;
@@ -87,9 +90,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
-    const connection = await getConnection();
+    const isTest = process.env.NODE_ENV === 'test' || process.env.USE_REAL_CONNECTIONS !== 'true';
+    const connection = isTest ? null : await getConnection();
 
-    const isTest = process.env.NODE_ENV === 'test';
     if (!connection || isTest) {
         // FALLBACK TO SIMULATION
         try {

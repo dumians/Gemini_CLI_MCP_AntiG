@@ -121,3 +121,47 @@ spec:
               key: latest
         - name: ORACLE_CONNECT_STRING
           value: "your-oracle-host:1521/xe"
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: gcp-one-mcp
+  labels:
+    cloud.googleapis.com/location: europe-west1
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/ingress: internal-and-cloud-load-balancing
+        run.googleapis.com/timeout: "3600"
+        run.googleapis.com/sessionAffinity: "true"
+        run.googleapis.com/vpc-access-egress: private-ranges-only
+        run.googleapis.com/network-interfaces: '[{"network":"default","subnetwork":"default"}]'
+    spec:
+      containers:
+      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/gcp-one-mcp:latest
+        env:
+        - name: GCP_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: SPANNER_INSTANCE_ID
+          value: "global-retail-instance"
+        - name: SPANNER_DATABASE_ID
+          value: "global-retail-db"
+        - name: BIGQUERY_DATASET_ID
+          value: "marketing_edw"
+        - name: BIGQUERY_LOCATION
+          value: "EU"
+        - name: ALLOYDB_REGION
+          value: "europe-west1"
+        - name: ALLOYDB_CLUSTER
+          value: "crm-cluster"
+        - name: ALLOYDB_INSTANCE
+          value: "crm-instance-1"
+        - name: ALLOYDB_USER
+          value: "postgres"
+        - name: ALLOYDB_DB
+          value: "postgres"
+        - name: ORACLE_USER
+          value: "ERP_READER"
+        - name: ORACLE_CONNECT_STRING
+          value: "your-oracle-host:1521/xe"

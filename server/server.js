@@ -460,6 +460,28 @@ app.get('/api/mcp/tools', authMiddleware, async (req, res) => {
     }
 });
 
+app.get('/api/mcp/gateway-status', authMiddleware, async (req, res) => {
+    try {
+        const status = await gateway.getGatewayStatus();
+        res.json(status);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/mcp/gateway-mode', authMiddleware, async (req, res) => {
+    try {
+        const { mode } = req.body;
+        if (!mode) {
+            return res.status(400).json({ error: "Missing required field: mode (unified | microservices | local | toolbox)" });
+        }
+        const result = gateway.setMode(mode);
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 app.get('/api/admin/events', authMiddleware, (req, res) => {
     res.json(logger.getA2AEvents());
 });

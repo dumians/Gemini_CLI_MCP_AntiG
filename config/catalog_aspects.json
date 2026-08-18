@@ -11,7 +11,7 @@
           "SOC2"
         ],
         "lifecycleStage": "Conformed Master",
-        "updatedAt": "2026-08-17T19:33:41.517Z"
+        "updatedAt": "2026-08-18T09:54:40.392Z"
       },
       "data_quality": {
         "score": 99.4,
@@ -516,6 +516,36 @@
       "governance": {
         "dataOwner": "netsuite-stewards@mesh.corp",
         "updatedAt": "2026-08-17T19:28:48.048Z"
+      }
+    },
+    "gcp_one_mcp.catalog_sources": {
+      "governance": {
+        "dataOwner": "gcp_one_mcp-stewards@mesh.corp",
+        "updatedAt": "2026-08-18T09:46:23.379Z"
+      }
+    },
+    "gcp_one_mcp.catalog_entities": {
+      "governance": {
+        "dataOwner": "gcp_one_mcp-stewards@mesh.corp",
+        "updatedAt": "2026-08-18T09:46:23.380Z"
+      }
+    },
+    "gcp_one_mcp.catalog_attributes": {
+      "governance": {
+        "dataOwner": "gcp_one_mcp-stewards@mesh.corp",
+        "updatedAt": "2026-08-18T09:46:23.381Z"
+      }
+    },
+    "gcp_one_mcp.catalog_relationships": {
+      "governance": {
+        "dataOwner": "gcp_one_mcp-stewards@mesh.corp",
+        "updatedAt": "2026-08-18T09:46:23.381Z"
+      }
+    },
+    "gcp_one_mcp.catalog_lineage": {
+      "governance": {
+        "dataOwner": "gcp_one_mcp-stewards@mesh.corp",
+        "updatedAt": "2026-08-18T09:46:23.382Z"
       }
     }
   }
