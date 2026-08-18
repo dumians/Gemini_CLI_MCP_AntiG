@@ -2,7 +2,7 @@
 
 This guide walks through running and evaluating **MeshOS**, the Enterprise Agentic Data Mesh platform built on Google Cloud Platform (GCP).
 
-MeshOS showcases multi-agent orchestration, the **GCP One-MCP Gateway**, and **Google Cloud Dataplex Labs** data governance and discovery capabilities across 9 enterprise domains:
+MeshOS showcases multi-agent orchestration, the **GCP One-MCP Gateway**, and **Google Cloud Knowledge Catalog (Dataplex Labs)** data governance and discovery capabilities across 9 enterprise domains:
 - **Oracle ERP**: `ERP_PURCHASE_ORDERS`, `ERP_SUPPLIERS`, `ERP_EXPENSES`
 - **Spanner Retail**: `Inventory`, `Transactions`, `Stores`, `Products`
 - **BigQuery Analytics**: `marketing_edw.customer_segments`, `churn_risk`
@@ -10,7 +10,7 @@ MeshOS showcases multi-agent orchestration, the **GCP One-MCP Gateway**, and **G
 - **NetSuite ERP**: `SalesOrders`, `Invoices`, `Fulfillment`
 - **Warehouse**: `StockBatches`, `AisleBins`, `PalletMovements`
 - **HR & Talent**: `Employees`, `Departments`, `HeadcountRequisitions`
-- **Catalog**: Dataplex Aspects, Lineage, W3C DCAT v3
+- **Catalog**: Knowledge Catalog Aspects, Lineage, W3C DCAT v3
 - **API Domain**: Dynamic external OpenAPI products
 
 ---
@@ -25,7 +25,7 @@ GCP_PROJECT_ID="your-gcp-project-id"
 GEMINI_API_KEY="your-gemini-api-key"
 GCP_ONE_MCP_ENABLED="true"
 ONE_MCP_MODE="unified"
-DATAPLEX_ZONE_ID="europe-west3"
+KNOWLEDGE_CATALOG_LOCATION="europe-west3"
 BIGQUERY_DATASET_ID="marketing_edw"
 USE_REAL_CONNECTIONS="false"
 ```
@@ -57,7 +57,7 @@ npm run start:all
 
 ---
 
-### Scenario 2: Dataplex Labs AI Discovery Agent (Semantic Decomposition & Multi-Search)
+### Scenario 2: Knowledge Catalog Labs AI Discovery Agent (Semantic Decomposition & Multi-Search)
 
 **Navigation:** Open the **Discovery & Drift** tab in the UI.
 
@@ -76,7 +76,7 @@ npm run start:all
 
 ---
 
-### Scenario 3: Dataplex Labs Data Governance Agent (Lineage Propagation & AutoDQ Trust Center)
+### Scenario 3: Knowledge Catalog Labs Data Governance Agent (Lineage Propagation & AutoDQ Trust Center)
 
 **Navigation:** Open the **Lineage & Descriptions** and **Data Trust Center** tabs in the UI.
 
@@ -98,5 +98,5 @@ npm run start:all
 Test dynamic switching between MCP operational modes in the UI or CLI:
 - **`unified`**: All 31+ tools routed through a single zero-trust endpoint.
 - **`microservices`**: Standalone microservices per domain (`servers/bigquery-mcp`, `servers/spanner-mcp`, etc.).
-- **`local`**: In-process driver execution.
-- **`toolbox`**: MCP Toolbox for Databases integration.
+- **`local`**: Offline stdio execution mode.
+- **`toolbox`**: Automated dynamic tool catalog integration.

@@ -17,7 +17,7 @@ The platform organizes enterprise data into 9 decentralized, contract-bounded do
 - **NetSuite ERP**: `SalesOrders`, `Invoices`, `Fulfillment`
 - **Warehouse**: `StockBatches`, `AisleBins`, `PalletMovements`
 - **HR & Talent**: `Employees`, `Departments`, `HeadcountRequisitions`
-- **Catalog & Knowledge**: Dataplex Aspects, Lineage, W3C DCAT v3
+- **Catalog & Knowledge**: Knowledge Catalog Aspects, Lineage, W3C DCAT v3
 - **API Domain**: Dynamic external OpenAPI products
 
 ---
@@ -30,22 +30,22 @@ The **GCP One-MCP Gateway** (`servers/one-mcp/index.js`, `agent/utils/one_mcp_ga
 
 ---
 
-### 3. Google Cloud Dataplex Labs Governance Agent
-Integrated from the Google Cloud Dataplex Labs reference specification:
+### 3. Google Cloud Knowledge Catalog Governance Agent
+Integrated from the Google Cloud Knowledge Catalog (Dataplex Labs) reference specification:
 - **Document RAG Engine**: Gemini multimodal extraction pipeline converting unstructured Markdown, PDFs, and schema dictionaries into structured table schemas and column definitions.
 - **Lineage-Based Metadata Propagation**: Propagates upstream column descriptions downstream with SQL transformation analysis (`COALESCE`, `SUM`, `CASE WHEN`).
-- **AI Business Glossary & EntryLinks**: Binds standardized glossary terms to Dataplex entries.
+- **AI Business Glossary & EntryLinks**: Binds standardized glossary terms to Knowledge Catalog entries.
 - **Data Trust Center (AutoDQ)**: Derives multi-hop Data Quality scores with automated SQL remediation bonuses and historical trend tracking.
-- **Dataplex Scans Runner**: Dispatches and tracks Data Quality and Profile scans.
+- **Knowledge Catalog Scans Runner**: Dispatches and tracks Data Quality and Profile scans.
 - **Estate Dashboard**: Real-time visibility into mesh-wide documentation gaps and trust indices.
 
 ---
 
-### 4. Google Cloud Dataplex Labs Discovery Agent
+### 4. Google Cloud Knowledge Catalog Discovery Agent
 - **Semantic Question Decomposition**: Translates natural language inquiries into 3 distinct search variations (synonyms, technical database translations, and category breadth).
 - **Predicate Extraction**: Extracts qualifiers (`type=table`, `system=bigquery`, `system=spanner`, `projectid=...`).
 - **Knowledge Catalog Multi-Search**: Executes concurrent semantic searches with `semantic_search: true`.
-- **Context Lookup (`lookupContext`)**: Calls Dataplex APIs to retrieve deep lineage, aspect schemas, and trust scores.
+- **Context Lookup (`lookupContext`)**: Calls Knowledge Catalog APIs to retrieve deep lineage, aspect schemas, and trust scores.
 
 ---
 

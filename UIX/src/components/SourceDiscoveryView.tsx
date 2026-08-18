@@ -43,7 +43,7 @@ export const SourceDiscoveryView = () => {
     try {
       // Trigger mesh catalog discovery scan to index newly registered source
       await api.post('/api/discovery/scan', { sourceId: sourceData.name.toLowerCase().replace(/\s+/g, '_') });
-      setSyncSuccess(`Successfully registered and indexed '${sourceData.name}' into GCP Knowledge Catalog & Dataplex!`);
+      setSyncSuccess(`Successfully registered and indexed '${sourceData.name}' into GCP Knowledge Catalog!`);
     } catch (err: any) {
       setError(`Failed to sync to catalog: ${err.message}`);
     } finally {
@@ -64,11 +64,11 @@ export const SourceDiscoveryView = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-white tracking-tight">Source Discovery & Schema Ingestion</h1>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
-              Dataplex Discovery Service
+              Knowledge Catalog Discovery Service
             </span>
           </div>
           <p className="text-slate-400 text-xs mt-1">
-            Connect external data sources, discover technical schemas, classify DLP sensitive fields, and register Dataplex catalog entries.
+            Connect external data sources, discover technical schemas, classify DLP sensitive fields, and register Knowledge Catalog entries.
           </p>
         </div>
       </div>
@@ -78,85 +78,100 @@ export const SourceDiscoveryView = () => {
         <div className="lg:col-span-1 p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             <Plus size={16} className="text-indigo-400" />
-            Add New Source Connector
+            Connect New Mesh Source
           </h2>
           
-          <div className="space-y-4">
+          {error && (
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle size={14} className="shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {syncSuccess && (
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center gap-2 font-semibold animate-fade-in">
+              <CheckCircle2 size={14} className="shrink-0" />
+              {syncSuccess}
+            </div>
+          )}
+
+          <form onSubmit={handleDiscover} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Source Name</label>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Source Name</label>
               <input
                 type="text"
-                name="name"
                 value={sourceData.name}
-                onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
-                placeholder="e.g. Oracle EBS HR"
+                onChange={e => setSourceData({ ...sourceData, name: e.target.value })}
+                placeholder="e.g. NetSuite ERP Connector"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Source Type</label>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Assigned Domain</label>
+              <input
+                type="text"
+                value={sourceData.domain}
+                onChange={e => setSourceData({ ...sourceData, domain: e.target.value })}
+                placeholder="e.g. Finance & Procurement"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Database / Source Type</label>
               <select
-                name="type"
                 value={sourceData.type}
-                onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
+                onChange={e => setSourceData({ ...sourceData, type: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
               >
-                <option value="REST API">REST API / OpenAPI</option>
-                <option value="Oracle DB">Oracle DB (Database@Google Cloud)</option>
-                <option value="Spanner">Cloud Spanner (Retail/Graph)</option>
-                <option value="BigQuery">BigQuery Analytics EDW</option>
-                <option value="AlloyDB">AlloyDB PostgreSQL (CRM)</option>
-                <option value="NetSuite">NetSuite ERP Connector</option>
+                <option value="postgresql">PostgreSQL / Cloud SQL</option>
+                <option value="mysql">MySQL Database</option>
+                <option value="oracle">Oracle Database</option>
+                <option value="spanner">Google Cloud Spanner</option>
+                <option value="bigquery">Google BigQuery</option>
+                <option value="rest_api">REST / OpenAPI Feed</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Connection URI / Endpoint</label>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Connection String / Host URI</label>
               <input
                 type="text"
-                name="uri"
-                value={sourceData.uri}
-                onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
-                placeholder="e.g. https://api.oracle.com/ebs"
+                value={sourceData.connectionUri}
+                onChange={e => setSourceData({ ...sourceData, connectionUri: e.target.value })}
+                placeholder="e.g. postgresql://user:pass@10.0.0.4:5432/crm_db"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+                required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Target Mesh Domain</label>
-              <input
-                type="text"
-                name="domain"
-                value={sourceData.domain}
-                onChange={handleInputChange}
-                className="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500"
-                placeholder="e.g. Human Resources"
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Schema DDL / JSON Sample (Optional)</label>
+              <textarea
+                value={sourceData.schemaSample}
+                onChange={e => setSourceData({ ...sourceData, schemaSample: e.target.value })}
+                rows={4}
+                placeholder="Paste DDL CREATE TABLE statements or sample JSON payload..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
               />
             </div>
 
             <button
-              onClick={handleDiscover}
-              disabled={loading || !sourceData.name || !sourceData.uri}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl py-2.5 text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <RefreshCw size={14} className="animate-spin" />
-                  Introspecting Schema...
-                </>
-              ) : (
-                <>
-                  <Search size={14} />
-                  Discover Schema & Profiling
-                </>
-              )}
+              {loading ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+              Run Automated Discovery & Profiling
             </button>
-          </div>
+          </form>
         </div>
 
-        {/* Right Column: Results */}
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
+        {/* Right Column: Profiling Preview */}
+        <div className="lg:col-span-2 p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <Database size={16} className="text-indigo-400" />
@@ -170,7 +185,7 @@ export const SourceDiscoveryView = () => {
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
               >
                 {isSyncing ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                Sync to Dataplex Knowledge Catalog
+                Sync to Knowledge Catalog
               </button>
             )}
           </div>

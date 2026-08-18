@@ -1,6 +1,6 @@
 # Enterprise Data Agents - GCP Production Deployment Blueprint
 
-This document outlines the professional deployment blueprint for the **MeshOS** Multi-Domain Agentic Data Mesh orchestration system on Google Cloud Platform (GCP). It encompasses serverless compute, managed persistence, zero-trust MCP gateway topology, Dataplex Labs governance and discovery services, networking, and CI/CD best practices.
+This document outlines the professional deployment blueprint for the **MeshOS** Multi-Domain Agentic Data Mesh orchestration system on Google Cloud Platform (GCP). It encompasses serverless compute, managed persistence, zero-trust MCP gateway topology, Knowledge Catalog governance and discovery services, networking, and CI/CD best practices.
 
 ![MeshOS Enterprise Architecture](images/gcp_agentic_mesh_unified_architecture.png)
 
@@ -18,8 +18,8 @@ graph TD
         APIGW --> |Direct VPC Egress| ORCH[Cloud Run: Master Orchestrator (Gemini 2.5)]
         ORCH --> |Internal gRPC/HTTP| OneMCP[Cloud Run: GCP One-MCP Unified Gateway]
         
-        OneMCP --> GovAgent[Cloud Run: Dataplex Governance Agent]
-        OneMCP --> DiscAgent[Cloud Run: Dataplex Discovery Agent]
+        OneMCP --> GovAgent[Cloud Run: Knowledge Catalog Governance Agent]
+        OneMCP --> DiscAgent[Cloud Run: Knowledge Catalog Discovery Agent]
         OneMCP --> DomainAgents[Cloud Run: 9 Domain Specialists]
     end
 
@@ -28,7 +28,7 @@ graph TD
         DomainAgents -.-> |Private API| Spanner[(Cloud Spanner Multi-Region)]
         DomainAgents -.-> |Private API| BigQuery[(BigQuery Analytics EDW)]
         DomainAgents -.-> |Private Service Connect| AlloyDB[(AlloyDB PostgreSQL + pgvector)]
-        GovAgent & DiscAgent -.-> |Private API| Dataplex[(Google Cloud Dataplex & Knowledge Catalog)]
+        GovAgent & DiscAgent -.-> |Private API| KnowledgeCatalog[(Google Cloud Knowledge Catalog)]
     end
 
     subgraph "Security & Operational Governance"
@@ -53,7 +53,7 @@ All compute components run on **Google Cloud Run** to achieve automatic scaling,
 2. **Express Mesh API Server**: Exposes REST and WebSocket endpoints for agent coordination and client streaming.
 3. **Master Orchestrator**: Containerized Node.js service running the Gemini 2.5 Flash / Pro reasoning engine, Context Fusion, and Data Contract validation.
 4. **GCP One-MCP Unified Gateway**: Runs on Cloud Run configured with SSE transport enabled on port 8088 (`/sse` and `/messages`) or stdio in sidecar deployments.
-5. **Dataplex Labs Governance & Discovery Agents**: Dedicated background workers for document ingestion RAG, lineage propagation, policy tag auditing, and multi-query decomposition.
+5. **Knowledge Catalog Governance & Discovery Agents**: Dedicated background workers for document ingestion RAG, lineage propagation, policy tag auditing, and multi-query decomposition.
 6. **9 Domain Specialists**: Microservices with isolated service accounts, enforcing least-privilege data access per domain.
 
 ---
@@ -64,7 +64,7 @@ All compute components run on **Google Cloud Run** to achieve automatic scaling,
 * **BigQuery (Analytics Domain)**: Serverless analytical warehouse housing `marketing_edw` datasets with BigQuery ML models for churn scoring.
 * **AlloyDB for PostgreSQL (CRM Domain)**: High-availability AlloyDB cluster with the `pgvector` extension for customer ticket similarity analysis, connected via Private Service Connect (PSC).
 * **Oracle Database@Google Cloud (ERP & HR Domains)**: Oracle Exadata Database Service / Bare Metal Solution connected over dedicated VPC Peering with TCPS / mTLS encryption.
-* **Google Cloud Dataplex (Catalog & Governance)**: Centralized metadata catalog managing custom Aspect Types (`governance`, `data_quality`, `security_privacy`), entry groups, and Data Quality scans.
+* **Google Cloud Knowledge Catalog (Catalog & Governance)**: Centralized metadata catalog managing custom Aspect Types (`governance`, `data_quality`, `security_privacy`), entry groups, and Data Quality scans.
 
 ---
 
@@ -131,4 +131,4 @@ options:
 * **Least Privilege IAM**:
   - `meshos-orchestrator@`: Has `roles/run.invoker` and `roles/aiplatform.user`.
   - `meshos-analytics@`: Has `roles/bigquery.dataViewer` and `roles/bigquery.jobUser`.
-  - `meshos-dataplex@`: Has `roles/dataplex.admin` and `roles/datacatalog.tagEditor`.
+  - `meshos-knowledge-catalog@`: Has `roles/dataplex.admin` and `roles/datacatalog.tagEditor`.

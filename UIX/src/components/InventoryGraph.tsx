@@ -696,7 +696,7 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
                                         <div className="space-y-4">
                                             {saveSuccess && (
                                                 <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center gap-2 font-bold animate-fade-in">
-                                                    <Check size={16} /> Metadata Synchronized to Dataplex & Catalog!
+                                                    <Check size={16} /> Metadata Synchronized to Knowledge Catalog!
                                                 </div>
                                             )}
 
@@ -705,8 +705,8 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
                                                     <div key={attr.name} className="p-3.5 bg-black/30 border border-white/5 rounded-2xl space-y-2.5">
                                                         <div className="flex justify-between items-start">
                                                             <div>
-                                                                <span className="font-mono font-bold text-xs text-white">{attr.name}</span>
-                                                                <span className="block font-mono text-[9px] text-slate-500 uppercase">{attr.dataType}</span>
+                                                                 <span className="font-mono font-bold text-xs text-white">{attr.name}</span>
+                                                                 <span className="block font-mono text-[9px] text-slate-500 uppercase">{attr.dataType}</span>
                                                             </div>
                                                             <div className="flex gap-1">
                                                                 {attr.isPrimaryKey && (
@@ -752,7 +752,7 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
                                                                 })}
                                                                 className="w-full bg-slate-950 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:border-primary/50 outline-none cursor-pointer"
                                                             >
-                                                                <option value="">Unlinked (Select Dataplex Term...)</option>
+                                                                <option value="">Unlinked (Select Knowledge Catalog Term...)</option>
                                                                 {glossaryTerms.map(t => (
                                                                     <option key={t.id} value={t.id}>{t.displayName}</option>
                                                                 ))}

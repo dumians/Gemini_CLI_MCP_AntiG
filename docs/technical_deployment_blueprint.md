@@ -15,8 +15,8 @@ This document provides a deep-dive into the technical service configuration, rea
 | | API Gateway | **Cloud Run Gateway / Apigee** | JWT validation, rate limiting, and request tracing with Cloud Trace. |
 | **Orchestration Plane** | Master Orchestrator | **Cloud Run (Serverless)** | Runs Gemini 2.5 Flash / Pro reasoning engine, Context Fusion, and Data Contract validation. |
 | **Unified Access Gateway** | GCP One-MCP Gateway | **Cloud Run (SSE on Port 8088 / Stdio)** | Centralized MCP server aggregating 31+ tools across 9 domains with zero-trust domain scoping. |
-| **Governance & Discovery** | Dataplex Labs Governance Agent | **Cloud Run + Dataplex v1** | Document RAG engine, lineage-based description propagation, policy tags, and AutoDQ Trust Center. |
-| | Dataplex Labs Discovery Agent | **Cloud Run + Vertex AI** | Semantic query decomposition, multi-search with `semantic_search: true`, and `lookupContext` API calls. |
+| **Governance & Discovery** | Knowledge Catalog Governance Agent | **Cloud Run + Knowledge Catalog v1** | Document RAG engine, lineage-based description propagation, policy tags, and AutoDQ Trust Center. |
+| | Knowledge Catalog Discovery Agent | **Cloud Run + Vertex AI** | Semantic query decomposition, multi-search with `semantic_search: true`, and `lookupContext` API calls. |
 | **Decentralized Domains** | 9 Domain Specialists | **Cloud Run Microservices** | Specialized domain agents (BigQuery, Spanner, AlloyDB, Oracle DB, NetSuite, Warehouse, HR, Catalog, API). |
 | **Persistence Tier** | Analytical Warehouse | **BigQuery** | Serverless data warehouse with BigQuery ML models for churn risk. |
 | | Global Relational & Graph | **Cloud Spanner** | Multi-region globally distributed database with Spanner Graph and native Vector indexing (`ARRAY<FLOAT32>`). |
@@ -39,7 +39,7 @@ sequenceDiagram
     participant AG as Express API Gateway (Cloud Run)
     participant OR as Master Orchestrator (Cloud Run)
     participant MCP as GCP One-MCP Gateway (Cloud Run)
-    participant GOV as Dataplex Governance Agent
+    participant GOV as Knowledge Catalog Governance Agent
     participant SA as Domain Specialist (Cloud Run)
     participant DB as GCP Persistence Tier (BQ / Spanner / AlloyDB / Oracle)
 
@@ -56,37 +56,51 @@ sequenceDiagram
     end
 
     rect rgb(30, 45, 70)
-        Note over OR,DB: Multi-Domain Agent-to-Agent (A2A) Execution
-        OR->>SA: Delegate Domain Sub-Task (e.g. Financial Specialist)
-        SA->>MCP: Execute Domain Tool (e.g. query_oracle_sql & query_oracle_graph)
-        MCP->>DB: Execute Query against GCP Managed Persistence
-        DB-->>MCP: Return Raw Relational / Graph / Vector Results
-        MCP-->>SA: Formatted JSON Payload
-        SA-->>OR: Standardized Data Product (Domain Bounded)
+        Note over OR,SA: Cross-Domain A2A Reasoning & Execution
+        OR->>MCP: call_financial_agent("Retrieve overdue POs")
+        MCP->>SA: Route to Financial Specialist (Scoped Token)
+        SA->>DB: Query Oracle ERP (SQL & Graph)
+        DB-->>SA: Return Delayed Suppliers & PO Lines
+        SA-->>MCP: Formatted Data Product (Financials)
+        MCP-->>OR: Grounded Financial Insight
+
+        OR->>MCP: call_retail_agent("Check stock for delayed SKUs")
+        MCP->>SA: Route to Retail Specialist (Inherited Context)
+        SA->>DB: Query Cloud Spanner (Graph Traversal & SQL)
+        DB-->>SA: Return Store Stockouts & Alternate Hubs
+        SA-->>MCP: Formatted Data Product (Retail)
+        MCP-->>OR: Grounded Supply Chain Insight
+
+        OR->>MCP: call_analytics_agent("Correlate Churn & Support Tickets")
+        MCP->>SA: Route to Analytics Specialist
+        SA->>DB: BigQuery EDW + AlloyDB CRM
+        DB-->>SA: Churn Risk Scores & Open Escalations
+        SA-->>MCP: Formatted Data Product (Analytics & CRM)
+        MCP-->>OR: Grounded Customer Impact Insight
     end
 
     rect rgb(25, 40, 60)
-        Note over OR,GOV: Data Quality, Policy Tagging & Trust Certification
+        Note over OR,GOV: Governance Verification & Trust Scoring
         OR->>MCP: calculate_data_trust_scores()
-        MCP->>GOV: Evaluate Multi-Hop DQ Scores + Policy Masking
-        GOV-->>MCP: Certified Trust Index & Policy Attestation
-        MCP-->>OR: Governance Context
+        MCP->>GOV: Run AutoDQ Multi-Hop Scoring
+        GOV-->>MCP: Attestation Report (96% Trust Index)
+        MCP-->>OR: Governance Verified
     end
 
-    Note over OR: Context Fusion & Final Synthesis (Gemini 2.5)
-    OR->>AG: Return Synthesis, Agent Timeline, and Knowledge Graph
-    AG->>U: Stream JSON Response to Web Dashboard
+    OR->>AG: 4. Synthesize Final Executive Response + Cross-Domain Graph
+    AG->>LB: 5. Stream JSON Response
+    LB->>U: 6. Render Strategic Dashboard, Timeline & Graph
 ```
 
 ---
 
-## 3. GraphRAG Grounding & Multimodal Verification
+## 3. GraphRAG Grounding & Anti-Guessing Protocol
 
-The platform implements **GraphRAG (Graph Retrieval-Augmented Generation)** to anchor LLM responses in verifiable database topologies:
+MeshOS prevents generative hallucinations through strict **GraphRAG Grounding**:
 
-1. **Entity Extraction & Resolution**: Domain agents extract structured entities from raw relational rows and unstructured documents.
-2. **Graph Traversal Queries**: Pathfinding queries are executed against **Cloud Spanner Graph** (`MATCH (s:Store)-[:STOCKS]->(i:Inventory)-[:SOURCED_FROM]->(sup:Supplier)`) and **Oracle Graph**.
-3. **Hybrid Vector Grounding**: Embeddings from **AlloyDB (`pgvector`)** and **Spanner Vector Search** enrich traversal paths with semantic similarity matches.
+1. **Path-Based Evidence Extraction**: When querying across domains, agents execute graph traversals across **Cloud Spanner Graph** (`(Store)-[:STOCKS]->(Inventory)-[:SOURCED_FROM]->(Supplier)`) and **Oracle Graph**.
+2. **Context Passing across Sub-Agents**: Sub-agents pass intermediate factual graph nodes as structured inputs to downstream specialists.
+3. **Data Product Contracts**: Outputs must conform to the `DataProductContract` JSON schema, validating domain source, confidence scores, and lineage hashes.
 4. **Immutable Fact Citations**: The Master Orchestrator synthesizes answers while explicitly citing verified graph paths, eliminating hallucination.
 
 ---
@@ -106,8 +120,8 @@ graph TD
         APIService -->|Direct VPC Egress| OrchestratorService[Cloud Run: Master Orchestrator]
         OrchestratorService -->|Internal IAM Authenticated| OneMCPService[Cloud Run: GCP One-MCP Gateway]
         
-        OneMCPService --> GovService[Cloud Run: Dataplex Governance Agent]
-        OneMCPService --> DiscService[Cloud Run: Dataplex Discovery Agent]
+        OneMCPService --> GovService[Cloud Run: Knowledge Catalog Governance Agent]
+        OneMCPService --> DiscService[Cloud Run: Knowledge Catalog Discovery Agent]
         OneMCPService --> DomainServices[Cloud Run: 9 Domain Specialists]
     end
 
@@ -116,12 +130,12 @@ graph TD
         DomainServices -.->|VPC Network Peering| OracleVPC[Oracle DB@GCP Exadata]
         DomainServices -.->|Google Private APIs| SpannerPrivate[Cloud Spanner Instance]
         DomainServices -.->|Google Private APIs| BigQueryPrivate[BigQuery Enterprise Datasets]
-        GovService & DiscService -.->|Google Private APIs| DataplexPrivate[Dataplex / Knowledge Catalog API]
+        GovService & DiscService -.->|Google Private APIs| DataplexPrivate[Knowledge Catalog API]
     end
 ```
 
 ### Security Guardrails
 - **Service-to-Service Authentication**: Internal Cloud Run services require Google OIDC authentication tokens with `roles/run.invoker`.
 - **Domain Tool Isolation**: MCP Gateway inspects agent identity tokens to restrict tool execution strictly to authorized domains.
-- **Dynamic Policy Tags & DLP Masking**: Sensitive fields (`EMAIL`, `CREDIT_CARD`, `SALARY`) are tagged with Dataplex Taxonomy Policy Tags and masked in transit.
+- **Dynamic Policy Tags & DLP Masking**: Sensitive fields (`EMAIL`, `CREDIT_CARD`, `SALARY`) are tagged with Knowledge Catalog Taxonomy Policy Tags and masked in transit.
 - **Secret Zero-Exposure**: Secret Manager injects database credentials dynamically into memory without storing tokens on disk or in container layers.

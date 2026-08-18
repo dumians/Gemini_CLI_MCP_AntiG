@@ -1,6 +1,6 @@
 # Strategic Architecture: Enterprise Agentic Data Mesh (MeshOS)
 
-This document defines the strategic and technical architecture for an **Autonomous Agentic Data Mesh (MeshOS)**. It evolves Martin Fowler and Zhamak Dehghani's foundational Data Mesh principles by introducing **Autonomous AI Agents**, **Model Context Protocol (MCP)** gateways, and **Google Cloud Dataplex Labs** automated governance.
+This document defines the strategic and technical architecture for an **Autonomous Agentic Data Mesh (MeshOS)**. It evolves Martin Fowler and Zhamak Dehghani's foundational Data Mesh principles by introducing **Autonomous AI Agents**, **Model Context Protocol (MCP)** gateways, and **Google Cloud Knowledge Catalog (Dataplex Labs)** automated governance.
 
 ![MeshOS Enterprise Architecture](images/gcp_agentic_mesh_unified_architecture.png)
 
@@ -31,8 +31,8 @@ graph TD
     end
 
     subgraph "4. Federated Computational Governance"
-        Gov["Dataplex Labs Governance Agent<br/>(Document RAG, Policy Tags, Trust Center)"]
-        Disc["Dataplex Labs Discovery Agent<br/>(Semantic Decomposition, Multi-Search)"]
+        Gov["Knowledge Catalog Governance Agent<br/>(Document RAG, Policy Tags, Trust Center)"]
+        Disc["Knowledge Catalog Discovery Agent<br/>(Semantic Decomposition, Multi-Search)"]
     end
 
     D1 & D2 & D3 & D4 & D5 & D6 & D7 & D8 & D9 --> Contracts
@@ -52,7 +52,7 @@ Data is not funneled into a brittle centralized data lake. Instead, each domain 
 4. **NetSuite Agent**: Owns NetSuite SaaS ERP records via SuiteTalk REST interfaces (`SalesOrders`, `Invoices`, `Fulfillment`).
 5. **Warehouse Agent**: Owns real-time inventory movements (`StockBatches`, `AisleBins`, `PalletMovements`).
 6. **HR & Talent Agent**: Owns sensitive employee directory and recruiting records (`Employees`, `Departments`, `HeadcountRequisitions`) with DLP masking.
-7. **Catalog Agent**: Owns Dataplex Aspect Schemas, cross-domain relationship graphs, and W3C DCAT v3 linked data.
+7. **Catalog Agent**: Owns Knowledge Catalog Aspect Schemas, cross-domain relationship graphs, and W3C DCAT v3 linked data.
 8. **API Agent**: Owns dynamic external API integrations and third-party data products.
 
 ---
@@ -92,11 +92,11 @@ MeshOS provides a shared, self-serve connectivity plane through the **GCP One-MC
 
 ---
 
-## 4. Federated Computational Governance (Dataplex Labs)
+## 4. Federated Computational Governance (Knowledge Catalog Labs)
 
 Governance in MeshOS is automated, continuous, and computationally enforced:
 - **Document RAG Data Steward**: Ingests unstructured policies and schema dictionaries to extract canonical business definitions.
 - **Lineage-Based Description Propagation**: Automatically updates downstream table and column documentation with SQL transformation rationales (`COALESCE`, `SUM`, `CASE WHEN`).
 - **Data Trust Center (AutoDQ)**: Derives multi-hop Data Quality scores with automated remediation bonuses and historical trend tracking.
-- **Semantic Question Decomposition**: Uses the Dataplex Labs Discovery Agent to decompose user questions into 3 distinct search variations and extracted predicates.
+- **Semantic Question Decomposition**: Uses the Knowledge Catalog Discovery Agent to decompose user questions into 3 distinct search variations and extracted predicates.
 - **Semantic Catalog Federation**: Exposes mesh assets via **W3C DCAT v3** and **Google Open Knowledge Graph** JSON-LD linked data.

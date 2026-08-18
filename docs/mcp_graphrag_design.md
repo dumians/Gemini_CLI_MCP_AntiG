@@ -94,4 +94,4 @@ These tools facilitate communication between the mesh and mission-critical Oracl
 
 ## 6. Security and Governance Integration
 
-Every tool call is wrapped in a **Workload Identity** token. The MCP Server validates the caller's identity against **Dataplex** access policies before executing the underlying GQL/SQL.
+Every tool call is wrapped in a **Workload Identity** token. The MCP Server validates the caller's identity against **Google Cloud Knowledge Catalog** access policies before executing the underlying GQL/SQL.

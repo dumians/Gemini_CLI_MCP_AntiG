@@ -226,7 +226,7 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
             <Database size={18} className="text-primary" /> Mesh Architecture & Cross-Domain Graph Visualizer
           </h3>
           <span className="text-xs text-slate-400">
-            Click any node to inspect schemas, Dataplex glossary links, or source properties.
+            Click any node to inspect schemas, Knowledge Catalog glossary links, or source properties.
           </span>
         </div>
         <InventoryGraph onSelectEntity={handleEntitySelectFromGraph} />

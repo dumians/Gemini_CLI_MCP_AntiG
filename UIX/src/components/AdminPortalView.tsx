@@ -588,7 +588,7 @@ export const AdminPortalView = () => {
                       </span>
                     </div>
                     <p className="text-xs text-slate-400">
-                      Consolidates BigQuery, Spanner, AlloyDB, Oracle DB@GCP, Dataplex, NetSuite, and APIs into a unified enterprise endpoint with domain-scoped Zero-Trust RBAC.
+                      Consolidates BigQuery, Spanner, AlloyDB, Oracle DB@GCP, Knowledge Catalog, NetSuite, and APIs into a unified enterprise endpoint with domain-scoped Zero-Trust RBAC.
                     </p>
                   </div>
 
@@ -661,7 +661,7 @@ export const AdminPortalView = () => {
                     { name: 'Cloud Spanner Retail', icon: 'SP', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' },
                     { name: 'AlloyDB PostgreSQL CRM', icon: 'ADB', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30' },
                     { name: 'Oracle Database@GCP', icon: 'ORA', color: 'bg-red-500/10 text-red-400 border-red-500/30' },
-                    { name: 'Dataplex Knowledge Catalog', icon: 'DP', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' },
+                    { name: 'Google Cloud Knowledge Catalog', icon: 'KC', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' },
                     { name: 'NetSuite ERP AI Connector', icon: 'NS', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
                     { name: 'External Domain APIs', icon: 'API', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' }
                   ].map(srv => (

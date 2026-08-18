@@ -241,10 +241,10 @@ export const ALL_ONE_MCP_TOOLS = [
         service: "oracle"
     },
 
-    // --- DATAPLEX / KNOWLEDGE CATALOG TOOLS ---
+    // --- KNOWLEDGE CATALOG TOOLS ---
     {
         name: "create_policy",
-        description: "Create or register a data governance policy in GCP Dataplex / Knowledge Catalog.",
+        description: "Create or register a data governance policy in Google Cloud Knowledge Catalog.",
         inputSchema: {
             type: "object",
             properties: {
@@ -263,7 +263,7 @@ export const ALL_ONE_MCP_TOOLS = [
     },
     {
         name: "evaluate_policy",
-        description: "Evaluates Data Products against federated GCP Dataplex policies and compliance rules.",
+        description: "Evaluates Data Products against federated Google Cloud Knowledge Catalog policies and compliance rules.",
         inputSchema: {
             type: "object",
             properties: {
@@ -382,7 +382,7 @@ export const ALL_ONE_MCP_TOOLS = [
     },
     {
         name: "manage_dataplex_scans",
-        description: "Lists or triggers Dataplex Data Quality and Data Profile scans on target entities.",
+        description: "Lists or triggers Knowledge Catalog Data Quality and Data Profile scans on target entities.",
         inputSchema: {
             type: "object",
             properties: {
@@ -408,7 +408,7 @@ export const ALL_ONE_MCP_TOOLS = [
     },
     {
         name: "knowledge_catalog_multi_search",
-        description: "Performs concurrent multi-query semantic search across Google Cloud Knowledge Catalog / Dataplex with automatic reranking.",
+        description: "Performs concurrent multi-query semantic search across Google Cloud Knowledge Catalog with automatic reranking.",
         inputSchema: {
             type: "object",
             properties: {

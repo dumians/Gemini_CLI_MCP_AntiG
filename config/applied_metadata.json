@@ -4,6 +4,6 @@
     "table": "campaign_metrics",
     "column": "spend",
     "description": "Total net media cost expenditure. Calculated using arithmetic aggregation, converted to float format.",
-    "timestamp": "2026-08-18T19:13:32.114Z"
+    "timestamp": "2026-08-18T19:24:24.445Z"
   }
 ]

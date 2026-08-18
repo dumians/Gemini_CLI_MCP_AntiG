@@ -20,10 +20,10 @@ graph TD
         MasterOrch -->|Zero-Trust MCP Protocol| OneMCP["GCP One-MCP Unified Gateway (Port 8088 / Stdio)"]
     end
 
-    subgraph "Dataplex Labs Governance & Discovery Plane"
-        OneMCP --> GovAgent["Dataplex Labs Governance Agent (Document RAG, Policy Tags, Trust Center)"]
-        OneMCP --> DiscAgent["Dataplex Labs Discovery Agent (Semantic Decomposition, Multi-Search)"]
-        GovAgent & DiscAgent <--> DataplexService["Google Cloud Dataplex / Knowledge Catalog"]
+    subgraph "Knowledge Catalog Governance & Discovery Plane"
+        OneMCP --> GovAgent["Knowledge Catalog Governance Agent (Document RAG, Policy Tags, Trust Center)"]
+        OneMCP --> DiscAgent["Knowledge Catalog Discovery Agent (Semantic Decomposition, Multi-Search)"]
+        GovAgent & DiscAgent <--> KnowledgeCatalogService["Google Cloud Knowledge Catalog"]
     end
 
     subgraph "Decentralized Domain Specialists Plane (9 Autonomous Domains)"
@@ -46,7 +46,7 @@ graph TD
         NSAgent -.-> NetSuiteAPI[("NetSuite Cloud ERP")]
         WHAgent -.-> WarehouseDB[("Warehouse Store")]
         HRAgent -.-> HRDB[("Encrypted HR Store")]
-        CatAgent -.-> KnowledgeStore[("Dataplex Metadata / Aspect Catalog")]
+        CatAgent -.-> KnowledgeStore[("Knowledge Catalog Metadata / Aspect Catalog")]
         ApiAgent -.-> OpenAPIEndpoint[("OpenAPI / External Endpoints")]
     end
 ```
@@ -66,7 +66,7 @@ sequenceDiagram
     participant API as Express Server
     participant ORCH as Master Orchestrator (Gemini 2.5)
     participant MCP as GCP One-MCP Gateway
-    participant GOV as Dataplex Governance Agent
+    participant GOV as Knowledge Catalog Governance Agent
     participant SPEC as Domain Specialists (Oracle / Spanner / BQ / AlloyDB)
     participant DB as GCP Database Tier
 
@@ -128,21 +128,21 @@ sequenceDiagram
 - **Domain Scoping**: Enforces Zero-Trust isolation. The `BigQuery Analytics` agent is scoped strictly to BigQuery and AlloyDB tools, preventing unauthorized lateral execution against `Oracle ERP` or `HR` systems.
 - **Fallback Engine**: Resilient fallback to local drivers and simulated catalogs when operating in offline testing or air-gapped environments.
 
-### 3.3 Google Cloud Dataplex Labs Governance Agent
+### 3.3 Google Cloud Knowledge Catalog Governance Agent
 - **Document RAG**: Multimodal extraction pipeline parsing unstructured PDF, Markdown, and JSON data dictionaries.
 - **Lineage-Based Metadata Propagation**: Automatically carries upstream column descriptions and business definitions downstream, appending SQL transformation rationales.
 - **Data Trust Center**: Derived multi-hop Data Quality calculations with automated SQL quality bonus factors (`COALESCE` $+8\%$, `DISTINCT` $+4\%$, `SAFE_CAST` $+5\%$) and drift tracking.
 
-### 3.4 Google Cloud Dataplex Labs Discovery Agent
+### 3.4 Google Cloud Knowledge Catalog Discovery Agent
 - **Semantic Decomposition**: Generates 3 query variations (direct synonym, database schema translation, and category breadth) with extracted predicates.
-- **Knowledge Catalog Search**: Concurrent semantic search (`semantic_search: true`) across Dataplex global catalog with cross-engine reranking.
-- **Context Lookup**: Invokes Dataplex `LookupContext` API to retrieve deep lineage, aspect attachments, and asset trust.
+- **Knowledge Catalog Search**: Concurrent semantic search (`semantic_search: true`) across Knowledge Catalog global catalog with cross-engine reranking.
+- **Context Lookup**: Invokes Knowledge Catalog `LookupContext` API to retrieve deep lineage, aspect attachments, and asset trust.
 
 ### 3.5 React UIX Studio & Cross-Domain Inventory
 - **Technology Stack**: React 19, Vite, Tailwind CSS, Lucide, D3 / SVG Force-Directed Canvas.
 - **Modules**:
   1. *Real-time Orchestration Console*: Interactive natural language querying and agent timeline inspector.
   2. *Cross-Domain Inventory*: Force-directed graph rendering relationships across all 9 domains with policy tag indicators and schema drift badges.
-  3. *Governance & Dataplex Studio*: Estate dashboard, Document RAG repository, Data Trust Center, and Aspect Schema editor.
+  3. *Governance & Knowledge Catalog Studio*: Estate dashboard, Document RAG repository, Data Trust Center, and Aspect Schema editor.
   4. *AI Semantic Discovery Studio*: Natural language question decomposition and ranked catalog asset browser.
   5. *W3C DCAT v3 / JSON-LD Catalog*: Standardized linked data metadata export.

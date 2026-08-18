@@ -1,7 +1,7 @@
 summary: Comprehensive 10-step walkthrough for building, governing, and exploring the Enterprise Agentic Data Mesh (MeshOS) on GCP.
 id: agentic-data-mesh-mcp
-categories: AI, Data, GCP, Dataplex
-tags: Gemini, MCP, OneMCP, DataMesh, Spanner, BigQuery, Oracle, AlloyDB, Dataplex
+categories: AI, Data, GCP, KnowledgeCatalog
+tags: Gemini, MCP, OneMCP, DataMesh, Spanner, BigQuery, Oracle, AlloyDB, KnowledgeCatalog
 status: Published
 authors: Google Cloud AI & Data Architect Team
 
@@ -18,8 +18,8 @@ In this walkthrough, you will explore:
 1. **Multi-Agent Orchestration**: Master Orchestrator powered by Gemini 2.5 Flash / Pro.
 2. **GCP One-MCP Gateway**: Centralized, Zero-Trust Model Context Protocol gateway.
 3. **9 Enterprise Data Domains**: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, NetSuite, Warehouse, HR, Catalog, and API.
-4. **Google Cloud Dataplex Labs Governance Agent**: Document RAG data stewardship, lineage-based column description propagation, and AutoDQ Trust Center.
-5. **Google Cloud Dataplex Labs Discovery Agent**: Semantic query decomposition, multi-search with `semantic_search: true`, and `lookupContext` API enrichment.
+4. **Google Cloud Knowledge Catalog Governance Agent**: Document RAG data stewardship, lineage-based column description propagation, and AutoDQ Trust Center.
+5. **Google Cloud Knowledge Catalog Discovery Agent**: Semantic query decomposition, multi-search with `semantic_search: true`, and `lookupContext` API enrichment.
 6. **Cross-Domain Force Graph & UI Studio**: Interactive real-time canvas, policy tag inspector, and W3C DCAT v3 JSON-LD export.
 
 ---
@@ -42,7 +42,7 @@ Duration: 5:00
    GEMINI_API_KEY="your-gemini-api-key"
    GCP_ONE_MCP_ENABLED="true"
    ONE_MCP_MODE="unified"
-   DATAPLEX_ZONE_ID="europe-west3"
+   KNOWLEDGE_CATALOG_LOCATION="europe-west3"
    BIGQUERY_DATASET_ID="marketing_edw"
    USE_REAL_CONNECTIONS="false"
    ```
@@ -65,7 +65,7 @@ MeshOS organizes enterprise data into 9 decentralized, contract-bounded domains:
 - **NetSuite ERP**: `SalesOrders`, `Invoices`, `Fulfillment`
 - **Warehouse**: `StockBatches`, `AisleBins`, `PalletMovements`
 - **HR & Talent**: `Employees`, `Departments`, `HeadcountRequisitions`
-- **Catalog & Knowledge**: Dataplex Aspects, Lineage, W3C DCAT v3
+- **Catalog & Knowledge**: Knowledge Catalog Aspects, Lineage, W3C DCAT v3
 - **API Domain**: Dynamic external OpenAPI products
 
 ---
@@ -80,7 +80,7 @@ Explore the **GCP One-MCP Gateway** (`servers/one-mcp/index.js`):
 
 ---
 
-## 4. Dataplex Labs AI Discovery Agent
+## 4. Knowledge Catalog Labs AI Discovery Agent
 Duration: 10:00
 
 Navigate to the **Discovery & Drift** tab in the UI:
@@ -94,13 +94,13 @@ Navigate to the **Discovery & Drift** tab in the UI:
 
 ---
 
-## 5. Dataplex Labs Data Governance & Document RAG
+## 5. Knowledge Catalog Labs Data Governance & Document RAG
 Duration: 10:00
 
 Open the **Document RAG** and **Lineage & Descriptions** tabs:
 1. **Upload Data Dictionaries**: Ingest Markdown or PDF data dictionaries. Gemini automatically extracts table schemas and column definitions.
 2. **Preview Lineage Description Propagation**: Propagate upstream column definitions down to curated views with automated SQL transformation explanations (`COALESCE`, `SUM`, `SAFE_CAST`).
-3. **AI Business Glossary**: Bind standardized glossary terms to Dataplex entry schemas.
+3. **AI Business Glossary**: Bind standardized glossary terms to Knowledge Catalog entry schemas.
 
 ---
 
@@ -111,7 +111,7 @@ Open the **Data Trust Center** tab:
 1. Inspect the derived Data Quality (DQ) score across multi-hop lineage.
 2. Review automatic **SQL Remediation Bonuses** (`COALESCE` $+8\%$, `DISTINCT` $+4\%$, `SAFE_CAST` $+5\%$).
 3. Monitor historical drift trends (`Improving`, `Stable`, `Degrading`).
-4. Dispatch and track **Dataplex Data Quality & Profile Scans**.
+4. Dispatch and track **Knowledge Catalog Data Quality & Profile Scans**.
 
 ---
 

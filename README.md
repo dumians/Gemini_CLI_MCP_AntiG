@@ -1,199 +1,194 @@
-# MeshOS: Enterprise Autonomous Agentic Data Mesh on Google Cloud Platform (GCP)
+# Enterprise Agentic Data Mesh (MeshOS) on Google Cloud
 
-[![GCP Architecture](https://img.shields.io/badge/Google_Cloud-Enterprise_Data_Mesh-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://cloud.google.com)
-[![Model Context Protocol](https://img.shields.io/badge/MCP-Unified_One--MCP_Gateway-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://modelcontextprotocol.io)
-[![Dataplex Labs](https://img.shields.io/badge/Dataplex_Labs-Governance_%26_Discovery_Agents-FF6F00?style=for-the-badge&logo=google&logoColor=white)](https://github.com/GoogleCloudPlatform/dataplex-labs)
-[![Tests Passing](https://img.shields.io/badge/Tests-99%2F99_Passing-success?style=for-the-badge)](tests/integration)
-
-![MeshOS Enterprise Architecture](docs/images/gcp_agentic_mesh_unified_architecture.png)
-
-## 📌 Executive Overview
-
-**MeshOS** is a next-generation **Autonomous Agentic Data Mesh platform** built on **Google Cloud Platform (GCP)**. It bridges disparate enterprise databases, transactional systems, analytics warehouses, and SaaS platforms into a self-governing, collaborative multi-agent ecosystem. 
-
-Powered by **Gemini 2.5 Flash / Pro**, the **Model Context Protocol (MCP)**, and official **Google Cloud Dataplex Labs** reference architectures, MeshOS enables autonomous cross-domain reasoning, automated metadata lineage propagation, zero-trust MCP tool federation, and real-time schema drift reconciliation.
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](https://opensource.org/licenses/Apache-2.0)
+[![Node.js](https://img.shields.io/badge/Node.js-v20+-green?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![TypeScript React](https://img.shields.io/badge/UIX-React_18_TypeScript-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![Knowledge Catalog](https://img.shields.io/badge/Knowledge_Catalog-Governance_%26_Discovery_Agents-FF6F00?style=for-the-badge&logo=google&logoColor=white)](https://cloud.google.com/dataplex)
+[![Model Context Protocol](https://img.shields.io/badge/Protocol-Model_Context_Protocol_(MCP)-8A2BE2?style=for-the-badge)](https://modelcontextprotocol.io/)
 
 ---
 
-## 🏛️ Core Architectural Pillars
+## 🌟 Executive Overview
+
+**MeshOS** is a multi-domain autonomous **Agentic Data Mesh Operating System** engineered for Google Cloud Platform (GCP). It elevates decentralized enterprise data from passive storage into active, intelligent cognitive products through domain-specific AI agents.
+
+Powered by **Gemini 2.5 Flash / Pro**, the **Model Context Protocol (MCP)**, and official **Google Cloud Knowledge Catalog (Dataplex Labs)** reference architectures, MeshOS enables autonomous cross-domain reasoning, automated metadata lineage propagation, zero-trust MCP tool federation, and real-time schema drift reconciliation.
+
+![MeshOS Enterprise Architecture](docs/images/gcp_agentic_mesh_unified_architecture.png)
+
+---
+
+## 🏛️ System Architecture Topology
 
 ```mermaid
 graph TD
-    subgraph "1. Management & Experience Plane"
-        UI["React UIX Studio (Vite / Lucide / Force-Directed Graph)"]
-        Orch["Master Orchestrator (Gemini 2.5 Multi-Agent Engine)"]
+    User["Data Consumer / Decision Maker"] --> Studio["MeshOS React UIX Studio (Port 5173)"]
+    Studio --> MasterOrch["Master Orchestrator Agent (Gemini 2.5 Flash/Pro)"]
+    
+    subgraph "1. Governance & Discovery Plane (Knowledge Catalog Labs)"
+        GovAgent["Knowledge Catalog Governance Agent (Document RAG, Policy Tags, Trust Center)"]
+        DiscAgent["Knowledge Catalog Discovery Agent (Semantic Decomposition, Multi-Search, Context Lookup)"]
+        Aspects["Knowledge Catalog Aspect Schemas (Security, Governance, Data Quality)"]
     end
-
+    
     subgraph "2. Unified Access & Security Plane"
-        OneMCP["GCP One-MCP Unified Gateway (Zero-Trust / Domain Scoped)"]
+        OneMCP["GCP One-MCP Unified Gateway (Port 8088 / Stdio)"]
+        RBAC["Zero-Trust Domain-Scoped Security"]
     end
 
-    subgraph "3. Governance & Metadata Plane (Dataplex Labs)"
-        GovAgent["Dataplex Labs Governance Agent (Document RAG, Policy Tags, Trust Center)"]
-        DiscAgent["Dataplex Labs Discovery Agent (Semantic Decomposition, Multi-Search, Context Lookup)"]
-        Aspects["Dataplex Aspect Schemas (Security, Governance, Data Quality)"]
+    subgraph "3. Decentralized Data Domains (9 Autonomous Specialized Agents)"
+        OracleAgent["FinancialAgent (Oracle Database@GCP)"]
+        SpannerAgent["RetailAgent (Cloud Spanner Graph/GQL)"]
+        BQAgent["AnalyticsAgent (BigQuery EDW & Churn ML)"]
+        AlloyAgent["CRMAgent (AlloyDB pgvector)"]
+        NetSuiteAgent["ERPAgent (NetSuite SuiteTalk AI Connector)"]
+        WarehouseAgent["WarehouseAgent (Stock Batches & AisleBins)"]
+        HRAgent["HRAgent (Employees & Headcount Req)"]
+        CatalogAgent["CatalogAgent (Aspects & W3C DCAT v3)"]
+        APIAgent["APIAgent (Dynamic OpenAPI Products)"]
     end
 
-    subgraph "4. Data Domains & Specialist Plane (9 Autonomous Domains)"
-        D1["BigQuery EDW Specialist"]
-        D2["Spanner Retail Specialist"]
-        D3["AlloyDB CRM Specialist"]
-        D4["Oracle ERP Specialist"]
-        D5["NetSuite ERP Specialist"]
-        D6["Warehouse Specialist"]
-        D7["HR & Talent Specialist"]
-        D8["Catalog & Knowledge Specialist"]
-        D9["External API Specialist"]
-    end
-
-    UI <--> Orch
-    Orch <--> OneMCP
-    OneMCP <--> GovAgent
-    OneMCP <--> DiscAgent
-    OneMCP <--> D1 & D2 & D3 & D4 & D5 & D6 & D7 & D8 & D9
-    GovAgent & DiscAgent <--> Aspects
+    MasterOrch --> GovAgent
+    MasterOrch --> DiscAgent
+    MasterOrch --> OneMCP
+    GovAgent --> Aspects
+    DiscAgent --> Aspects
+    OneMCP --> RBAC
+    RBAC --> OracleAgent
+    RBAC --> SpannerAgent
+    RBAC --> BQAgent
+    RBAC --> AlloyAgent
+    RBAC --> NetSuiteAgent
+    RBAC --> WarehouseAgent
+    RBAC --> HRAgent
+    RBAC --> CatalogAgent
+    RBAC --> APIAgent
 ```
 
 ---
 
-## 🌐 The 9 Mesh Domains
+## 📦 The 9 Mesh Domains & Capabilities
 
-MeshOS organizes enterprise data into 9 decentralized, autonomous domains with formal data contracts, lineage graphs, and specialized agents:
-
-| Domain | Underlying Engine | Key Entities & Capabilities | Agent Specialist |
+| Domain | Underlying GCP / Enterprise Engine | Key Data Products & Schemas | Specialist Agent |
 | :--- | :--- | :--- | :--- |
-| **BigQuery Analytics** | Google Cloud BigQuery | `marketing_edw.customer_segments`, `campaign_performance`, `churn_risk` | `AnalyticsAgent` |
-| **Spanner Retail** | Cloud Spanner + Graph | `Inventory`, `Transactions`, `Stores`, `Products`, Native Vector Index | `RetailAgent` |
-| **AlloyDB CRM** | AlloyDB for PostgreSQL | `CRM_LEADS`, `CRM_ACCOUNTS`, `SUPPORT_TICKETS`, `pgvector` | `AnalyticsAgent` |
-| **Oracle ERP** | Oracle DB@GCP / BMS | `ERP_PURCHASE_ORDERS`, `ERP_SUPPLIERS`, `ERP_EXPENSES`, Graph & Vector | `FinancialAgent` |
-| **NetSuite ERP** | SuiteTalk / REST Connector | `SalesOrders`, `Invoices`, `Fulfillment`, `ItemReceipts` | `NetSuiteAgent` |
-| **Warehouse** | Real-time Inventory Engine | `StockBatches`, `AisleBins`, `PalletMovements` | `WarehouseAgent` |
-| **HR & Talent** | Sensitive HR Store | `Employees`, `Departments`, `HeadcountRequisitions`, DLP Masking | `HRAgent` |
-| **Catalog & Knowledge** | Dataplex / Knowledge Catalog | `OpenKnowledgeGraph`, `DCATv3`, Aspect Types, Cross-Domain Links | `CatalogAgent` |
-| **API Domain** | External Gateways | Dynamic OpenAPI / REST Endpoints, Vendor Data Ingestion | `ApiAgent` |
+| **Oracle ERP** | Oracle Database@Google Cloud / Autonomous DB | `ERP_PURCHASE_ORDERS`, `ERP_SUPPLIERS`, `ERP_EXPENSES` | `FinancialAgent` |
+| **Spanner Retail** | Google Cloud Spanner (Graph GQL & SQL) | `Stores`, `Products`, `Inventory`, `Transactions` | `RetailAgent` |
+| **BigQuery Analytics** | Google Cloud BigQuery EDW & ML | `marketing_edw.customer_segments`, `churn_risk` | `AnalyticsAgent` |
+| **AlloyDB CRM** | Google Cloud AlloyDB PostgreSQL (`pgvector`) | `CRM_LEADS`, `CRM_ACCOUNTS`, `SUPPORT_TICKETS` | `CRMAgent` |
+| **NetSuite ERP** | NetSuite SuiteTalk REST AI Connector | `SalesOrders`, `Invoices`, `Fulfillment` | `ERPAgent` |
+| **Warehouse** | Real-Time Supply Chain Persistence | `StockBatches`, `AisleBins`, `PalletMovements` | `WarehouseAgent` |
+| **HR & Talent** | Human Resources Directory (Confidential) | `Employees`, `Departments`, `HeadcountRequisitions` | `HRAgent` |
+| **Catalog & Knowledge** | Google Cloud Knowledge Catalog | `OpenKnowledgeGraph`, `DCATv3`, Aspect Types, Cross-Domain Links | `CatalogAgent` |
+| **API Domain** | Dynamic OpenAPI Ingestion Feeds | Registered 3rd Party APIs, Partner Feeds | `APIAgent` |
 
 ---
 
 ## ⚡ GCP One-MCP Unified Gateway
 
-The **GCP One-MCP Gateway** (`servers/one-mcp/index.js`, `agent/utils/one_mcp_gateway.js`) provides a centralized, high-performance Zero-Trust access point for enterprise AI agents.
+The **GCP One-MCP Gateway** (`servers/one-mcp/index.js`, `agent/utils/one_mcp_gateway.js`) establishes a single, consolidated Zero-Trust integration plane:
 
-### Key Capabilities:
-- **Unified Gateway Endpoint**: Aggregates 31+ specialized tools across BigQuery, Spanner, AlloyDB, Oracle DB, Dataplex, and NetSuite into a single manageable MCP service.
-- **4 Runtime Operation Modes**:
-  - `unified`: Single multi-service gateway routing with dynamic tool filtering.
-  - `microservices`: Dedicated standalone MCP servers per database domain.
-  - `local`: Direct in-process JavaScript driver execution.
-  - `toolbox`: Enterprise MCP Toolbox for Databases integration.
-- **Zero-Trust Scoping & RBAC**: Filters available tools dynamically based on agent domain credentials, preventing lateral data exfiltration.
-
----
-
-## 🛡️ Dataplex Labs Data Governance Agent Integration
-
-MeshOS natively integrates the **Google Cloud Dataplex Labs Governance Agent** (`agent/utils/governance_metadata_propagator.js`, `agent/utils/document_rag_engine.js`):
-
-1. **Document RAG Engine & AI Data Steward**: Ingests unstructured Markdown, PDF, and JSON data dictionaries. Uses multimodal Gemini models to extract table schemas, column descriptions, and glossary terms.
-2. **Lineage-Based Metadata Propagation**: Propagates descriptions across multi-hop pipelines with automatic SQL transformation detection (`COALESCE`, `SUM`, `CONCAT`, `CASE WHEN`, `SAFE_CAST`).
-3. **AI Business Glossary & EntryLinks**: Recommends and binds business glossary terms to Dataplex entries with resilient local fallback (`config/glossary_links.json`).
-4. **Policy Tag Propagation**: Detects straight-pull vs transformed columns to propagate sensitive data policy tags and generate authorized reader summaries.
-5. **Data Trust Center (AutoDQ)**: Calculates derived multi-hop Data Quality scores with automated SQL remediation bonuses and historical trend tracking (`Improving`, `Stable`, `Degrading`).
-6. **Dataplex Scans Management**: Dispatches and tracks Dataplex Data Quality and Profile scans (`config/dataplex_scans.json`).
-7. **Estate Dashboard**: Real-time visibility into metadata gap percentages, documentation coverage, and enterprise trust indexes.
+- **Unified Gateway Endpoint**: Aggregates 31+ specialized tools across BigQuery, Spanner, AlloyDB, Oracle DB, Knowledge Catalog, and NetSuite into a single manageable MCP service.
+- **Dynamic Domain Scoping**: Restricts available tools dynamically based on calling agent domain identity, preventing lateral security vulnerabilities.
+- **4 Runtime Modes**:
+  - `unified`: Single multi-tool MCP server (Port 8088 / SSE).
+  - `microservices`: Decentralized independent MCP services per domain.
+  - `local`: Stdio-spawned sub-processes for isolated offline CLI workflows.
+  - `toolbox`: Dynamic tool registry integration.
 
 ---
 
-## 🔍 Dataplex Labs Knowledge Catalog Discovery Agent Integration
+## 🛡️ Knowledge Catalog Data Governance Agent Integration
 
-MeshOS integrates the **Dataplex Labs Knowledge Catalog Discovery Agent** (`agent/utils/knowledge_catalog_discovery_service.js`):
+MeshOS natively integrates the **Google Cloud Knowledge Catalog Governance Agent** (`agent/utils/governance_metadata_propagator.js`, `agent/utils/document_rag_engine.js`):
 
-1. **Semantic Question Decomposition**: Translates high-level analytical and business inquiries into 3 distinct search variations:
-   - *Variation 1 (Direct & Synonyms)*: Expanded business terms.
-   - *Variation 2 (Technical Schema Translation)*: Translates business concepts (e.g. *customer acquisition*, *churn risk*) to technical database column patterns (`spend`, `gross_revenue`, `customer_profile`).
-   - *Variation 3 (Category & Domain Context)*: Enterprise category expansion.
-2. **Predicate Extraction**: Extracts and appends qualified search qualifiers (`type=table`, `system=bigquery`, `system=spanner`, `projectid=...`).
-3. **Knowledge Catalog Multi-Search**: Executes concurrent semantic searches (`semantic_search: true`) across Google Cloud Knowledge Catalog and reranks entries.
-4. **Context Lookup (`lookupContext`)**: Queries Knowledge Catalog to retrieve deep lineage, aspect attachments, and governance posture for discovered assets.
+1. **Document RAG Data Steward**: Gemini multimodal extraction pipeline converting unstructured Markdown, PDFs, and schema dictionaries into structured table schemas and column definitions.
+2. **Lineage-Based Metadata Propagation**: Propagates upstream column descriptions downstream with SQL transformation analysis (`COALESCE`, `SUM`, `CASE WHEN`).
+3. **AI Business Glossary & EntryLinks**: Recommends and binds business glossary terms to Knowledge Catalog entries with resilient local fallback (`config/glossary_links.json`).
+4. **Data Trust Center (AutoDQ)**: Derives multi-hop Data Quality scores with automated SQL remediation bonuses and historical trend tracking.
+5. **Estate Summary Dashboard**: Real-time visibility into mesh-wide documentation gaps and trust indices.
+6. **Knowledge Catalog Scans Management**: Dispatches and tracks Data Quality and Profile scans (`config/dataplex_scans.json`).
 
 ---
 
-## 📊 Cross-Domain Inventory & Knowledge Graph UI
+## 🔍 Knowledge Catalog Discovery Agent Integration
 
-The **React UIX Studio** (`UIX/src/components/GovernanceView.tsx`) delivers an executive-grade command center:
-- **Interactive Force-Directed Graph**: Visualizes cross-domain entity linkages, data contracts, and policy tag indicators.
-- **AI Discovery & Multi-Search Studio**: Real-time interface for natural language decomposition, query variation preview, and asset reranking.
-- **Data Trust Center**: Real-time DQ score breakdown, auto-remediation suggestions, and scan history.
-- **Document RAG Workspace**: Upload and index data dictionaries and policy documents.
-- **Aspect Schema Editor**: Live management of custom Dataplex aspect types (`governance`, `data_quality`, `security_privacy`).
-- **W3C DCAT v3 / JSON-LD Export**: Interoperable semantic metadata export.
+MeshOS integrates the **Knowledge Catalog Discovery Agent** (`agent/utils/knowledge_catalog_discovery_service.js`):
+
+1. **Semantic Question Decomposition**: Translates natural language inquiries into 3 distinct search variations (direct synonyms, database column patterns, category breadth).
+2. **Predicate Extraction**: Extracts search qualifiers (`type=table`, `system=bigquery`, `system=spanner`, `projectid=...`).
+3. **Knowledge Catalog Multi-Search**: Executes concurrent semantic searches with cross-engine reranking.
+4. **Context Lookup (`lookupContext`)**: Calls Knowledge Catalog `LookupContext` API for batch resources to retrieve lineage, aspects, and trust index.
+
+---
+
+## 🖥️ MeshOS React UIX Studio
+
+The modern web studio (`UIX/`) offers enterprise observability:
+
+- **Real-Time Orchestration Console**: Interactive natural language query interface with live A2A timeline, step-by-step reasoning logs, and confidence score badges.
+- **Force-Directed Graph**: Visualizes cross-domain relationships, policy tags (`PII`, `FINANCIAL`), and data contract SLAs.
+- **Data Trust Center**: Comprehensive Data Quality dashboard, aspect editor, and scan dispatcher.
+- **W3C DCAT v3 / JSON-LD Export**: Standardized linked data catalog representation.
 
 ---
 
 ## 🚀 Quick Start Guide
 
 ### Prerequisites
-- Node.js 20+
-- Google Cloud SDK (`gcloud`)
-- Gemini API Key / Google Cloud ADC
+- Node.js `>= 20.0.0`
+- Google Cloud SDK (`gcloud`) with ADC configured (`gcloud auth application-default login`)
+- A valid Gemini API Key (`GEMINI_API_KEY`)
 
-### 1. Installation
+### Environment Setup
+Create a `.env` file in the root directory:
 ```bash
-git clone https://github.com/GoogleCloudPlatform/agenticmesh.git
-cd agenticmesh
+GEMINI_API_KEY="your-gemini-api-key"
+GCP_PROJECT_ID="your-gcp-project-id"
+GCP_REGION="europe-west3"
+KNOWLEDGE_CATALOG_LOCATION="europe-west3"
+MCP_GATEWAY_MODE="unified"
+ONE_MCP_PORT=8088
+PORT=8080
+```
+
+### Installation & Execution
+```bash
+# 1. Install dependencies
 npm install
 cd UIX && npm install && cd ..
-```
 
-### 2. Environment Configuration
-Create a `.env` file in the root directory:
-```env
-PORT=3000
-GCP_PROJECT_ID="your-project-id"
-GEMINI_API_KEY="your-gemini-api-key"
-GCP_ONE_MCP_ENABLED="true"
-ONE_MCP_MODE="unified"
-DATAPLEX_ZONE_ID="europe-west3"
-BIGQUERY_DATASET_ID="marketing_edw"
-USE_REAL_CONNECTIONS="false"  # Set to true for live GCP databases
-```
+# 2. Run full test suite (99 tests across 17 test suites)
+npm test
 
-### 3. Run the Platform
-```bash
-# Start backend Express server + One-MCP Gateway + React UIX
+# 3. Build frontend studio
+cd UIX && npm run build && cd ..
+
+# 4. Launch MeshOS (Backend API + One-MCP Gateway + UIX Studio)
 npm run start:all
 ```
-- **Web UI Studio**: `http://localhost:5173`
-- **Express Backend API**: `http://localhost:3000`
-- **GCP One-MCP SSE Gateway**: `http://localhost:8088/sse`
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
 ## 🧪 Testing & Verification
 
-MeshOS maintains a 100% pass rate across unit, integration, and end-to-end suites:
-
 ```bash
-# Run all 17 integration test suites (99 tests)
+# Run all integration test suites
 npm test
 
-# Build production React UIX frontend
-cd UIX && npm run build
+# Run Knowledge Catalog Governance Agent tests
+node --test tests/integration/dataplex_labs_governance_agent.test.js
+
+# Run Knowledge Catalog Discovery Agent tests
+node --test tests/integration/dataplex_labs_discovery_agent.test.js
+
+# Run GCP One-MCP Gateway tests
+node --test tests/integration/one_mcp_gateway.test.js
 ```
 
 ---
 
-## 📚 Documentation Index
+## 📄 License & Standards
 
-- [Architecture & Flow Specification](docs/architecture_and_flow.md)
-- [Agentic Data Mesh Design](docs/agentic_data_mesh_design.md)
-- [GCP Deployment Blueprint](docs/gcp_deployment_blueprint.md)
-- [Technical Deployment & Security Blueprint](docs/technical_deployment_blueprint.md)
-- [MCP GraphRAG Grounding Design](docs/mcp_graphrag_design.md)
-- [Interactive Demo Guide](docs/demo_guide.md)
-- [Step-by-Step Walkthrough](docs/walkthrough_10_steps.md)
-- [Architectural Whitepaper](docs/architect_article.md)
-
----
-
-## 📄 License & Attribution
-Licensed under the Apache 2.0 License. Built in alignment with the Google Cloud Dataplex Labs specifications.
+Licensed under the Apache 2.0 License. Built in alignment with the Google Cloud Knowledge Catalog (Dataplex Labs) specifications.

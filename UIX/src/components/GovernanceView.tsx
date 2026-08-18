@@ -408,7 +408,7 @@ export const GovernanceView: React.FC = () => {
         targetEntity
       });
       if (res && res.status === 'success') {
-        setActionMessage({ text: `Successfully executed Dataplex ${scanType} Scan on ${targetEntity}! Score: ${Math.round((res.scan.score || 0.95) * 100)}%` });
+        setActionMessage({ text: `Successfully executed Knowledge Catalog ${scanType} Scan on ${targetEntity}! Score: ${Math.round((res.scan.score || 0.95) * 100)}%` });
         fetchDataplexScans();
         fetchEstateSummary();
       }
@@ -452,7 +452,7 @@ export const GovernanceView: React.FC = () => {
         updates
       });
       if (res && res.status === 'success') {
-        setActionMessage({ text: `Linked ${updates.length} columns to Business Glossary EntryLinks in Dataplex!` });
+        setActionMessage({ text: `Linked ${updates.length} columns to Business Glossary EntryLinks in Knowledge Catalog!` });
       }
     } catch (err: any) {
       setActionMessage({ text: `Failed to link glossary terms: ${err.message}`, isError: true });
@@ -576,18 +576,13 @@ export const GovernanceView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-indigo-400">
-              <Compass size={24} />
+            <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+              <ShieldCheck size={26} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-white tracking-tight">GCP Dataplex Labs Governance Agent</h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">
-                  Dataplex Catalog v4 • Labs Integration
-                </span>
-              </div>
-              <p className="text-slate-400 text-xs mt-1">
-                Autonomous metadata discovery, recursive column-level lineage (CLL) propagation, AI Business Glossary mapping, and Document RAG.
+              <h1 className="text-2xl font-bold text-white tracking-tight">GCP Knowledge Catalog Governance & Discovery Agent</h1>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Knowledge Catalog v4 • Labs Integration
               </p>
             </div>
           </div>
@@ -1016,8 +1011,8 @@ export const GovernanceView: React.FC = () => {
         <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-white">Dataplex Business Glossary & EntryLinks</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Map technical physical columns to semantic business terms in GCP Dataplex Glossary natively.</p>
+              <h3 className="text-base font-bold text-white">Knowledge Catalog Business Glossary & EntryLinks</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Map technical physical columns to semantic business terms in GCP Knowledge Catalog Glossary natively.</p>
             </div>
             <button
               onClick={handleApplyGlossary}
@@ -1180,15 +1175,15 @@ export const GovernanceView: React.FC = () => {
             )}
           </div>
 
-          {/* Bottom: Dataplex Scans Management */}
+          {/* Bottom: Knowledge Catalog Scans Management */}
           <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-bold text-white flex items-center gap-2">
                   <Activity size={16} className="text-blue-400" />
-                  Dataplex AutoDQ & Data Profile Scans
+                  Knowledge Catalog AutoDQ & Data Profile Scans
                 </h4>
-                <p className="text-xs text-slate-400 mt-0.5">Managed Google Cloud Dataplex execution jobs.</p>
+                <p className="text-xs text-slate-400 mt-0.5">Managed Google Cloud Knowledge Catalog execution jobs.</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1315,7 +1310,7 @@ export const GovernanceView: React.FC = () => {
                     className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center justify-center gap-1.5 transition-all"
                   >
                     <Edit3 size={12} />
-                    Edit Dataplex Aspects
+                    Edit Knowledge Catalog Aspects
                   </button>
                 </div>
               ))}
@@ -1327,7 +1322,7 @@ export const GovernanceView: React.FC = () => {
       {/* TAB 8: DISCOVERY & SCHEMA DRIFT */}
       {activeTab === 'discovery' && (
         <div className="space-y-6">
-          {/* Dataplex Labs Discovery Agent Card */}
+          {/* Knowledge Catalog Discovery Agent Card */}
           <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-purple-950/30 border border-indigo-500/30 space-y-4 shadow-xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1338,7 +1333,7 @@ export const GovernanceView: React.FC = () => {
                   <h4 className="text-sm font-bold text-white flex items-center gap-2">
                     AI Semantic Discovery & Multi-Search Agent
                     <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono">
-                      Dataplex Labs
+                      Knowledge Catalog Labs
                     </span>
                   </h4>
                   <p className="text-xs text-slate-400 mt-0.5">
