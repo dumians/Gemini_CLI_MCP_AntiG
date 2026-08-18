@@ -83,8 +83,9 @@ images:
 serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_SERVICE_ACCOUNT_EMAIL}'
 
 substitutions:
-  _SERVICE_ACCOUNT_EMAIL: 'mesh-builder@${PROJECT_ID}.iam.gserviceaccount.com'
+  _SERVICE_ACCOUNT_EMAIL: '207265762145-compute@developer.gserviceaccount.com'
+
 
 options:
-  logging: CLOUD_LOGGING_ONLY
-  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+   logging: CLOUD_LOGGING_ONLY
+  substitutionOption: ALLOW_LOOSE
