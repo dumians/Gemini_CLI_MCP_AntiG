@@ -49,9 +49,20 @@ export function GraphView({ data: initialData }: { data?: any }) {
 
     // Filter nodes by domain
     const filteredGraphData = useMemo(() => {
-        if (selectedDomain === 'ALL') return graphData;
+        const nodes = graphData.nodes || [];
+        const links = graphData.links || [];
 
-        const visibleNodes = (graphData.nodes || []).filter((n: any) => {
+        if (selectedDomain === 'ALL') {
+            const allNodeIds = new Set(nodes.map((n: any) => n.id));
+            const safeLinks = links.filter((l: any) => {
+                const sId = typeof l.source === 'object' ? l.source?.id : l.source;
+                const tId = typeof l.target === 'object' ? l.target?.id : l.target;
+                return allNodeIds.has(sId) && allNodeIds.has(tId);
+            });
+            return { nodes, links: safeLinks };
+        }
+
+        const visibleNodes = nodes.filter((n: any) => {
             const domain = n.domain || n.properties?.domain || '';
             const style = getDomainStyle(domain, n.sourceId || n.id);
             return style.name.toLowerCase().includes(selectedDomain.toLowerCase()) || 
@@ -59,9 +70,9 @@ export function GraphView({ data: initialData }: { data?: any }) {
         });
         
         const visibleNodeIds = new Set(visibleNodes.map((n: any) => n.id));
-        const visibleLinks = (graphData.links || []).filter((l: any) => {
-            const sId = typeof l.source === 'object' ? l.source.id : l.source;
-            const tId = typeof l.target === 'object' ? l.target.id : l.target;
+        const visibleLinks = links.filter((l: any) => {
+            const sId = typeof l.source === 'object' ? l.source?.id : l.source;
+            const tId = typeof l.target === 'object' ? l.target?.id : l.target;
             return visibleNodeIds.has(sId) && visibleNodeIds.has(tId);
         });
 

@@ -70,9 +70,20 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
 
     // Filter nodes by selected domain
     const filteredGraphData = useMemo(() => {
-        if (selectedDomain === 'ALL') return graphData;
+        const nodes = graphData.nodes || [];
+        const links = graphData.links || [];
 
-        const visibleNodes = graphData.nodes.filter(n => {
+        if (selectedDomain === 'ALL') {
+            const allNodeIds = new Set(nodes.map(n => n.id));
+            const safeLinks = links.filter(l => {
+                const sId = typeof l.source === 'object' ? l.source?.id : l.source;
+                const tId = typeof l.target === 'object' ? l.target?.id : l.target;
+                return allNodeIds.has(sId) && allNodeIds.has(tId);
+            });
+            return { nodes, links: safeLinks };
+        }
+
+        const visibleNodes = nodes.filter(n => {
             const domain = n.domain || n.properties?.domain || '';
             const style = getDomainStyle(domain, n.sourceId || n.id);
             return style.name.toLowerCase().includes(selectedDomain.toLowerCase()) || 
@@ -80,9 +91,9 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
         });
         
         const visibleNodeIds = new Set(visibleNodes.map(n => n.id));
-        const visibleLinks = graphData.links.filter(l => {
-            const sId = typeof l.source === 'object' ? l.source.id : l.source;
-            const tId = typeof l.target === 'object' ? l.target.id : l.target;
+        const visibleLinks = links.filter(l => {
+            const sId = typeof l.source === 'object' ? l.source?.id : l.source;
+            const tId = typeof l.target === 'object' ? l.target?.id : l.target;
             return visibleNodeIds.has(sId) && visibleNodeIds.has(tId);
         });
 

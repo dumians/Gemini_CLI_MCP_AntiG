@@ -19,29 +19,29 @@
   ],
   "cross_domain_keys": {
     "customer_id": [
-      "alloydb_schema.customers",
-      "bigquery_schema.customer_segments",
-      "bigquery_schema.web_events"
+      "alloydb.customers",
+      "bigquery.customer_segments",
+      "bigquery.web_events"
     ],
     "supplier_id": [
-      "oracle_schema.suppliers",
-      "oracle_schema.purchase_orders"
+      "oracle.suppliers",
+      "oracle.purchase_orders"
     ],
     "store_id": [
-      "spanner_schema.stores",
-      "spanner_schema.global_inventory",
-      "spanner_schema.realtime_transactions"
+      "spanner.stores",
+      "spanner.global_inventory",
+      "spanner.realtime_transactions"
     ],
     "dept_id": [
-      "hr_schema.hr_departments",
-      "hr_schema.hr_employees",
-      "hr_schema.hr_recruitment"
+      "oracle_hr.hr_departments",
+      "oracle_hr.hr_employees",
+      "oracle_hr.hr_recruitment"
     ],
     "warehouse_id": [
-      "spanner_schema.global_inventory",
-      "spanner_schema.realtime_transactions",
-      "warehouse_schema.warehouse_master",
-      "warehouse_schema.inventory_levels"
+      "spanner.global_inventory",
+      "spanner.realtime_transactions",
+      "warehouse.warehouse_master",
+      "warehouse.inventory_levels"
     ]
   },
   "domain_metadata": {

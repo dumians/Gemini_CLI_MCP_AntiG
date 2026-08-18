@@ -367,8 +367,15 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
                 color: isGraph ? '#ec4899' : '#10b981' // Pink for Graph, Emerald for Table
             });
 
-            // Link to Source
-            if (ent.sourceId) {
+        });
+
+        // Set of valid node IDs for referential integrity
+        const validNodeIds = new Set(graphData.nodes.map(n => n.id));
+
+        // 3. Link Entity to Parent Source
+        Object.keys(catalog.entities).forEach(entId => {
+            const ent = catalog.entities[entId];
+            if (ent.sourceId && validNodeIds.has(ent.sourceId) && validNodeIds.has(entId)) {
                 graphData.links.push({
                     source: ent.sourceId,
                     target: entId,
@@ -379,28 +386,36 @@ app.get('/api/catalog/graph', authMiddleware, (req, res) => {
             }
         });
 
-        // 3. Link Relationships (Foreign Keys)
+        // 4. Link Relationships (Foreign Keys)
         catalog.relationships.forEach(rel => {
-            graphData.links.push({
-                source: rel.sourceEntity,
-                target: rel.targetEntity,
-                type: 'relationship',
-                label: rel.type || 'relates',
-                color: '#06b6d4'
-            });
+            const src = rel.sourceEntity?.replace('_schema.', '.');
+            const tgt = rel.targetEntity?.replace('_schema.', '.');
+            if (validNodeIds.has(src) && validNodeIds.has(tgt)) {
+                graphData.links.push({
+                    source: src,
+                    target: tgt,
+                    type: 'relationship',
+                    label: rel.type || 'relates',
+                    color: '#06b6d4'
+                });
+            }
         });
 
-        // 4. Link Cross-Domain Correlations
+        // 5. Link Cross-Domain Correlations
         if (catalog.crossDomainLinks) {
             catalog.crossDomainLinks.forEach(link => {
-                graphData.links.push({
-                    source: link.sourceA,
-                    target: link.sourceB,
-                    type: 'cross_domain',
-                    label: `correlates (${link.key})`,
-                    key: link.key,
-                    color: '#f59e0b' // Amber/Orange
-                });
+                const src = link.sourceA?.replace('_schema.', '.');
+                const tgt = link.sourceB?.replace('_schema.', '.');
+                if (validNodeIds.has(src) && validNodeIds.has(tgt)) {
+                    graphData.links.push({
+                        source: src,
+                        target: tgt,
+                        type: 'cross_domain',
+                        label: `correlates (${link.key})`,
+                        key: link.key,
+                        color: '#f59e0b' // Amber/Orange
+                    });
+                }
             });
         }
 

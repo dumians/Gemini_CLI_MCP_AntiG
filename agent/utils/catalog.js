@@ -242,13 +242,17 @@ export class MetadataCatalog {
         for (const [keyName, locations] of Object.entries(crossDomainKeys)) {
             for (let i = 0; i < locations.length; i++) {
                 for (let j = i + 1; j < locations.length; j++) {
-                    this.crossDomainLinks.push({
-                        key: keyName,
-                        sourceA: locations[i],
-                        sourceB: locations[j],
-                        type: 'CROSS_DOMAIN',
-                        confidence: 1.0
-                    });
+                    const normA = locations[i].replace('_schema.', '.');
+                    const normB = locations[j].replace('_schema.', '.');
+                    if (this.entities[normA] && this.entities[normB]) {
+                        this.crossDomainLinks.push({
+                            key: keyName,
+                            sourceA: normA,
+                            sourceB: normB,
+                            type: 'CROSS_DOMAIN',
+                            confidence: 1.0
+                        });
+                    }
                 }
             }
         }
