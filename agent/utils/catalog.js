@@ -353,7 +353,30 @@ export class MetadataCatalog {
                 });
             }
         } catch (err) {
-            console.error("[MetadataCatalog] Failed to infer correlations:", err);
+            console.warn("[MetadataCatalog] LLM correlation inference unavailable, applying deterministic schema correlations:", err.message);
+            const commonKeys = ['customer_id', 'supplier_id', 'order_id', 'store_id', 'item_id', 'warehouse_id', 'employee_id'];
+            const entitiesList = Object.values(this.entities).filter(e => e.type === 'TABLE');
+            for (let i = 0; i < entitiesList.length; i++) {
+                for (let j = i + 1; j < entitiesList.length; j++) {
+                    const eA = entitiesList[i];
+                    const eB = entitiesList[j];
+                    if (eA.sourceId === eB.sourceId) continue;
+                    for (const key of commonKeys) {
+                        const hasA = (eA.attributes || []).some(a => (a.name || '').toLowerCase() === key);
+                        const hasB = (eB.attributes || []).some(a => (a.name || '').toLowerCase() === key);
+                        if (hasA && hasB) {
+                            this.crossDomainLinks.push({
+                                key: key,
+                                sourceA: eA.id,
+                                sourceB: eB.id,
+                                type: 'CROSS_DOMAIN',
+                                confidence: 0.95,
+                                reason: `Shared identifier '${key}' across domains (${eA.sourceId} & ${eB.sourceId})`
+                            });
+                        }
+                    }
+                }
+            }
         }
     }
 
