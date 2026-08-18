@@ -16,6 +16,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { governancePropagator } from "../../agent/utils/governance_metadata_propagator.js";
 import { documentRAGEngine } from "../../agent/utils/document_rag_engine.js";
+import { kcDiscoveryService } from "../../agent/utils/knowledge_catalog_discovery_service.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -405,6 +406,46 @@ export const ALL_ONE_MCP_TOOLS = [
         domain: "Catalog",
         service: "dataplex"
     },
+    {
+        name: "knowledge_catalog_multi_search",
+        description: "Performs concurrent multi-query semantic search across Google Cloud Knowledge Catalog / Dataplex with automatic reranking.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                queries: { type: "array", items: { type: "string" }, description: "List of search query strings with extracted predicates" }
+            },
+            required: ["queries"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "decompose_and_discover_assets",
+        description: "End-to-end AI Discovery Agent: Decomposes natural language query into 3 distinct variations, runs multi-search, looks up context, and returns ranked assets.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                query: { type: "string", description: "Natural language discovery request" }
+            },
+            required: ["query"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "lookup_knowledge_context",
+        description: "Calls Knowledge Catalog LookupContext API to retrieve deep lineage, aspect schemas, and context for batch resources.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                region: { type: "string", description: "GCP region (e.g., global, europe-west3)" },
+                batchEntries: { type: "array", items: { type: "string" }, description: "Array of resource entry names" }
+            },
+            required: ["batchEntries"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
 
     // --- NETSUITE ERP TOOLS ---
     {
@@ -765,6 +806,21 @@ export function createOneMcpServer() {
 
                 case "get_estate_governance_summary": {
                     const result = await governancePropagator.getEstateSummary();
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "knowledge_catalog_multi_search": {
+                    const result = await kcDiscoveryService.multiSearch(args.queries);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "decompose_and_discover_assets": {
+                    const result = await kcDiscoveryService.discoverAssets(args.query);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "lookup_knowledge_context": {
+                    const result = await kcDiscoveryService.lookupContext(args.region || 'global', args.batchEntries);
                     return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
                 }
 

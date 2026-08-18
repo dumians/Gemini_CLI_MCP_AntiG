@@ -16,6 +16,7 @@ import { fileURLToPath } from 'url';
 
 import { documentRAGEngine } from "./utils/document_rag_engine.js";
 import { governancePropagator } from "./utils/governance_metadata_propagator.js";
+import { kcDiscoveryService } from "./utils/knowledge_catalog_discovery_service.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -63,7 +64,10 @@ class CatalogAgent {
             query_governance_rag: (args) => documentRAGEngine.queryRelevantMetadata(args || {}),
             search_governance_documents: ({ query }) => documentRAGEngine.searchDocuments(query),
             get_estate_governance_summary: () => governancePropagator.getEstateSummary(),
-            calculate_data_trust_scores: ({ tableId, datasetId }) => governancePropagator.propagateDQScores(datasetId || 'marketing_edw', tableId)
+            calculate_data_trust_scores: ({ tableId, datasetId }) => governancePropagator.propagateDQScores(datasetId || 'marketing_edw', tableId),
+            knowledge_catalog_multi_search: ({ queries }) => kcDiscoveryService.multiSearch(queries),
+            decompose_and_discover_assets: ({ query }) => kcDiscoveryService.discoverAssets(query),
+            lookup_knowledge_context: ({ region, batchEntries }) => kcDiscoveryService.lookupContext(region || 'global', batchEntries)
         };
     }
 

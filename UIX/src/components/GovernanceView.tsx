@@ -207,6 +207,36 @@ export const GovernanceView: React.FC = () => {
   const [isRemediating, setIsRemediating] = React.useState(false);
   const [actionMessage, setActionMessage] = React.useState<{ text: string; isError?: boolean } | null>(null);
 
+  // AI Discovery Agent state (Dataplex Labs)
+  const [aiDiscoveryQuery, setAiDiscoveryQuery] = React.useState('');
+  const [isAiDiscovering, setIsAiDiscovering] = React.useState(false);
+  const [aiDiscoveryResult, setAiDiscoveryResult] = React.useState<{
+    userQuery?: string;
+    decomposition?: { predicates: string[]; variations: string[] };
+    rankedResults?: any[];
+    contextSummary?: string;
+    totalFound?: number;
+  } | null>(null);
+
+  const handleRunAiDiscovery = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!aiDiscoveryQuery.trim()) return;
+    setIsAiDiscovering(true);
+    setActionMessage(null);
+    try {
+      const res = await api.post('/api/catalog/discovery/ai-search', { query: aiDiscoveryQuery });
+      if (res && res.status === 'success') {
+        setAiDiscoveryResult(res);
+        setActionMessage({ text: `Discovered ${res.totalFound || res.rankedResults?.length || 0} catalog assets using semantic decomposition!` });
+      }
+    } catch (err: any) {
+      console.error("AI discovery failed:", err);
+      setActionMessage({ text: `Discovery query failed: ${err.message}`, isError: true });
+    } finally {
+      setIsAiDiscovering(false);
+    }
+  };
+
   // Fetch Aspect Type schemas
   const fetchAspectTypes = async () => {
     try {
@@ -1297,6 +1327,146 @@ export const GovernanceView: React.FC = () => {
       {/* TAB 8: DISCOVERY & SCHEMA DRIFT */}
       {activeTab === 'discovery' && (
         <div className="space-y-6">
+          {/* Dataplex Labs Discovery Agent Card */}
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-purple-950/30 border border-indigo-500/30 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400">
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    AI Semantic Discovery & Multi-Search Agent
+                    <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono">
+                      Dataplex Labs
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Performs semantic question decomposition, generates 3 search variations with qualified predicates, calls LookupContext, and reranks Google Cloud Knowledge Catalog assets.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleRunAiDiscovery} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={aiDiscoveryQuery}
+                  onChange={e => setAiDiscoveryQuery(e.target.value)}
+                  placeholder="e.g. Find customer revenue, churn risk, and billing data in BigQuery and Spanner..."
+                  className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isAiDiscovering || !aiDiscoveryQuery.trim()}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 disabled:opacity-50 transition-all"
+              >
+                {isAiDiscovering ? <RefreshCw size={14} className="animate-spin" /> : <Compass size={14} />}
+                Decompose & Search
+              </button>
+            </form>
+
+            {/* Quick Sample Queries */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-[11px] text-slate-500 font-medium">Try:</span>
+              {[
+                'Find omnichannel retail revenue and customer orders in Spanner',
+                'Identify sensitive PII email and customer profiles in CRM',
+                'Show marketing campaign metrics and revenue attribution in BigQuery'
+              ].map((querySample, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setAiDiscoveryQuery(querySample);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] border border-slate-700/50 transition-colors"
+                >
+                  "{querySample}"
+                </button>
+              ))}
+            </div>
+
+            {/* Discovery Results & Semantic Decomposition Output */}
+            {aiDiscoveryResult && (
+              <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-4">
+                {/* Decomposition summary */}
+                {aiDiscoveryResult.decomposition && (
+                  <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                      <span className="flex items-center gap-1.5 text-indigo-400">
+                        <Layers size={14} />
+                        Semantic Query Variations ({aiDiscoveryResult.decomposition.variations?.length || 0})
+                      </span>
+                      {aiDiscoveryResult.decomposition.predicates?.length > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-slate-500">Extracted Predicates:</span>
+                          {aiDiscoveryResult.decomposition.predicates.map((p, i) => (
+                            <span key={i} className="px-1.5 py-0.5 rounded bg-indigo-950/60 border border-indigo-800/60 text-indigo-300 font-mono text-[10px]">
+                              {p}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      {aiDiscoveryResult.decomposition.variations?.map((variation, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-[11px] text-slate-300 font-mono">
+                          <span className="text-[10px] text-indigo-400 font-bold block mb-1">Variation {idx + 1}:</span>
+                          {variation}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Context Lookup Banner */}
+                {aiDiscoveryResult.contextSummary && (
+                  <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-800/40 text-xs text-indigo-200 flex items-start gap-2.5">
+                    <Info size={16} className="text-indigo-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-white mb-0.5">Knowledge Catalog Context Lookup:</span>
+                      <p className="text-[11px] text-indigo-300/90 leading-relaxed">{aiDiscoveryResult.contextSummary}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Ranked Discovered Assets */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                      Discovered & Reranked Catalog Assets ({aiDiscoveryResult.rankedResults?.length || 0})
+                    </h5>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {aiDiscoveryResult.rankedResults?.map((entry, idx) => (
+                      <div key={idx} className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/90 hover:border-slate-700 transition-all space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Database size={14} className="text-indigo-400" />
+                            <span className="text-xs font-bold text-white">{entry.displayName || entry.name}</span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] font-semibold">
+                            {Math.round((entry.score || 0.9) * 100)}% Match
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 line-clamp-2">{entry.description || 'Mesh data asset'}</p>
+                        <div className="flex items-center justify-between pt-1 text-[10px] text-slate-500 border-t border-slate-800/60">
+                          <span className="font-mono text-indigo-300">{entry.system || 'GCP'} • {entry.domain || 'Omnichannel'}</span>
+                          <span>{entry.attributeCount || (entry.attributes || []).length || 8} Attributes</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {discoveryResult && (
             <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
               <h4 className="text-sm font-bold text-white flex items-center gap-2">

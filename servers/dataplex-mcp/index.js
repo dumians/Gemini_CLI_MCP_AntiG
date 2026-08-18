@@ -9,6 +9,7 @@ import { dataplex } from "../../agent/utils/dataplex.js";
 import { DataplexAgent } from "../../agent/dataplex_agent.js";
 import { governancePropagator } from "../../agent/utils/governance_metadata_propagator.js";
 import { documentRAGEngine } from "../../agent/utils/document_rag_engine.js";
+import { kcDiscoveryService } from "../../agent/utils/knowledge_catalog_discovery_service.js";
 import dotenv from "dotenv";
 import express from 'express';
 import path from 'path';
@@ -190,6 +191,40 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     type: "object",
                     properties: {}
                 }
+            },
+            {
+                name: "knowledge_catalog_multi_search",
+                description: "Performs concurrent multi-query semantic search across Google Cloud Knowledge Catalog / Dataplex with automatic reranking",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        queries: { type: "array", items: { type: "string" }, description: "List of search query strings with extracted predicates" }
+                    },
+                    required: ["queries"]
+                }
+            },
+            {
+                name: "decompose_and_discover_assets",
+                description: "End-to-end AI Discovery Agent: Decomposes natural language query into 3 distinct variations, runs multi-search, looks up context, and returns ranked assets",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        query: { type: "string", description: "Natural language discovery request" }
+                    },
+                    required: ["query"]
+                }
+            },
+            {
+                name: "lookup_knowledge_context",
+                description: "Calls Knowledge Catalog LookupContext API to retrieve deep lineage, aspect schemas, and context for batch resources",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        region: { type: "string", description: "GCP region (e.g., global, europe-west3)" },
+                        batchEntries: { type: "array", items: { type: "string" }, description: "Array of resource entry names" }
+                    },
+                    required: ["batchEntries"]
+                }
             }
         ],
     };
@@ -242,6 +277,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         } else if (name === "get_estate_governance_summary") {
             const result = await governancePropagator.getEstateSummary();
+            return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        } else if (name === "knowledge_catalog_multi_search") {
+            const result = await kcDiscoveryService.multiSearch(args.queries);
+            return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        } else if (name === "decompose_and_discover_assets") {
+            const result = await kcDiscoveryService.discoverAssets(args.query);
+            return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        } else if (name === "lookup_knowledge_context") {
+            const result = await kcDiscoveryService.lookupContext(args.region || 'global', args.batchEntries);
             return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
     } catch (error) {

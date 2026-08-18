@@ -20,6 +20,7 @@ import { memoryBankService } from '../agent/utils/memory_bank_service.js';
 import { knowledgeCatalogService } from '../agent/utils/knowledge_catalog_service.js';
 import { discoveryService } from '../agent/utils/discovery_service.js';
 import { documentRAGEngine } from '../agent/utils/document_rag_engine.js';
+import { kcDiscoveryService } from '../agent/utils/knowledge_catalog_discovery_service.js';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1420,6 +1421,51 @@ app.post('/api/governance/scans/run', authMiddleware, async (req, res) => {
         res.json({ status: 'success', scan: result });
     } catch (err) {
         logger.log('Server', `API /api/governance/scans/run failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- KNOWLEDGE CATALOG DISCOVERY AGENT ENDPOINTS (Dataplex Labs) ---
+app.post('/api/catalog/discovery/decompose', authMiddleware, async (req, res) => {
+    try {
+        const { query } = req.body;
+        const result = await kcDiscoveryService.decomposeQuery(query);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        logger.log('Server', `API /api/catalog/discovery/decompose failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/catalog/discovery/multi-search', authMiddleware, async (req, res) => {
+    try {
+        const { queries } = req.body;
+        const result = await kcDiscoveryService.multiSearch(queries);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        logger.log('Server', `API /api/catalog/discovery/multi-search failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/catalog/discovery/lookup-context', authMiddleware, async (req, res) => {
+    try {
+        const { region, batchEntries } = req.body;
+        const result = await kcDiscoveryService.lookupContext(region, batchEntries);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        logger.log('Server', `API /api/catalog/discovery/lookup-context failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/catalog/discovery/ai-search', authMiddleware, async (req, res) => {
+    try {
+        const { query } = req.body;
+        const result = await kcDiscoveryService.discoverAssets(query);
+        res.json({ status: 'success', ...result });
+    } catch (err) {
+        logger.log('Server', `API /api/catalog/discovery/ai-search failed: ${err.message}`, 'ERROR');
         res.status(500).json({ error: err.message });
     }
 });

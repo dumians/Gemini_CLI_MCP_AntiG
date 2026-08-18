@@ -5,6 +5,7 @@ import { logger } from './utils/logging_service.js';
 import { governancePropagator } from './utils/governance_metadata_propagator.js';
 import { documentRAGEngine } from './utils/document_rag_engine.js';
 import { dataplex } from './utils/dataplex.js';
+import { kcDiscoveryService } from './utils/knowledge_catalog_discovery_service.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -164,6 +165,40 @@ export class DataplexAgent {
                     type: "OBJECT",
                     properties: {}
                 }
+            },
+            {
+                name: "knowledge_catalog_multi_search",
+                description: "Performs concurrent multi-query semantic search across Google Cloud Knowledge Catalog / Dataplex with automatic reranking",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        queries: { type: "ARRAY", description: "List of search query strings with extracted predicates" }
+                    },
+                    required: ["queries"]
+                }
+            },
+            {
+                name: "decompose_and_discover_assets",
+                description: "End-to-end AI Discovery Agent: Decomposes natural language query into 3 distinct variations, runs multi-search, looks up context, and returns ranked assets",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        query: { type: "STRING", description: "Natural language discovery request" }
+                    },
+                    required: ["query"]
+                }
+            },
+            {
+                name: "lookup_knowledge_context",
+                description: "Calls Knowledge Catalog LookupContext API to retrieve deep lineage, aspect schemas, and context for batch resources",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        region: { type: "STRING", description: "GCP region (e.g., global, europe-west3)" },
+                        batchEntries: { type: "ARRAY", description: "Array of resource entry names" }
+                    },
+                    required: ["batchEntries"]
+                }
             }
         ];
     }
@@ -208,6 +243,12 @@ export class DataplexAgent {
                 return governancePropagator.listDataplexScans();
             case "get_estate_governance_summary":
                 return governancePropagator.getEstateSummary();
+            case "knowledge_catalog_multi_search":
+                return kcDiscoveryService.multiSearch(args.queries);
+            case "decompose_and_discover_assets":
+                return kcDiscoveryService.discoverAssets(args.query);
+            case "lookup_knowledge_context":
+                return kcDiscoveryService.lookupContext(args.region || 'global', args.batchEntries);
             default:
                 throw new Error(`Tool ${toolName} not found in DataplexAgent`);
         }
