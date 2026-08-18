@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   RefreshCw, Activity, Bot, Database, Search, Filter, Layers, 
-  ArrowRight, ShieldCheck, Cpu, Sparkles, CheckCircle2, TrendingUp, AlertTriangle
+  ArrowRight, ShieldCheck, Cpu, Sparkles, CheckCircle2, TrendingUp, AlertTriangle, X
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar, Cell } from 'recharts';
 import { InventoryGraph } from './InventoryGraph';
