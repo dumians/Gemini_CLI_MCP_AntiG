@@ -1,0 +1,9 @@
+[
+  {
+    "table": "campaign_metrics",
+    "column": "customer_id",
+    "term_id": "projects/governance-agent/locations/europe-west1/glossaries/retail-common-glossary/terms/customer-id",
+    "term_display": "Customer Identifier",
+    "timestamp": "2026-08-18T18:06:19.208Z"
+  }
+]

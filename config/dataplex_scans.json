@@ -1,0 +1,50 @@
+[
+  {
+    "id": "scan-test-01",
+    "name": "marketing_edw.campaign_metrics Automated DQ Scan",
+    "type": "DATA_QUALITY",
+    "target": "marketing_edw.campaign_metrics",
+    "domain": "BigQuery Analytics",
+    "status": "PASSED",
+    "rulesEvaluated": 12,
+    "rulesPassed": 12,
+    "lastRunTime": "2026-08-18T18:06:31.540Z",
+    "score": 0.96
+  },
+  {
+    "id": "scan-retail-dq-01",
+    "name": "Retail Omnichannel DQ Scan",
+    "type": "DATA_QUALITY",
+    "target": "spanner_retail.transactions",
+    "domain": "Spanner Retail",
+    "status": "PASSED",
+    "rulesEvaluated": 14,
+    "rulesPassed": 14,
+    "lastRunTime": "2026-08-18T17:04:57.677Z",
+    "score": 0.98
+  },
+  {
+    "id": "scan-analytics-profile-01",
+    "name": "Marketing EDW Data Profile Scan",
+    "type": "DATA_PROFILE",
+    "target": "marketing_edw.campaign_metrics",
+    "domain": "BigQuery Analytics",
+    "status": "COMPLETED",
+    "rulesEvaluated": 8,
+    "rulesPassed": 8,
+    "lastRunTime": "2026-08-18T16:04:57.677Z",
+    "score": 0.94
+  },
+  {
+    "id": "scan-crm-dq-02",
+    "name": "AlloyDB Customer Contacts DQ Scan",
+    "type": "DATA_QUALITY",
+    "target": "crm_alloydb.customers",
+    "domain": "AlloyDB CRM",
+    "status": "WARNING",
+    "rulesEvaluated": 10,
+    "rulesPassed": 8,
+    "lastRunTime": "2026-08-18T14:04:57.677Z",
+    "score": 0.84
+  }
+]

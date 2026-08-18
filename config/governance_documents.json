@@ -1,0 +1,239 @@
+[
+  {
+    "id": "doc-1787076388608-f6059",
+    "title": "Test Financial Governance Spec",
+    "fileName": "financial_governance_spec.md",
+    "fileType": "markdown",
+    "uploadedAt": "2026-08-18T18:06:28.608Z",
+    "extractedMetadata": {
+      "documentTitle": "Test Financial Governance Spec",
+      "summary": "Governance specifications extracted from financial_governance_spec.md",
+      "tables": [
+        {
+          "tableName": "invoices",
+          "domain": "Oracle ERP",
+          "description": "Master customer billing invoices ledger.",
+          "columns": [
+            {
+              "name": "invoice_id",
+              "dataType": "STRING",
+              "description": "Unique financial invoice document identifier",
+              "policyTag": "Confidential",
+              "suggestedGlossaryTerm": "Invoice Identifier",
+              "remediationLogic": "DISTINCT deduplication"
+            },
+            {
+              "name": "gross_total",
+              "dataType": "FLOAT",
+              "description": "Total invoice amount before sales tax",
+              "policyTag": "Financial",
+              "suggestedGlossaryTerm": "Gross Revenue",
+              "remediationLogic": "ROUND(gross_total, 2)"
+            }
+          ]
+        }
+      ],
+      "glossaryTerms": [
+        {
+          "term": "Test Financial Governance Spec",
+          "definition": "Governance term defined in financial_governance_spec.md",
+          "category": "General"
+        }
+      ],
+      "policyRules": [
+        {
+          "name": "Test Financial Governance Spec Standard Policy",
+          "classification": "Medium",
+          "maskingRule": "Role-Based"
+        }
+      ]
+    }
+  },
+  {
+    "id": "doc-1787076377018-1pqpa",
+    "title": "Test Financial Governance Spec",
+    "fileName": "financial_governance_spec.md",
+    "fileType": "markdown",
+    "uploadedAt": "2026-08-18T18:06:17.018Z",
+    "extractedMetadata": {
+      "documentTitle": "Test Financial Governance Spec",
+      "summary": "Governance specifications extracted from financial_governance_spec.md",
+      "tables": [
+        {
+          "tableName": "invoices",
+          "domain": "Oracle ERP",
+          "description": "Master customer billing invoices ledger.",
+          "columns": [
+            {
+              "name": "invoice_id",
+              "dataType": "STRING",
+              "description": "Unique financial invoice document identifier",
+              "policyTag": "Confidential",
+              "suggestedGlossaryTerm": "Invoice Identifier",
+              "remediationLogic": "DISTINCT deduplication"
+            },
+            {
+              "name": "gross_total",
+              "dataType": "FLOAT",
+              "description": "Total invoice amount before sales tax",
+              "policyTag": "Financial",
+              "suggestedGlossaryTerm": "Gross Revenue",
+              "remediationLogic": "ROUND(gross_total, 2)"
+            }
+          ]
+        }
+      ],
+      "glossaryTerms": [
+        {
+          "term": "Test Financial Governance Spec",
+          "definition": "Governance term defined in financial_governance_spec.md",
+          "category": "General"
+        }
+      ],
+      "policyRules": [
+        {
+          "name": "Test Financial Governance Spec Standard Policy",
+          "classification": "Medium",
+          "maskingRule": "Role-Based"
+        }
+      ]
+    }
+  },
+  {
+    "id": "doc-1787076295198-zz4zr",
+    "title": "Test Financial Governance Spec",
+    "fileName": "financial_governance_spec.md",
+    "fileType": "markdown",
+    "uploadedAt": "2026-08-18T18:04:55.198Z",
+    "extractedMetadata": {
+      "documentTitle": "Test Financial Governance Spec",
+      "summary": "Governance specifications extracted from financial_governance_spec.md",
+      "tables": [
+        {
+          "tableName": "financial_governance_spec",
+          "domain": "Universal",
+          "description": "Extracted table schema and governance definitions from Test Financial Governance Spec",
+          "columns": [
+            {
+              "name": "extracted_field",
+              "dataType": "STRING",
+              "description": "Standard enterprise data field defined in policy document.",
+              "suggestedGlossaryTerm": "Enterprise Term",
+              "policyTag": "Internal"
+            }
+          ]
+        }
+      ],
+      "glossaryTerms": [
+        {
+          "term": "Test Financial Governance Spec",
+          "definition": "Governance term defined in financial_governance_spec.md",
+          "category": "General"
+        }
+      ],
+      "policyRules": [
+        {
+          "name": "Test Financial Governance Spec Standard Policy",
+          "classification": "Medium",
+          "maskingRule": "Role-Based"
+        }
+      ]
+    }
+  },
+  {
+    "id": "doc-retail-dictionary",
+    "title": "Retail Data Governance & Data Dictionary Spec",
+    "fileName": "retail_data_dictionary.md",
+    "fileType": "markdown",
+    "uploadedAt": "2026-08-18T18:04:54.978Z",
+    "extractedMetadata": {
+      "documentTitle": "Retail Data Dictionary",
+      "summary": "Enterprise standard field definitions and classifications for omnichannel retail data products.",
+      "tables": [
+        {
+          "tableName": "transactions",
+          "domain": "Spanner Retail",
+          "description": "Point of sale and ecommerce transactional purchase ledger.",
+          "columns": [
+            {
+              "name": "transaction_id",
+              "dataType": "STRING",
+              "description": "Globally unique immutable identifier for a customer checkout transaction.",
+              "suggestedGlossaryTerm": "Transaction Identifier",
+              "policyTag": "Confidential",
+              "remediationLogic": "DISTINCT deduplication"
+            },
+            {
+              "name": "quantity_sold",
+              "dataType": "INTEGER",
+              "description": "Total unit count of items purchased in the transaction line item.",
+              "suggestedGlossaryTerm": "Sales Unit Volume",
+              "policyTag": "Public",
+              "remediationLogic": "COALESCE(quantity_sold, 1)"
+            },
+            {
+              "name": "customer_id",
+              "dataType": "STRING",
+              "description": "Alphanumeric identifier of the authenticated customer profile.",
+              "suggestedGlossaryTerm": "Customer Identifier",
+              "policyTag": "PII",
+              "remediationLogic": "Hash masking for analytics"
+            }
+          ]
+        },
+        {
+          "tableName": "campaign_metrics",
+          "domain": "BigQuery Analytics",
+          "description": "Aggregated omnichannel marketing performance and cohort attribution dataset.",
+          "columns": [
+            {
+              "name": "spend",
+              "dataType": "FLOAT",
+              "description": "Total net media cost expenditure allocated to the marketing campaign.",
+              "suggestedGlossaryTerm": "Marketing Expenditure",
+              "policyTag": "Financial",
+              "remediationLogic": "ROUND(spend, 2)"
+            },
+            {
+              "name": "segment_name",
+              "dataType": "STRING",
+              "description": "Customer cohort audience classification identifier.",
+              "suggestedGlossaryTerm": "Customer Segment",
+              "policyTag": "Confidential",
+              "remediationLogic": "Standardized upper case"
+            }
+          ]
+        }
+      ],
+      "glossaryTerms": [
+        {
+          "term": "Customer Identifier",
+          "definition": "Unique ID mapping to an individual customer profile",
+          "category": "Customer"
+        },
+        {
+          "term": "Marketing Expenditure",
+          "definition": "Direct gross media and promotion spend in USD",
+          "category": "Financial"
+        },
+        {
+          "term": "Transaction Identifier",
+          "definition": "Immutable unique transaction reference key",
+          "category": "Operational"
+        }
+      ],
+      "policyRules": [
+        {
+          "name": "PII Protection Policy",
+          "classification": "High",
+          "maskingRule": "SHA256 Hash Masking"
+        },
+        {
+          "name": "Financial Ledger Compliance",
+          "classification": "High",
+          "maskingRule": "Fine-Grained Reader Access"
+        }
+      ]
+    }
+  }
+]

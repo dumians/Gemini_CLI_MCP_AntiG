@@ -19,6 +19,7 @@ import { configService } from '../agent/utils/config_service.js';
 import { memoryBankService } from '../agent/utils/memory_bank_service.js';
 import { knowledgeCatalogService } from '../agent/utils/knowledge_catalog_service.js';
 import { discoveryService } from '../agent/utils/discovery_service.js';
+import { documentRAGEngine } from '../agent/utils/document_rag_engine.js';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1353,6 +1354,72 @@ app.get('/api/governance/dq-propagate', authMiddleware, async (req, res) => {
         res.json({ status: 'success', columnsTrust });
     } catch (err) {
         logger.log('Server', `API /api/governance/dq-propagate failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- DATAPLEX LABS GOVERNANCE AGENT ENDPOINTS ---
+app.get('/api/governance/estate-summary', authMiddleware, async (req, res) => {
+    try {
+        const summary = await metadataPropagator.getEstateSummary();
+        res.json({ status: 'success', summary });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/estate-summary failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/governance/documents', authMiddleware, (req, res) => {
+    try {
+        const docs = documentRAGEngine.listDocuments();
+        res.json({ status: 'success', documents: docs });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/documents failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/governance/documents/upload', authMiddleware, async (req, res) => {
+    try {
+        const { title, content, fileName, fileType } = req.body;
+        if (!title || !content) {
+            return res.status(400).json({ error: "Missing required fields: title, content" });
+        }
+        const doc = await documentRAGEngine.ingestDocument({ title, content, fileName, fileType });
+        res.json({ status: 'success', document: doc });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/documents/upload failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/governance/documents/rag-query', authMiddleware, (req, res) => {
+    try {
+        const matches = documentRAGEngine.queryRelevantMetadata(req.body);
+        res.json({ status: 'success', matches });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/documents/rag-query failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/governance/scans', authMiddleware, async (req, res) => {
+    try {
+        const scans = await metadataPropagator.listDataplexScans();
+        res.json({ status: 'success', scans });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/scans failed: ${err.message}`, 'ERROR');
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/governance/scans/run', authMiddleware, async (req, res) => {
+    try {
+        const { scanId, scanType, targetEntity } = req.body;
+        const result = await metadataPropagator.triggerDataplexScan(scanId, scanType, targetEntity);
+        res.json({ status: 'success', scan: result });
+    } catch (err) {
+        logger.log('Server', `API /api/governance/scans/run failed: ${err.message}`, 'ERROR');
         res.status(500).json({ error: err.message });
     }
 });

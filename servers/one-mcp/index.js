@@ -14,6 +14,8 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { governancePropagator } from "../../agent/utils/governance_metadata_propagator.js";
+import { documentRAGEngine } from "../../agent/utils/document_rag_engine.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -268,6 +270,137 @@ export const ALL_ONE_MCP_TOOLS = [
                 dataProduct: { type: "object" }
             },
             required: ["domain", "dataProduct"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "scan_metadata_gaps",
+        description: "Scans datasets for missing descriptions and metadata gaps across data domains.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                sourceId: { type: "string" },
+                datasetId: { type: "string" }
+            }
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "propagate_lineage_descriptions",
+        description: "Previews and propagates column descriptions recursively across column-level lineage with SQL logic enrichment.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                datasetId: { type: "string" },
+                targetTable: { type: "string" },
+                apply: { type: "boolean" },
+                updates: { type: "array" }
+            },
+            required: ["targetTable"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "map_ai_business_glossary",
+        description: "Performs AI semantic mapping of technical database columns to Business Glossary terms using Vertex AI/Gemini.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                datasetId: { type: "string" },
+                tableId: { type: "string" },
+                apply: { type: "boolean" },
+                updates: { type: "array" }
+            },
+            required: ["tableId"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "propagate_policy_tags",
+        description: "Analyzes column lineage to recommend and propagate sensitive data policy tags with straight-pull detection and access summaries.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                datasetId: { type: "string" },
+                targetTable: { type: "string" },
+                apply: { type: "boolean" },
+                updates: { type: "array" }
+            },
+            required: ["targetTable"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "calculate_data_trust_scores",
+        description: "Calculates derived Data Trust Scores (DQ) across multi-hop lineage, applying remediation bonuses and trend analysis.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                datasetId: { type: "string" },
+                tableId: { type: "string" }
+            },
+            required: ["tableId"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "ingest_governance_document",
+        description: "Ingests unstructured data dictionaries, PDFs, markdown, or policy documents into the governance RAG engine.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                title: { type: "string" },
+                content: { type: "string" },
+                fileName: { type: "string" },
+                fileType: { type: "string" }
+            },
+            required: ["title", "content"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "query_governance_rag",
+        description: "Queries indexed governance documents and policies for table/column definitions and rules.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                tableName: { type: "string" },
+                columnName: { type: "string" },
+                domain: { type: "string" }
+            }
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "manage_dataplex_scans",
+        description: "Lists or triggers Dataplex Data Quality and Data Profile scans on target entities.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                action: { type: "string", enum: ["list", "trigger"] },
+                scanId: { type: "string" },
+                scanType: { type: "string" },
+                targetEntity: { type: "string" }
+            },
+            required: ["action"]
+        },
+        domain: "Catalog",
+        service: "dataplex"
+    },
+    {
+        name: "get_estate_governance_summary",
+        description: "Returns the comprehensive Estate Dashboard metrics including metadata gap percentage, trust score, and policy coverage.",
+        inputSchema: {
+            type: "object",
+            properties: {}
         },
         domain: "Catalog",
         service: "dataplex"
@@ -580,6 +713,59 @@ export function createOneMcpServer() {
                             text: JSON.stringify({ status: "PASSED", domain: args.domain, complianceScore: 98.5, activeAspects: ["governance", "data_quality", "security_privacy"] })
                         }]
                     };
+                }
+
+                case "scan_metadata_gaps": {
+                    const result = await governancePropagator.scanForMissingDescriptions(args.sourceId, args.datasetId);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "propagate_lineage_descriptions": {
+                    const result = args.apply && args.updates
+                        ? await governancePropagator.applyPropagation(args.datasetId, args.updates)
+                        : await governancePropagator.previewPropagation(args.datasetId, args.targetTable);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "map_ai_business_glossary": {
+                    const result = args.apply && args.updates
+                        ? await governancePropagator.applyGlossaryTerms(args.datasetId, args.tableId, args.updates)
+                        : await governancePropagator.recommendGlossaryTerms(args.datasetId, args.tableId);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "propagate_policy_tags": {
+                    const result = args.apply && args.updates
+                        ? await governancePropagator.applyPolicyTags(args.datasetId, args.updates)
+                        : await governancePropagator.previewPolicyTagPropagation(args.datasetId, args.targetTable);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "calculate_data_trust_scores": {
+                    const result = await governancePropagator.propagateDQScores(args.datasetId, args.tableId);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "ingest_governance_document": {
+                    const result = await documentRAGEngine.ingestDocument(args);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "query_governance_rag": {
+                    const result = documentRAGEngine.queryRelevantMetadata(args);
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "manage_dataplex_scans": {
+                    const result = args.action === 'trigger'
+                        ? await governancePropagator.triggerDataplexScan(args.scanId, args.scanType, args.targetEntity)
+                        : await governancePropagator.listDataplexScans();
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+                }
+
+                case "get_estate_governance_summary": {
+                    const result = await governancePropagator.getEstateSummary();
+                    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
                 }
 
                 // --- NETSUITE ERP ---

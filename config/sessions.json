@@ -661,5 +661,31 @@
         "timestamp": "2026-08-18T09:55:19.412Z"
       }
     ]
+  },
+  {
+    "id": "simulated-session-1787076389075",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787076389075",
+    "userId": "admin",
+    "createdAt": "2026-08-18T18:06:29.077Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-08-18T18:06:29.078Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787076390878",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787076390878",
+    "userId": "test_user_999",
+    "createdAt": "2026-08-18T18:06:30.878Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-08-18T18:06:30.880Z"
+      }
+    ]
   }
 ]

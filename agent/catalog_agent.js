@@ -14,6 +14,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { documentRAGEngine } from "./utils/document_rag_engine.js";
+import { governancePropagator } from "./utils/governance_metadata_propagator.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 class CatalogAgent {
@@ -56,7 +59,11 @@ class CatalogAgent {
             get_entity_aspects: ({ entityId }) => knowledgeCatalogService.getEntityAspects(entityId),
             update_entity_aspect: ({ entityId, aspectTypeId, aspectData }) => knowledgeCatalogService.updateEntityAspect(entityId, aspectTypeId, aspectData),
             audit_mesh_governance: () => knowledgeCatalogService.auditMeshGovernance(),
-            auto_remediate_governance: async ({ issueIds }) => await knowledgeCatalogService.executeRemediation(issueIds || ['ALL'])
+            auto_remediate_governance: async ({ issueIds }) => await knowledgeCatalogService.executeRemediation(issueIds || ['ALL']),
+            query_governance_rag: (args) => documentRAGEngine.queryRelevantMetadata(args || {}),
+            search_governance_documents: ({ query }) => documentRAGEngine.searchDocuments(query),
+            get_estate_governance_summary: () => governancePropagator.getEstateSummary(),
+            calculate_data_trust_scores: ({ tableId, datasetId }) => governancePropagator.propagateDQScores(datasetId || 'marketing_edw', tableId)
         };
     }
 

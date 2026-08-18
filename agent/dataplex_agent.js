@@ -2,6 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './utils/logging_service.js';
+import { governancePropagator } from './utils/governance_metadata_propagator.js';
+import { documentRAGEngine } from './utils/document_rag_engine.js';
+import { dataplex } from './utils/dataplex.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,7 +29,7 @@ export class DataplexAgent {
             },
             {
                 name: "tag_entity",
-                description: "Tags a mesh entity with governance metadata (e.g., PII, Sensitive)",
+                description: "Tags a mesh entity with governance metadata (e.g., PII, Sensitive, Confidential)",
                 parameters: {
                     type: "OBJECT",
                     properties: {
@@ -48,6 +51,119 @@ export class DataplexAgent {
                     },
                     required: ["source", "target"]
                 }
+            },
+            {
+                name: "scan_metadata_gaps",
+                description: "Scans datasets and entities for missing descriptions and metadata gaps across data domains",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        sourceId: { type: "STRING", description: "Optional data source ID (e.g., bigquery, spanner, oracle)" },
+                        datasetId: { type: "STRING", description: "Optional dataset ID" }
+                    }
+                }
+            },
+            {
+                name: "propagate_lineage_descriptions",
+                description: "Previews and propagates column descriptions recursively across column-level lineage with SQL logic enrichment",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        datasetId: { type: "STRING" },
+                        targetTable: { type: "STRING" },
+                        apply: { type: "BOOLEAN", description: "If true, applies the propagation updates" },
+                        updates: { type: "ARRAY", description: "Array of updates to apply" }
+                    },
+                    required: ["targetTable"]
+                }
+            },
+            {
+                name: "map_ai_business_glossary",
+                description: "Performs AI semantic mapping of technical database columns to Business Glossary terms using Vertex AI/Gemini",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        datasetId: { type: "STRING" },
+                        tableId: { type: "STRING" },
+                        apply: { type: "BOOLEAN", description: "If true, persists mappings to native Dataplex EntryLinks" },
+                        updates: { type: "ARRAY", description: "List of glossary mappings to apply" }
+                    },
+                    required: ["tableId"]
+                }
+            },
+            {
+                name: "propagate_policy_tags",
+                description: "Analyzes column lineage to recommend and propagate sensitive data policy tags with straight-pull detection and access summaries",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        datasetId: { type: "STRING" },
+                        targetTable: { type: "STRING" },
+                        apply: { type: "BOOLEAN" },
+                        updates: { type: "ARRAY" }
+                    },
+                    required: ["targetTable"]
+                }
+            },
+            {
+                name: "calculate_data_trust_scores",
+                description: "Calculates derived Data Trust Scores (DQ) across multi-hop lineage, applying remediation bonuses and trend analysis",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        datasetId: { type: "STRING" },
+                        tableId: { type: "STRING" }
+                    },
+                    required: ["tableId"]
+                }
+            },
+            {
+                name: "ingest_governance_document",
+                description: "Ingests unstructured data dictionaries, PDFs, markdown, or policy documents into the governance RAG engine",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        title: { type: "STRING" },
+                        content: { type: "STRING" },
+                        fileName: { type: "STRING" },
+                        fileType: { type: "STRING" }
+                    },
+                    required: ["title", "content"]
+                }
+            },
+            {
+                name: "query_governance_rag",
+                description: "Queries indexed governance documents and policies for table/column definitions and rules",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        tableName: { type: "STRING" },
+                        columnName: { type: "STRING" },
+                        domain: { type: "STRING" }
+                    }
+                }
+            },
+            {
+                name: "manage_dataplex_scans",
+                description: "Lists or triggers Dataplex Data Quality and Data Profile scans on target entities",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        action: { type: "STRING", description: "'list' or 'trigger'" },
+                        scanId: { type: "STRING" },
+                        scanType: { type: "STRING", description: "'DATA_QUALITY' or 'DATA_PROFILE'" },
+                        targetEntity: { type: "STRING" }
+                    },
+                    required: ["action"]
+                }
+            },
+            {
+                name: "get_estate_governance_summary",
+                description: "Returns the comprehensive Estate Dashboard metrics including metadata gap percentage, trust score, and policy coverage",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {}
+                }
             }
         ];
     }
@@ -62,8 +178,38 @@ export class DataplexAgent {
                 return this.tagEntity(args.entityId, args.tag, traceId);
             case "track_lineage":
                 return this.trackLineage(args.source, args.target, args.relationship, traceId);
+            case "scan_metadata_gaps":
+                return governancePropagator.scanForMissingDescriptions(args.sourceId, args.datasetId);
+            case "propagate_lineage_descriptions":
+                if (args.apply && args.updates) {
+                    return governancePropagator.applyPropagation(args.datasetId, args.updates);
+                }
+                return governancePropagator.previewPropagation(args.datasetId, args.targetTable);
+            case "map_ai_business_glossary":
+                if (args.apply && args.updates) {
+                    return governancePropagator.applyGlossaryTerms(args.datasetId, args.tableId, args.updates);
+                }
+                return governancePropagator.recommendGlossaryTerms(args.datasetId, args.tableId);
+            case "propagate_policy_tags":
+                if (args.apply && args.updates) {
+                    return governancePropagator.applyPolicyTags(args.datasetId, args.updates);
+                }
+                return governancePropagator.previewPolicyTagPropagation(args.datasetId, args.targetTable);
+            case "calculate_data_trust_scores":
+                return governancePropagator.propagateDQScores(args.datasetId, args.tableId);
+            case "ingest_governance_document":
+                return documentRAGEngine.ingestDocument(args);
+            case "query_governance_rag":
+                return documentRAGEngine.queryRelevantMetadata(args);
+            case "manage_dataplex_scans":
+                if (args.action === 'trigger') {
+                    return governancePropagator.triggerDataplexScan(args.scanId, args.scanType, args.targetEntity);
+                }
+                return governancePropagator.listDataplexScans();
+            case "get_estate_governance_summary":
+                return governancePropagator.getEstateSummary();
             default:
-                throw new Error(`Tool ${toolName} not found`);
+                throw new Error(`Tool ${toolName} not found in DataplexAgent`);
         }
     }
 
@@ -78,7 +224,6 @@ export class DataplexAgent {
             return { status: "PASSED", reason: "No specific policy for this domain. Standard policy applied." };
         }
 
-        // Advanced policy masking rule enforcement (redact, hash, nullify)
         if (domainRule.maskFields && dataProduct) {
             const ruleType = domainRule.maskingRule || 'redact';
             domainRule.maskFields.forEach((field) => {
@@ -88,7 +233,6 @@ export class DataplexAgent {
                     } else if (ruleType === 'nullify') {
                         dataProduct[field] = null;
                     } else {
-                        // default 'redact'
                         dataProduct[field] = "****MASKED****";
                     }
                 }
@@ -114,7 +258,6 @@ export class DataplexAgent {
                 lineageData = JSON.parse(fs.readFileSync(lineagePath, 'utf8'));
             }
             
-            // Check if edge already exists
             const exists = lineageData.edges.find((e) => e.source === source && e.target === target);
             if (!exists) {
                 lineageData.edges.push({

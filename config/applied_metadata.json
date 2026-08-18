@@ -1,0 +1,9 @@
+[
+  {
+    "sourceId": "bigquery",
+    "table": "campaign_metrics",
+    "column": "spend",
+    "description": "Total net media cost expenditure. Calculated using arithmetic aggregation, converted to float format.",
+    "timestamp": "2026-08-18T18:06:29.065Z"
+  }
+]

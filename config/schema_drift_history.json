@@ -1,5 +1,5 @@
 {
-  "lastScan": "2026-08-18T09:54:40.426Z",
+  "lastScan": "2026-08-18T18:06:28.686Z",
   "latestSnapshot": {
     "oracle.suppliers": [
       {
@@ -160,7 +160,8 @@
       },
       {
         "name": "spend",
-        "dataType": "FLOAT64"
+        "dataType": "FLOAT64",
+        "description": "Total net media cost expenditure. Calculated using arithmetic aggregation, converted to float format."
       },
       {
         "name": "impressions",
@@ -531,7 +532,7 @@
       "changeType": "COLUMN_ADDED",
       "columnName": "loyalty_tier_score",
       "dataType": "NUMERIC",
-      "timestamp": "2026-08-17T09:54:40.426Z",
+      "timestamp": "2026-08-17T18:06:28.686Z",
       "severity": "INFO"
     },
     {
@@ -539,7 +540,7 @@
       "changeType": "INDEX_OPTIMIZED",
       "columnName": "sku_store_composite_idx",
       "dataType": "INDEX",
-      "timestamp": "2026-08-16T09:54:40.426Z",
+      "timestamp": "2026-08-16T18:06:28.686Z",
       "severity": "INFO"
     }
   ]
