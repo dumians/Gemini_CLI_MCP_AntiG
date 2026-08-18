@@ -1,121 +1,134 @@
-# Enterprise Data Agents - GCP Deployment Blueprint
+# Enterprise Data Agents - GCP Production Deployment Blueprint
 
-This document outlines the professional architecture deployment blueprint for the Enterprise Data Agents (A2A) orchestration system on Google Cloud Platform (GCP). It encompasses compute, data, networking, security, and CI/CD best practices designed for enterprise scalability and reliability.
+This document outlines the professional deployment blueprint for the **MeshOS** Multi-Domain Agentic Data Mesh orchestration system on Google Cloud Platform (GCP). It encompasses serverless compute, managed persistence, zero-trust MCP gateway topology, Dataplex Labs governance and discovery services, networking, and CI/CD best practices.
+
+![MeshOS Enterprise Architecture](images/gcp_agentic_mesh_unified_architecture.png)
+
+---
 
 ## 1. High-Level Component Deployment Architecture
 
-The deployment architecture leverages managed, serverless, and highly scalable GCP services to minimize operational overhead while maximizing performance and security.
-
 ```mermaid
 graph TD
-    User((Users)) --> |HTTPS| GLB[Cloud Global Load Balancer]
-    GLB --> |Serverless NEG| UIRun[Cloud Run: Web Dashboard]
-    GLB --> |Serverless NEG| APIGW[API Gateway / Cloud Run API]
+    User((Enterprise Users)) --> |HTTPS / TLS 1.3| GLB[Cloud Global Load Balancer + Cloud Armor WAF]
+    GLB --> |Serverless NEG| UIRun[Cloud Run: React UIX Studio]
+    GLB --> |Serverless NEG| APIGW[Cloud Run: Express Mesh API]
 
-    subgraph "Compute & Orchestration Layer (Serverless)"
-        APIGW --> |gRPC/HTTP| API[Cloud Run: Express API]
-        API --> |Internal| ORCH[Cloud Run: Master Orchestrator]
+    subgraph "Compute & Orchestration Layer (Serverless Cloud Run)"
+        APIGW --> |Direct VPC Egress| ORCH[Cloud Run: Master Orchestrator (Gemini 2.5)]
+        ORCH --> |Internal gRPC/HTTP| OneMCP[Cloud Run: GCP One-MCP Unified Gateway]
         
-        ORCH --> |Internal| FinAgent[Cloud Run: Financial Agent]
-        ORCH --> |Internal| RetAgent[Cloud Run: Retail Agent]
-        ORCH --> |Internal| AnaAgent[Cloud Run: Analytics Agent]
-        ORCH --> |Internal| HRAgent[Cloud Run: HR Agent]
+        OneMCP --> GovAgent[Cloud Run: Dataplex Governance Agent]
+        OneMCP --> DiscAgent[Cloud Run: Dataplex Discovery Agent]
+        OneMCP --> DomainAgents[Cloud Run: 9 Domain Specialists]
     end
 
-    subgraph "MCP Infrastructure Layer (Cloud Run Sidecars/Standalone)"
-        FinAgent --> |Local/Internal| OracleMCP[Cloud Run: Oracle MCP]
-        HRAgent --> |Local/Internal| OracleMCP
-        RetAgent --> |Local/Internal| SpannerMCP[Cloud Run: Spanner MCP]
-        AnaAgent --> |Local/Internal| BQMCP[Cloud Run: BigQuery MCP]
-        AnaAgent --> |Local/Internal| AlloyMCP[Cloud Run: AlloyDB MCP]
+    subgraph "Data Persistence & Metadata Layer (GCP Managed Services)"
+        DomainAgents -.-> |VPC Peering| OracleDB[(Oracle DB@GCP Exadata / BMS)]
+        DomainAgents -.-> |Private API| Spanner[(Cloud Spanner Multi-Region)]
+        DomainAgents -.-> |Private API| BigQuery[(BigQuery Analytics EDW)]
+        DomainAgents -.-> |Private Service Connect| AlloyDB[(AlloyDB PostgreSQL + pgvector)]
+        GovAgent & DiscAgent -.-> |Private API| Dataplex[(Google Cloud Dataplex & Knowledge Catalog)]
     end
 
-    subgraph "Data Persistence Layer (GCP Managed Services)"
-        OracleMCP -.-> |VPC Peering| OracleDB[(Oracle DB@GCP)]
-        SpannerMCP -.-> |Google API| Spanner[(Cloud Spanner)]
-        BQMCP -.-> |Google API| BigQuery[(BigQuery)]
-        AlloyMCP -.-> |Private Service Connect| AlloyDB[(AlloyDB Omni/Managed)]
-    end
-
-    subgraph "Security & Ops"
-        SecretManager[Secret Manager]
-        CloudLogging[Cloud Logging & Monitoring]
+    subgraph "Security & Operational Governance"
+        SecretManager[Google Secret Manager]
+        CloudLogging[Cloud Logging: CLOUD_LOGGING_ONLY]
+        CloudTrace[Cloud Trace Distributed Tracing]
     end
     
-    ORCH -.-> |Read Keys| SecretManager
-    API -.-> CloudLogging
-    ORCH -.-> CloudLogging
+    ORCH -.-> SecretManager
+    OneMCP -.-> SecretManager
+    APIGW -.-> CloudLogging
+    ORCH -.-> CloudTrace
 ```
 
-## 2. Compute & Orchestration Layer
+---
 
-Given the stateless nature of the agents and the Node.js/Express stack, **Google Cloud Run** is the recommended compute platform.
+## 2. Serverless Compute Layer (Google Cloud Run)
 
-* **Web Dashboard UI**: Deployed to Cloud Run (if SSR via Next.js) or Firebase Hosting (if static SPA via Vite).
-* **API & Orchestrator**: Cloud Run services configured to scale to zero to minimize costs during idle times, with provisioned concurrency configured for production to eliminate cold starts.
-* **Domain Agents**: Deployed as independent Cloud Run microservices. This allows independent scaling based on domain query volume (e.g., Analytics Agent scaling higher during reporting periods).
-* **MCP Servers**: Can be deployed either as **Cloud Run Multi-container components (Sidecars)** tightly coupled to specific agents to minimize latency, or as separate internal Cloud Run services if shared across multiple agents.
+All compute components run on **Google Cloud Run** to achieve automatic scaling, cost optimization (scale-to-zero during off-hours), and microsecond elasticity during query surges:
 
-## 3. Database & Storage Layer
+1. **React UIX Studio**: Deployed as a containerized SPA served via NGINX or Firebase App Hosting.
+2. **Express Mesh API Server**: Exposes REST and WebSocket endpoints for agent coordination and client streaming.
+3. **Master Orchestrator**: Containerized Node.js service running the Gemini 2.5 Flash / Pro reasoning engine, Context Fusion, and Data Contract validation.
+4. **GCP One-MCP Unified Gateway**: Runs on Cloud Run configured with SSE transport enabled on port 8088 (`/sse` and `/messages`) or stdio in sidecar deployments.
+5. **Dataplex Labs Governance & Discovery Agents**: Dedicated background workers for document ingestion RAG, lineage propagation, policy tag auditing, and multi-query decomposition.
+6. **9 Domain Specialists**: Microservices with isolated service accounts, enforcing least-privilege data access per domain.
 
-The core of the Data Mesh relies on managed databases.
+---
 
-* **Spanner (Retail)**: Multi-region configuration for global availability. Accessible via standard Google Cloud APIs.
-* **BigQuery (Analytics)**: Serverless enterprise data warehouse. Configured with appropriate datasets and IAM roles.
-* **AlloyDB (CRM)**: Highly available PostgreSQL-compatible database. Exposed via Private Service Connect (PSC) or Serverless VPC Access for secure internal routing from Cloud Run.
-* **Oracle DB@GCP (ERP/HR)**: Oracle Exadata Database Service hosted on GCP. Requires VPC Peering from the Cloud Run instances to access the Exadata infrastructure.
+## 3. Database & Persistence Layer
 
-## 4. Networking and Security Blueprint
+* **Cloud Spanner (Retail Domain)**: Multi-region configuration with Spanner Graph schemas and native Vector search (`ARRAY<FLOAT32>`).
+* **BigQuery (Analytics Domain)**: Serverless analytical warehouse housing `marketing_edw` datasets with BigQuery ML models for churn scoring.
+* **AlloyDB for PostgreSQL (CRM Domain)**: High-availability AlloyDB cluster with the `pgvector` extension for customer ticket similarity analysis, connected via Private Service Connect (PSC).
+* **Oracle Database@Google Cloud (ERP & HR Domains)**: Oracle Exadata Database Service / Bare Metal Solution connected over dedicated VPC Peering with TCPS / mTLS encryption.
+* **Google Cloud Dataplex (Catalog & Governance)**: Centralized metadata catalog managing custom Aspect Types (`governance`, `data_quality`, `security_privacy`), entry groups, and Data Quality scans.
 
-Security is paramount for an enterprise data mesh handling cross-domain data.
+---
 
-### 4.1 Networking
+## 4. Enterprise CI/CD with Cloud Build
 
-* **Ingress**: Cloud Global Load Balancer (GLB) with Cloud Armor (WAF) to protect the frontend and public API endpoints against DDoS and top OWASP vulnerabilities.
-* **Egress / Internal**: Cloud Run services should be attached to a **VPC network** via Direct VPC Egress or a Serverless VPC Access connector to ensure traffic to AlloyDB and Oracle DB remains entirely on Google's private network.
-* **Ingress for Agents**: The Master Orchestrator, Domain Agents, and MCP servers should have their Cloud Run ingress set to `Internal` to prevent public access.
+The deployment pipeline is fully automated using **Cloud Build** with enforced regional user-owned logging and service account security:
 
-### 4.2 Security (IAM & Secrets)
+### `cloudbuild.yaml`
+```yaml
+steps:
+  # 1. Install dependencies & Run Integration Test Suite
+  - name: 'node:20-alpine'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        npm ci
+        npm test
+        cd UIX && npm ci && npm run build
 
-* **Principle of Least Privilege (IAM)**:
-  * *Orchestrator Identity*: Only has permissions to invoke Domain Agent Cloud Run services.
-  * *Agent Identity*: E.g., The Analytics Agent service account only has `roles/bigquery.dataViewer` and `roles/run.invoker` for its MCP servers. It cannot access Spanner.
-* **Secret Manager**: The Gemini API Key, database passwords (for Oracle/AlloyDB), and other sensitive configurations must be stored in Google Cloud Secret Manager. Cloud Run services will mount these secrets as environment variables or volumes at runtime.
+  # 2. Build Container Image with Cloud Native Buildpacks / Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'europe-west3-docker.pkg.dev/$PROJECT_ID/meshos-repo/agenticmesh:$COMMIT_SHA'
+      - '-t'
+      - 'europe-west3-docker.pkg.dev/$PROJECT_ID/meshos-repo/agenticmesh:latest'
+      - '.'
 
-## 5. CI/CD Deployment Flow
+  # 3. Push to Google Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'europe-west3-docker.pkg.dev/$PROJECT_ID/meshos-repo/agenticmesh'
 
-A robust CI/CD pipeline using **Cloud Build** and **Artifact Registry**.
+  # 4. Deploy Express Mesh Gateway & Orchestrator to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'meshos-gateway'
+      - '--image=europe-west3-docker.pkg.dev/$PROJECT_ID/meshos-repo/agenticmesh:$COMMIT_SHA'
+      - '--region=europe-west3'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=NODE_ENV=production,GCP_ONE_MCP_ENABLED=true,ONE_MCP_MODE=unified'
+      - '--set-secrets=GEMINI_API_KEY=GEMINI_API_KEY:latest'
 
-1. **Source Code**: Hosted in Cloud Source Repositories or GitHub.
-2. **Continuous Integration (CI)**:
-    * On pull request: Cloud Build runs unit tests, linting, and security scans.
-3. **Continuous Deployment (CD)**:
-    * On merge to `main`: Cloud Build builds Docker container images for the Web UI, API, Orchestrator, Agents, and MCP servers.
-    * Images are pushed to **Artifact Registry**.
-    * Cloud Build executes `gcloud run deploy` commands to update the respective services.
-    * Database migrations (if any) are executed.
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Git as GitHub
-    participant CB as Cloud Build
-    participant AR as Artifact Registry
-    participant CR as Cloud Run
-
-    Dev->>Git: Git Push
-    Git->>CB: Webhook Trigger
-    CB->>CB: Run Tests & Lint
-    CB->>CB: Docker Build
-    CB->>AR: Docker Push
-    CB->>CR: gcloud run deploy (Service Update)
-    CR-->>CB: Deployment Success
-    CB-->>Git: Status Check Passed
+# Explicit Service Account and Cloud Logging Configuration
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/cloudbuild-deployer@$PROJECT_ID.iam.gserviceaccount.com'
+options:
+  logging: CLOUD_LOGGING_ONLY
 ```
 
-## 6. Cost and Scaling Considerations
+---
 
-* **Cloud Run**: Billed per 100ms of execution time. Automatic scaling gracefully handles traffic bursts. Using committed use discounts for baseline workloads reduces costs.
-* **Spanner & AlloyDB**: Provide predictable performance but have baseline running costs. Size instances appropriately for the expected QPS.
-* **BigQuery**: Optimize queries and use partition/clustering to manage storage and query scanning costs.
-* **Gemini API**: Monitor token usage. Implement caching at the API Gateway or Orchestrator level for identical analytical queries to reduce repetitive AI calls.
+## 5. Security & IAM Governance
+
+* **Zero-Trust Tool Scoping**: The GCP One-MCP Gateway checks bearer tokens and agent identity to ensure domain isolation.
+* **Secret Management**: Google Secret Manager injects database credentials, API tokens, and private keys dynamically into memory at container startup.
+* **Least Privilege IAM**:
+  - `meshos-orchestrator@`: Has `roles/run.invoker` and `roles/aiplatform.user`.
+  - `meshos-analytics@`: Has `roles/bigquery.dataViewer` and `roles/bigquery.jobUser`.
+  - `meshos-dataplex@`: Has `roles/dataplex.admin` and `roles/datacatalog.tagEditor`.

@@ -1,135 +1,63 @@
-# Enterprise Data Agents Demo (ADK) - Walkthrough
+# Enterprise Agentic Data Mesh (MeshOS) - Architectural Walkthrough
 
-This document outlines the finished architecture and usage guidelines for the Multi-Domain Data Agent demo, utilizing Google Cloud databases, MCP, and the Gemini CLI.
+This document outlines the complete architectural evolution and usage guidelines for **MeshOS**, the Multi-Domain Autonomous Agentic Data Mesh on Google Cloud Platform (GCP).
 
-## Architecture Highlights
-
-The project successfully implements a simulated environment to showcase cross-domain data orchestration:
-
-1. **Custom MCP Servers for GCP Databases**:
-   Instead of using standard SQL proxies, we built custom Node.js MCP servers to explicitly expose the advanced features of each database:
-   - `servers/oracle-mcp/index.js`: Exposes `query_oracle_sql`, `query_oracle_graph`, and `query_oracle_vector`.
-   - `servers/spanner-mcp/index.js`: Exposes `query_spanner_sql` and `query_spanner_graph`.
-   - `servers/bigquery-mcp/index.js`: Exposes `query_bigquery`.
-
-   *Note: In the demo configuration, these servers return simulated JSON strings to mimic actual API behavior without requiring live database credentials or indices.*
-
-2. **The ADK (Agent Development Kit) Orchestrator**:
-   - `agent/index.js`: A master Node.js script using the `@google/genai` SDK.
-   - It dynamically connects to the local MCP servers via stdio.
-   - It aggregates the tool schemas and injects a robust System Instruction informing Gemini 2.5 Flash on how to route queries across Oracle (ERP), Spanner (Retail/Inventory), BigQuery (EDW), and AlloyDB (CRM).
-
-3. **Demo Guide**:
-   - `demo_guide.md`: Included in the repository to provide sample prompts that trigger multi-step, multi-database reasoning (e.g., combining BigQuery analytical segments with Spanner Graph traversals and Oracle AI Vector searches).
-
-4. **Schema Definitions for GCP**:
-   - The `db-schemas/` directory contains the DDL for the real environments.
-     - `oracle_schema.sql`: Contains ERP tracking and Oracle Graph nodes/edges mapped to Oracle Vector indexes.
-     - `spanner_schema.sql`: Shows Spanner Graph definition mapping Inventory to Transactions, with native `ARRAY<FLOAT32>` Vector indexing for similarity search.
-     - `alloydb_schema.sql`: Instantiates `pgvector` extensions for support ticket similarity search.
-     - `bigquery_schema.sql`: EDW marketing schemas.
-   - The `scripts/deploy_to_gcp.sh` script demonstrates how to quickly stand up the BigQuery datasets and includes `gcloud` commands for Spanner setup.
-
-## Phase 2: Professional UI, Test Data, and A2A
-
-Phase 2 has been completed, introducing a professional web client, interconnected test data, and an Agent-to-Agent (A2A) orchestration layer.
-
-### 1. Agent-to-Agent (A2A) Orchestration
-
-The single Data Agent has been refactored into a sophisticated multi-agent system:
-
-- **Master Orchestrator (`agent/index.js`)**: Receives the user query and delegates specific tasks to specialized sub-agents.
-- **Financial Agent (`agent/financial_agent.js`)**: Specialist for Oracle DB@GCP.
-- **Retail Agent (`agent/retail_agent.js`)**: Specialist for Spanner Global Retail.
-- **Analytics Agent (`agent/analytics_agent.js`)**: Specialist for BigQuery and AlloyDB.
-
-This architecture demonstrates how complex cross-domain reasoning can be distributed across specialized AI models, each with its own specific toolset and system instructions.
-
-### 2. Professional Web Client (Stitch)
-
-A professional, high-end web dashboard has been designed using StitchMCP:
-
-- **Main Dashboard**: A dark-themed command center featuring a glassmorphism search bar and real-time task tracking for the A2A Orchestrator.
-- **Query Results Analysis**: A sophisticated view showing the "Agent Chain" (timeline of sub-agent contributions) and a central Synthesis Hub for the final results.
-
-### 3. Interconnected Test Data
-
-A new script, `scripts/generate_test_data.js`, has been created and executed. It populates a `test-data/` directory with CSV files containing linked records across all four database domains (e.g., a VIP customer in BigQuery experiencing a shipment delay in Spanner due to an Oracle PO issue).
-
-## Verification & Usage
-
-The infrastructure is ready to be tested.
-
-1. Ensure your Gemini API Key is available by creating a `.env` file in the root directory:
-
-   ```env
-   GEMINI_API_KEY="your-api-key"
-   ```
-
-2. Start the interactive agent loop: `npm start`.
-3. Explore UI: View the generated designs in the Stitch project `projects/4702640601584353325`.
-
-## Phase 5: Autonomous Data Mesh & HR Domain
-
-We have successfully transitioned the architecture into a fully **Autonomous Data Mesh**:
-
-### 1. Context Fusion (A2A Synergy)
-
-The Orchestrator now maintains a shared **Mesh Context**. As agents are called sequentially, they "see" the insights from previous agents. For example:
-
-- The **Retail Agent** can now adjust its inventory reasoning based on **HR Agent**'s talent pipeline data.
-- The **Financial Agent** integrates supply chain risks from the **Retail Agent** directly into its ERP reports.
-
-### 2. Standardized Data Products
-
-Every agent in the mesh now follows a unified output schema:
-
-```json
-{
-  "domain": "...",
-  "data": "...",
-  "metadata": { "confidence": 0.95, "source": "..." },
-  "insights": "..."
-}
-```
-
-### 3. HR Domain Integration
-
-Added the **Oracle HR** domain, complete with its own schema, agent, and UI dashboard card.
-
-### 4. Professional UI Updates
-
-The web dashboard now visualizes this "Fusion" in the **Agent Chain** component, displaying domain-specific insights and confidence scores for every step of the autonomous reasoning process.
+![MeshOS Enterprise Architecture](images/gcp_agentic_mesh_unified_architecture.png)
 
 ---
-**The platform is now a state-of-the-art Agentic Data Mesh, ready for cross-domain autonomous reasoning.**
 
-## Phase 6: GraphRAG Implementation (Grounding)
+## 🏛️ Architecture Highlights
 
-The system now supports **Grounding via GraphRAG**, ensuring that AI insights are anchored in actual database relationships:
-
-### 1. Verification Logic
-
-- **Grounding Utility**: Added [grounding.js](file:///d:/Projects/Gemini_CLI_MCP_AntiG/agent/utils/grounding.js) to synthesize graph paths into agent context.
-- **Domain Citations**: `FinancialAgent` and `RetailAgent` now cite specific graph traversal results (e.g., `Supplier -> PO` or `Store -> Inventory`) as grounded facts.
-
-### 2. UI Visualization
-
-- **Grounded Facts**: The **Agent Chain** now features a "Grounded Graph Fact" section with a Shield icon, highlighting the exact paths used to verify the AI's reasoning.
-
-## Phase 7: Infrastructure as Code (Terraform Provisioning)
-
-Added production readiness capabilities ensuring easy initialization.
-
-### 1. Unified GCP Data Platforms
-
-- Declarative infrastructure hooks for **Google Cloud Spanner**, **BigQuery**, **AlloyDB**, **Dataplex**, and **Cloud Firestore** residing directly in `deploy/terraform/`.
-
-### 2. Cognitive AI & Security Endpoints
-
-- **Vertex Context Memory**: Advanced indexing using Vertex AI Vector Search (`vertex.tf`).
-- **Model Armor Protection Layer**: Integrated prompt filtering frameworks for zero-trust model deployments (`model_armor.tf`).
-- **MCP Gateway Node Interfaces**: Centralized edge connectivity via Google Cloud Run workloads (`mcp_gateway.tf`).
+### 1. The 9 Mesh Data Domains
+The platform organizes enterprise data into 9 decentralized, contract-bounded domains:
+- **Oracle ERP**: `ERP_PURCHASE_ORDERS`, `ERP_SUPPLIERS`, `ERP_EXPENSES`
+- **Spanner Retail**: `Inventory`, `Transactions`, `Stores`, `Products`
+- **BigQuery Analytics**: `marketing_edw.customer_segments`, `churn_risk`
+- **AlloyDB CRM**: `CRM_LEADS`, `CRM_ACCOUNTS`, `SUPPORT_TICKETS`
+- **NetSuite ERP**: `SalesOrders`, `Invoices`, `Fulfillment`
+- **Warehouse**: `StockBatches`, `AisleBins`, `PalletMovements`
+- **HR & Talent**: `Employees`, `Departments`, `HeadcountRequisitions`
+- **Catalog & Knowledge**: Dataplex Aspects, Lineage, W3C DCAT v3
+- **API Domain**: Dynamic external OpenAPI products
 
 ---
-**The platform combines state-of-the-art enterprise mesh with automated cloud native provisioning pipelines seamlessly.**
+
+### 2. GCP One-MCP Unified Gateway
+The **GCP One-MCP Gateway** (`servers/one-mcp/index.js`, `agent/utils/one_mcp_gateway.js`) establishes a single Zero-Trust entry point:
+- **Universal Tool Federation**: Exposes 31+ domain tools over Server-Sent Events (SSE) on port 8088 or stdio.
+- **Dynamic Domain Scoping**: Restricts available tools based on the calling agent's domain identity, preventing lateral security vulnerabilities.
+- **Flexible Modes**: Seamlessly switches between `unified`, `microservices`, `local`, and `toolbox`.
+
+---
+
+### 3. Google Cloud Dataplex Labs Governance Agent
+Integrated from the Google Cloud Dataplex Labs reference specification:
+- **Document RAG Engine**: Gemini multimodal extraction pipeline converting unstructured Markdown, PDFs, and schema dictionaries into structured table schemas and column definitions.
+- **Lineage-Based Metadata Propagation**: Propagates upstream column descriptions downstream with SQL transformation analysis (`COALESCE`, `SUM`, `CASE WHEN`).
+- **AI Business Glossary & EntryLinks**: Binds standardized glossary terms to Dataplex entries.
+- **Data Trust Center (AutoDQ)**: Derives multi-hop Data Quality scores with automated SQL remediation bonuses and historical trend tracking.
+- **Dataplex Scans Runner**: Dispatches and tracks Data Quality and Profile scans.
+- **Estate Dashboard**: Real-time visibility into mesh-wide documentation gaps and trust indices.
+
+---
+
+### 4. Google Cloud Dataplex Labs Discovery Agent
+- **Semantic Question Decomposition**: Translates natural language inquiries into 3 distinct search variations (synonyms, technical database translations, and category breadth).
+- **Predicate Extraction**: Extracts qualifiers (`type=table`, `system=bigquery`, `system=spanner`, `projectid=...`).
+- **Knowledge Catalog Multi-Search**: Executes concurrent semantic searches with `semantic_search: true`.
+- **Context Lookup (`lookupContext`)**: Calls Dataplex APIs to retrieve deep lineage, aspect schemas, and trust scores.
+
+---
+
+### 5. React UIX Studio & Cross-Domain Inventory
+- **Real-Time Orchestration Console**: Interactive natural language query interface with live A2A timeline and confidence score badges.
+- **Force-Directed Graph**: Visualizes cross-domain relationships, policy tags (`PII`, `FINANCIAL`), and data contract SLAs.
+- **Data Trust Center & Document RAG**: Complete web UI for managing metadata propagation, data quality, and aspect schemas.
+- **W3C DCAT v3 / JSON-LD Export**: Enterprise-standard linked data catalog export.
+
+---
+
+## 🧪 Verification & Execution
+- **Integration Test Suite**: `npm test` runs 17 test suites (**99 / 99 tests passing**).
+- **Frontend Production Build**: `cd UIX && npm run build` compiles with 0 errors.
+- **Launch Command**: `npm run start:all`.

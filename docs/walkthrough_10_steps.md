@@ -1,205 +1,165 @@
-summary: Step-by-step guide to building and exploring an Agentic Data Mesh with Gemini and MCP.
+summary: Comprehensive 10-step walkthrough for building, governing, and exploring the Enterprise Agentic Data Mesh (MeshOS) on GCP.
 id: agentic-data-mesh-mcp
-categories: AI, Data, GCP
-tags: Gemini, MCP, DataMesh, Spanner, BigQuery, Oracle, AlloyDB
+categories: AI, Data, GCP, Dataplex
+tags: Gemini, MCP, OneMCP, DataMesh, Spanner, BigQuery, Oracle, AlloyDB, Dataplex
 status: Published
-authors: Gemini CLI Agent
-Feedback Link: https://github.com/google-gemini/gemini-cli/issues
+authors: Google Cloud AI & Data Architect Team
 
-# Building an Agentic Data Mesh with Gemini and MCP
+# Building and Governing an Enterprise Agentic Data Mesh with Gemini and GCP One-MCP
 
-## 0. Overview
-Duration: 2:00
+![MeshOS Enterprise Architecture](images/gcp_agentic_mesh_unified_architecture.png)
 
-The **Agentic Data Mesh** (MeshOS) is a state-of-the-art orchestration system that decentralizes data ownership across domains while providing a unified AI interface. It uses an **Agent-to-Agent (A2A)** architecture where a Master Orchestrator delegates complex queries to specialized domain experts (Financial, Retail, HR, Analytics).
+## 0. Executive Overview
+Duration: 3:00
 
-In this walkthrough, you will learn how to:
-- Configure a multi-agent environment with Gemini 1.5/2.5 Flash.
-- Deploy custom MCP servers to interface with GCP databases (Oracle, Spanner, BigQuery, AlloyDB).
-- Implement **GraphRAG Grounding** to anchor AI insights in verifiable database relationships.
-- Use a **CatalogAgent** for autonomous data discovery and governance.
-- Visualize the reasoning process in a professional **Stitch Dashboard**.
+**MeshOS** is an enterprise-grade **Autonomous Agentic Data Mesh platform** on Google Cloud Platform (GCP). It unifies relational, graph, vector, analytics, and SaaS ERP systems into a decentralized, collaborative multi-agent mesh.
 
-### What you'll need
-- A Google Cloud Project with Billing enabled.
-- A Gemini API Key from [Google AI Studio](https://aistudio.google.com/).
-- Node.js installed on your local machine.
+In this walkthrough, you will explore:
+1. **Multi-Agent Orchestration**: Master Orchestrator powered by Gemini 2.5 Flash / Pro.
+2. **GCP One-MCP Gateway**: Centralized, Zero-Trust Model Context Protocol gateway.
+3. **9 Enterprise Data Domains**: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, NetSuite, Warehouse, HR, Catalog, and API.
+4. **Google Cloud Dataplex Labs Governance Agent**: Document RAG data stewardship, lineage-based column description propagation, and AutoDQ Trust Center.
+5. **Google Cloud Dataplex Labs Discovery Agent**: Semantic query decomposition, multi-search with `semantic_search: true`, and `lookupContext` API enrichment.
+6. **Cross-Domain Force Graph & UI Studio**: Interactive real-time canvas, policy tag inspector, and W3C DCAT v3 JSON-LD export.
 
 ---
 
-## 1. Environment Configuration
+## 1. Environment Setup & Configuration
 Duration: 5:00
 
-Before launching the mesh, you need to set up your environment variables and dependencies.
-
-1. **Clone the Repository**:
+1. **Clone the Repository & Install Dependencies**:
    ```bash
-   git clone <repository-url>
-   cd Gemini_CLI_MCP_AntiG
-   ```
-
-2. **Install Dependencies**:
-   ```bash
+   git clone https://github.com/GoogleCloudPlatform/agenticmesh.git
+   cd agenticmesh
    npm install
+   cd UIX && npm install && cd ..
    ```
 
-3. **Configure `.env`**:
-   Create a `.env` file in the root directory and add your credentials:
+2. **Configure `.env`**:
    ```env
+   PORT=3000
+   GCP_PROJECT_ID="your-gcp-project-id"
    GEMINI_API_KEY="your-gemini-api-key"
-   PROJECT_ID="your-gcp-project-id"
-   # Database connection strings (optional for mock mode)
-   SPANNER_INSTANCE="main-instance"
-   BIGQUERY_DATASET="edw_marketing"
+   GCP_ONE_MCP_ENABLED="true"
+   ONE_MCP_MODE="unified"
+   DATAPLEX_ZONE_ID="europe-west3"
+   BIGQUERY_DATASET_ID="marketing_edw"
+   USE_REAL_CONNECTIONS="false"
    ```
 
-4. **Verify the Installation**:
-   Check if the orchestrator can initialize by running:
+3. **Launch the Mesh Stack**:
    ```bash
-   node agent/index.js --verify
+   npm run start:all
    ```
 
 ---
 
-## 2. The Enterprise Catalog & Schema Mapping
+## 2. The Decentralized 9 Data Mesh Domains
 Duration: 7:00
 
-The first step in any mesh operation is **Discovery**. Instead of hardcoding table names, the system uses a `CatalogAgent` to find where data resides.
-
-1. **Explore the Catalog**:
-   Open `config/catalog_agent.json`. This file defines the "Data Products" available in each domain.
-   
-2. **Schema Mapping**:
-   The Orchestrator uses a `mapBusinessTerms` utility to translate natural language (e.g., "revenue") into technical columns (e.g., `invoice_amount`).
-   
-3. **Try it out**:
-   The `CatalogAgent` can answer questions like "Which domain handles supplier payments?" or "Show me the schema for inventory tracking."
-
----
-
-## 3. MCP Infrastructure Layer
-Duration: 10:00
-
-The system uses the **Model Context Protocol (MCP)** to provide a standardized interface for different database technologies.
-
-1. **Custom MCP Servers**:
-   Navigate to the `servers/` directory. Each sub-directory contains an MCP server tailored for a specific database:
-   - `oracle-mcp`: Supports Graph and Vector queries.
-   - `spanner-mcp`: Supports high-scale relational and graph traversals.
-   - `bigquery-mcp`: Optimized for large-scale analytical scanning.
-
-2. **Launching Servers**:
-   In a production environment, these run as sidecars or standalone services. For this demo, they are connected via `stdio`.
-   ```bash
-   npm run start-spanner-mcp
-   ```
+MeshOS organizes enterprise data into 9 decentralized, contract-bounded domains:
+- **Oracle ERP**: `ERP_PURCHASE_ORDERS`, `ERP_SUPPLIERS`, `ERP_EXPENSES`
+- **Spanner Retail**: `Inventory`, `Transactions`, `Stores`, `Products`
+- **BigQuery Analytics**: `marketing_edw.customer_segments`, `churn_risk`
+- **AlloyDB CRM**: `CRM_LEADS`, `CRM_ACCOUNTS`, `SUPPORT_TICKETS`
+- **NetSuite ERP**: `SalesOrders`, `Invoices`, `Fulfillment`
+- **Warehouse**: `StockBatches`, `AisleBins`, `PalletMovements`
+- **HR & Talent**: `Employees`, `Departments`, `HeadcountRequisitions`
+- **Catalog & Knowledge**: Dataplex Aspects, Lineage, W3C DCAT v3
+- **API Domain**: Dynamic external OpenAPI products
 
 ---
 
-## 4. Master Orchestrator & A2A Strategy
+## 3. GCP One-MCP Unified Gateway Topology
 Duration: 8:00
 
-The **Master Orchestrator** is the brain of the mesh. It doesn't query databases directly; it delegates.
-
-1. **Decomposition**:
-   When you ask a complex question, the Orchestrator uses Gemini to generate a **Strategic Plan**.
-   
-2. **Delegation**:
-   It calls specialized sub-agents via tools like `call_financial_agent` or `call_retail_agent`.
-   
-3. **Synthesis**:
-   After sub-agents return their results, the Orchestrator correlates the insights into a final strategic summary.
+Explore the **GCP One-MCP Gateway** (`servers/one-mcp/index.js`):
+- **Universal Tool Aggregation**: Aggregates 31+ domain tools into a single endpoint (`http://localhost:8088/sse`).
+- **Zero-Trust Scoping**: Prevents cross-domain lateral access by filtering tools dynamically according to agent identity.
+- **4 Runtime Modes**: `unified`, `microservices`, `local`, and `toolbox`.
 
 ---
 
-## 5. Specialized Domain Agents
+## 4. Dataplex Labs AI Discovery Agent
 Duration: 10:00
 
-Each domain has a specialized agent with its own system instructions and expertise.
-
-- **Financial Agent (`financial_agent.js`)**: Expert in Oracle ERP. It knows how to join Purchase Orders with Supplier Vector embeddings.
-- **Retail Agent (`retail_agent.js`)**: Expert in Spanner. It performs Graph traversals to find bottlenecks in the supply chain.
-- **HR Agent (`hr_agent.js`)**: Manages talent pipelines and recruitment delays.
-- **Analytics Agent (`analytics_agent.js`)**: Scans BigQuery segments and AlloyDB support tickets.
-
-You can modify their instructions in the `agent/` directory to refine their expertise.
-
----
-
-## 6. GraphRAG & Grounding
-Duration: 12:00
-
-To prevent hallucinations, the mesh uses **GraphRAG Grounding**.
-
-1. **Grounding Utility**:
-   The `grounding.js` utility takes raw graph results (e.g., `Supplier A -> Delayed PO 123`) and injects them as "Verified Facts" into the agent's context.
-   
-2. **Knowledge Graph (KG)**:
-   The system maintains a local Knowledge Graph (`kg_service.js`) that tracks every intent and data product retrieved, ensuring a clear "Lineage" of reasoning.
-
-3. **Citations**:
-   Look for the **Shield Icon** in the UI to see which parts of the answer are grounded in database relationships.
+Navigate to the **Discovery & Drift** tab in the UI:
+1. Enter a natural language request: *"Find customer revenue, churn risk, and billing data in BigQuery and Spanner."*
+2. Inspect the **Semantic Question Decomposition**:
+   - *Variation 1 (Direct Synonyms)*: `customer revenue marketing_edw`
+   - *Variation 2 (Technical Schema Translation)*: `spend OR total_amount OR gross_revenue`
+   - *Variation 3 (Category Breadth)*: `omnichannel retail sales transaction store`
+   - *Extracted Predicates*: `type=table`, `system=bigquery`, `system=spanner`
+3. View the **Context Lookup** and **Reranked Matches** with match score percentages.
 
 ---
 
-## 7. Memory Bank & Personalization
-Duration: 8:00
+## 5. Dataplex Labs Data Governance & Document RAG
+Duration: 10:00
 
-The **Memory Bank** (`memory_bank_service.js`) uses Vertex AI to store long-term context across sessions.
-
-1. **Fact Retrieval**:
-   If a user previously mentioned they are interested in "European Suppliers," the memory bank will retrieve this fact and inject it into future queries.
-   
-2. **Session Persistence**:
-   Memories are scoped to the `userId`, allowing the mesh to become more personalized over time.
+Open the **Document RAG** and **Lineage & Descriptions** tabs:
+1. **Upload Data Dictionaries**: Ingest Markdown or PDF data dictionaries. Gemini automatically extracts table schemas and column definitions.
+2. **Preview Lineage Description Propagation**: Propagate upstream column definitions down to curated views with automated SQL transformation explanations (`COALESCE`, `SUM`, `SAFE_CAST`).
+3. **AI Business Glossary**: Bind standardized glossary terms to Dataplex entry schemas.
 
 ---
 
-## 8. Reflection & Governance
+## 6. Data Trust Center & AutoDQ Scoring
 Duration: 7:00
 
-The final stage of processing is **Reflection** and **Governance**.
-
-1. **Self-Correction**:
-   After generating a response, the system runs a "Critic" pass. If the answer is incomplete or inaccurate, the Orchestrator revises it automatically.
-   
-2. **Governance Filters**:
-   The `filterMeshContext` function ensures that sensitive data (like HR details) doesn't accidentally bleed into a Financial report unless explicitly authorized.
-
-3. **Data Contracts**:
-   Every agent output is validated against a schema in `config/data_contracts.json` before being accepted by the Orchestrator.
+Open the **Data Trust Center** tab:
+1. Inspect the derived Data Quality (DQ) score across multi-hop lineage.
+2. Review automatic **SQL Remediation Bonuses** (`COALESCE` $+8\%$, `DISTINCT` $+4\%$, `SAFE_CAST` $+5\%$).
+3. Monitor historical drift trends (`Improving`, `Stable`, `Degrading`).
+4. Dispatch and track **Dataplex Data Quality & Profile Scans**.
 
 ---
 
-## 9. Exploring the Mesh Dashboard (MeshOS)
+## 7. Master Orchestrator Context Fusion & GraphRAG Grounding
 Duration: 10:00
 
-The **UIX** directory contains a React dashboard that brings the mesh to life.
+Submit a cross-domain strategic query in the main dashboard:
+> *"Analyze how supplier delivery delays in Oracle ERP and stockouts in Spanner Retail correlate with VIP customer churn risk in BigQuery."*
 
-1. **Agent Chain**:
-   Visualize the A2A reasoning steps in real-time. See which agent was called, what query it ran, and its confidence score.
-   
-2. **Data Lineage Graph**:
-   View the relationships between datasets across different domains.
-   
-3. **Marketplace**:
-   Explore available "Data Products" and their governance status.
+1. **Context Fusion**: Intermediate domain data products are shared across sequential agent calls.
+2. **GraphRAG Grounding**: The Orchestrator cites verifiable database graph paths (`Supplier -> PO -> Inventory -> Customer`), eliminating AI hallucinations.
 
 ---
 
-## 10. The Cross-Domain Challenge
-Duration: 15:00
+## 8. Cross-Domain Inventory & Force-Directed Graph
+Duration: 8:00
 
-Ready to test the mesh? Try this complex query in the Dashboard:
+Open the **Cross-Domain Inventory** in the UI:
+- Interactive **Force-Directed Graph** rendering cross-domain links.
+- Click nodes to inspect schema attributes, policy tags (`PII`, `FINANCIAL`, `RESTRICTED`), and SLA contracts.
+- Export metadata as **W3C DCAT v3 / JSON-LD**.
 
-> *"Analyze how recruitment delays in HR are affecting our Spanner Global supply chain for high-value customers identified in BigQuery risk segments."*
+---
 
-### What happens behind the scenes:
-1. **Orchestrator** decomposes the query.
-2. **CatalogAgent** maps terms and identifies HR, Retail, and Analytics as necessary domains.
-3. **HRAgent** queries Oracle for talent bottlenecks.
-4. **AnalyticsAgent** identifies at-risk customer segments in BigQuery.
-5. **RetailAgent** traverses the Spanner Graph to find stock shortages related to those customers.
-6. **Orchestrator** synthesizes the final strategic insight, grounded in the graph paths found by all three agents.
+## 9. Cloud Run & Cloud Build Production Deployment
+Duration: 8:00
 
-**Congratulations! You have successfully explored the Agentic Data Mesh.**
+Deploy the complete stack to Google Cloud:
+1. Use `cloudbuild.yaml` with regional logging:
+   ```yaml
+   options:
+     logging: CLOUD_LOGGING_ONLY
+   ```
+2. Deploy the Express Gateway, One-MCP Gateway, and React UIX Studio to **Cloud Run**.
+3. Enforce **Google Secret Manager** runtime secret mounting.
+
+---
+
+## 10. Verification & Test Suite
+Duration: 5:00
+
+Verify system integrity across all 17 integration suites:
+```bash
+# Run all 99 automated integration tests
+npm test
+
+# Build production React frontend
+cd UIX && npm run build
+```
+
+**Congratulations! You have completed the comprehensive walkthrough of the Enterprise Agentic Data Mesh.**

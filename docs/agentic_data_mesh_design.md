@@ -1,81 +1,102 @@
-# Agentic Data Mesh Architecture
+# Strategic Architecture: Enterprise Agentic Data Mesh (MeshOS)
 
-This document defines the strategic architecture for an **Agentic Data Mesh**. It evolves the standard Data Mesh principles by introducing **Autonomous Data Agents** as the primary interface for data consumption and governance.
+This document defines the strategic and technical architecture for an **Autonomous Agentic Data Mesh (MeshOS)**. It evolves Martin Fowler and Zhamak Dehghani's foundational Data Mesh principles by introducing **Autonomous AI Agents**, **Model Context Protocol (MCP)** gateways, and **Google Cloud Dataplex Labs** automated governance.
 
-## Core Pillars of the Agentic Mesh
+![MeshOS Enterprise Architecture](images/gcp_agentic_mesh_unified_architecture.png)
 
-### 1. Decentralized Domain Ownership
+---
 
-Data is not stored in a central lake but owned by domain-specific agents.
-
-- **Financial Agent:** Owns the Oracle ERP domain (Invoices, Suppliers).
-- **Retail Agent:** Owns the Spanner Global domain (Inventory, Transactions).
-- **HR Agent:** Owns the Oracle HR domain (Employees, Recruitment).
-- **Analytics Agent:** Owns the BigQuery/AlloyDB domain (Segments, CRM).
-
-### 2. Data as a Product (Agent-Agnostic Access)
-
-Each agent exposes their domain data as a "Product" via standardized MCP (Model Context Protocol) interfaces.
-
-- Agents don't just return rows; they return **Contextual Insights**.
-- Discovery is handled by the **Master Orchestrator** (the mesh directory).
-
-### 3. Self-Serve Agentic Infrastructure
-
-The mesh is powered by a common infrastructure layer:
-
-- **GCP Foundation:** AlloyDB, Spanner, BigQuery, and Oracle DB@GCP.
-- **Orchestration Layer:** Express API serving as the gateway.
-- **Communication Protocol:** A2A (Agent-to-Agent) messaging via Gemini 1.5 Flash.
-
-### 4. Federated Computational Governance
-
-Policy and security are applied globally but executed locally by agents.
-
-- **Security:** Google Cloud ADC (Application Default Credentials).
-- **Auditability:** Every step in the `AgentChain` is logged and verifiable.
-- **Quality:** Agents validate data against domain-specific logical schemas before responding.
-
-## High-Level Mesh Topology
+## The Four Core Pillars of the Agentic Mesh
 
 ```mermaid
-graph LR
-    subgraph "Consumer Tier"
-        Dashboard["Web Dashboard"]
+graph TD
+    subgraph "1. Decentralized Domain Ownership"
+        D1["Oracle ERP Domain"]
+        D2["Spanner Retail Domain"]
+        D3["BigQuery Analytics Domain"]
+        D4["AlloyDB CRM Domain"]
+        D5["NetSuite ERP Domain"]
+        D6["Warehouse Domain"]
+        D7["HR & Talent Domain"]
+        D8["Catalog Domain"]
+        D9["External API Domain"]
     end
 
-    subgraph "Orchestration & Discovery"
-        Orchestrator["Master Orchestrator<br/>(Mesh Discovery)"]
+    subgraph "2. Data as a Contextual Product"
+        Contracts["Standardized Data Product Contract<br/>(Schema, Metadata, Trust Score, SLA)"]
     end
 
-    subgraph "Domain Agentic Units"
-        subgraph "Finance Domain"
-            FinAgent["Financial Agent"] --> OracleERP["Oracle ERP"]
-        end
-        subgraph "Retail Domain"
-            RetailAgent["Retail Agent"] --> SpannerInv["Spanner Inventory"]
-        end
-        subgraph "Talent Domain"
-            HRAgent["HR Agent"] --> OracleHR["Oracle HR"]
-        end
-        subgraph "Analytics Domain"
-            AnalyticsAgent["Analytics Agent"] --> BQSegment["BQ Segments"]
-        end
+    subgraph "3. Self-Serve Agentic Infrastructure"
+        OneMCP["GCP One-MCP Unified Gateway<br/>(Zero-Trust, Domain Scoping, SSE/Stdio)"]
     end
 
-    Dashboard <--> Orchestrator
-    Orchestrator <--> FinAgent
-    Orchestrator <--> RetailAgent
-    Orchestrator <--> HRAgent
-    Orchestrator <--> AnalyticsAgent
-    
-    %% Cross-Domain Collaboration (A2A Mesh)
-    FinAgent -.->|Context Sync| RetailAgent
-    HRAgent -.->|Resource Planning| FinAgent
+    subgraph "4. Federated Computational Governance"
+        Gov["Dataplex Labs Governance Agent<br/>(Document RAG, Policy Tags, Trust Center)"]
+        Disc["Dataplex Labs Discovery Agent<br/>(Semantic Decomposition, Multi-Search)"]
+    end
+
+    D1 & D2 & D3 & D4 & D5 & D6 & D7 & D8 & D9 --> Contracts
+    Contracts --> OneMCP
+    OneMCP <--> Gov & Disc
 ```
 
-## Strategic Advantages
+---
 
-- **Infinite Scalability:** Add a new "Supply Chain Agent" by simply registering it in the Orchestrator.
-- **Reduced Latency:** Reasoning happens at the domain level; only synthesized insights travel the network.
-- **Native Intelligence:** The mesh doesn't just store data; it understands the *meaning* of the data within its domain.
+## 1. Decentralized Domain Ownership (9 Autonomous Units)
+
+Data is not funneled into a brittle centralized data lake. Instead, each domain operates an autonomous, specialized AI agent unit responsible for its own storage, queries, and business rules:
+
+1. **Financial Agent**: Owns Oracle ERP (`ERP_PURCHASE_ORDERS`, `ERP_SUPPLIERS`, `ERP_EXPENSES`), Oracle Graph, and Oracle Vector Search.
+2. **Retail Agent**: Owns Cloud Spanner (`Inventory`, `Transactions`, `Stores`, `Products`), Spanner Graph, and Vector Similarity.
+3. **Analytics Agent**: Owns BigQuery (`marketing_edw.customer_segments`, `churn_risk`) and AlloyDB (`CRM_LEADS`, `SUPPORT_TICKETS`).
+4. **NetSuite Agent**: Owns NetSuite SaaS ERP records via SuiteTalk REST interfaces (`SalesOrders`, `Invoices`, `Fulfillment`).
+5. **Warehouse Agent**: Owns real-time inventory movements (`StockBatches`, `AisleBins`, `PalletMovements`).
+6. **HR & Talent Agent**: Owns sensitive employee directory and recruiting records (`Employees`, `Departments`, `HeadcountRequisitions`) with DLP masking.
+7. **Catalog Agent**: Owns Dataplex Aspect Schemas, cross-domain relationship graphs, and W3C DCAT v3 linked data.
+8. **API Agent**: Owns dynamic external API integrations and third-party data products.
+
+---
+
+## 2. Data as a Product (Contract-Driven AI Exchange)
+
+Agents in the mesh communicate using standardized **Data Product Contracts** rather than exchanging raw tabular dumps:
+
+```json
+{
+  "domain": "Spanner Retail",
+  "data": {
+    "storeId": "STORE_101",
+    "stockLevel": 450,
+    "reorderThreshold": 1200,
+    "status": "CRITICAL_LOW"
+  },
+  "metadata": {
+    "confidence": 0.98,
+    "source": "spanner.inventory",
+    "lineageHop": 1,
+    "policyTag": "PUBLIC"
+  },
+  "insights": "Store 101 has critically low stock for SKU-900 due to Supplier S-400 shipping delays in Oracle ERP.",
+  "dataTrustScore": 0.96
+}
+```
+
+---
+
+## 3. Self-Serve Agentic Infrastructure (GCP One-MCP Gateway)
+
+MeshOS provides a shared, self-serve connectivity plane through the **GCP One-MCP Gateway** (`servers/one-mcp/index.js`):
+- **Universal Tool Aggregation**: Aggregates 31+ domain tools into a unified endpoint.
+- **Dynamic Domain Scoping**: Restricts access so that an agent cannot execute unauthorized tools outside its designated domain boundary.
+- **Multi-Transport Support**: Compatible with SSE (port 8088) and standard I/O for Cloud Run sidecar deployments.
+
+---
+
+## 4. Federated Computational Governance (Dataplex Labs)
+
+Governance in MeshOS is automated, continuous, and computationally enforced:
+- **Document RAG Data Steward**: Ingests unstructured policies and schema dictionaries to extract canonical business definitions.
+- **Lineage-Based Description Propagation**: Automatically updates downstream table and column documentation with SQL transformation rationales (`COALESCE`, `SUM`, `CASE WHEN`).
+- **Data Trust Center (AutoDQ)**: Derives multi-hop Data Quality scores with automated remediation bonuses and historical trend tracking.
+- **Semantic Question Decomposition**: Uses the Dataplex Labs Discovery Agent to decompose user questions into 3 distinct search variations and extracted predicates.
+- **Semantic Catalog Federation**: Exposes mesh assets via **W3C DCAT v3** and **Google Open Knowledge Graph** JSON-LD linked data.

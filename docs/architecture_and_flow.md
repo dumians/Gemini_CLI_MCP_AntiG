@@ -1,105 +1,148 @@
-# Enterprise Data Agents Solution Architecture
+# Enterprise Agentic Data Mesh Solution Architecture & Flow Specification
 
-This document provides a high-level overview of the Multi-Domain Data Agent (A2A) orchestration system, including the system architecture and the process flow for a typical user query.
+This document provides a comprehensive technical overview of the **MeshOS** multi-domain Agent-to-Agent (A2A) orchestration system, including high-level architecture, unified MCP gateway topology, governance and discovery pipelines, and cross-domain query lifecycle.
 
-## Systems Architecture
+![MeshOS Enterprise Architecture](images/gcp_agentic_mesh_unified_architecture.png)
 
-The system is built on a modular, Agent-to-Agent (A2A) architecture. A Master Orchestrator delegates specialized tasks to sub-agents, each responsible for a specific data domain.
+---
+
+## 1. High-Level Systems Architecture
+
+MeshOS decomposes the enterprise data stack into four decoupled architectural planes:
 
 ```mermaid
 graph TD
-    User((User)) -->|NL Query| WebUI["Web Dashboard (React/Vite)"]
-    WebUI -->|API Request| API["Express API Server"]
-    API -->|Ask| Orchestrator["Master Orchestrator (Gemini 1.5 Flash)"]
+    User((Enterprise User)) -->|Natural Language Query| WebUI["React UIX Studio (Vite / D3 Force Graph / Lucide)"]
+    WebUI -->|REST / SSE Streams| API["Express Mesh Gateway Server"]
+    API -->|Prompt & Context| MasterOrch["Master Orchestrator (Gemini 2.5 Multi-Agent Engine)"]
 
-    subgraph "A2A Orchestration Layer"
-        Orchestrator -->|Delegate| FinAgent["Financial Agent (Specialist)"]
-        Orchestrator -->|Delegate| RetailAgent["Retail Agent (Specialist)"]
-        Orchestrator -->|Delegate| AnalyticsAgent["Analytics Agent (Specialist)"]
-        Orchestrator -->|Delegate| HRAgent["HR Agent (Specialist)"]
+    subgraph "Unified Access & Security Plane"
+        MasterOrch -->|Zero-Trust MCP Protocol| OneMCP["GCP One-MCP Unified Gateway (Port 8088 / Stdio)"]
     end
 
-    subgraph "MCP Infrastructure Layer"
-        FinAgent -->|MCP Protocol| OracleMCP["Oracle MCP Server"]
-        RetailAgent -->|MCP Protocol| SpannerMCP["Spanner MCP Server"]
-        AnalyticsAgent -->|MCP Protocol| BQMCP["BigQuery MCP Server"]
-        AnalyticsAgent -->|MCP Protocol| AlloyMCP["AlloyDB MCP Server"]
-        HRAgent -->|MCP Protocol| OracleMCP["Oracle MCP Server"]
+    subgraph "Dataplex Labs Governance & Discovery Plane"
+        OneMCP --> GovAgent["Dataplex Labs Governance Agent (Document RAG, Policy Tags, Trust Center)"]
+        OneMCP --> DiscAgent["Dataplex Labs Discovery Agent (Semantic Decomposition, Multi-Search)"]
+        GovAgent & DiscAgent <--> DataplexService["Google Cloud Dataplex / Knowledge Catalog"]
     end
 
-    subgraph "Data Persistence (GCP)"
-        OracleMCP --> OracleDB[("Oracle DB @GCP (ERP)")]
-        SpannerMCP --> SpannerDB[("Spanner (Global Retail)")]
-        BQMCP --> BigQuery[("BigQuery (EDW)")]
-        AlloyMCP --> AlloyDB[("AlloyDB (CRM)")]
+    subgraph "Decentralized Domain Specialists Plane (9 Autonomous Domains)"
+        OneMCP --> FinAgent["Financial Specialist (Oracle ERP / BMS)"]
+        OneMCP --> RetailAgent["Retail Specialist (Cloud Spanner Graph/Vector)"]
+        OneMCP --> AnalyticsAgent["Analytics Specialist (BigQuery EDW)"]
+        OneMCP --> CRMAgent["CRM Specialist (AlloyDB pgvector)"]
+        OneMCP --> NSAgent["NetSuite Specialist (SuiteTalk / ERP)"]
+        OneMCP --> WHAgent["Warehouse Specialist (Inventory Batches)"]
+        OneMCP --> HRAgent["HR & Talent Specialist (Sensitive HR Data)"]
+        OneMCP --> CatAgent["Catalog Specialist (Aspects & Lineage)"]
+        OneMCP --> ApiAgent["API Specialist (External Data Products)"]
     end
 
-    classDef agent fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef mcp fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef db fill:#dfd,stroke:#333,stroke-width:2px;
-    
-    class Orchestrator,FinAgent,RetailAgent,AnalyticsAgent,HRAgent agent;
-    class OracleMCP,SpannerMCP,BQMCP,AlloyMCP mcp;
-    class OracleDB,SpannerDB,BigQuery,AlloyDB db;
+    subgraph "Physical Data Persistence Layer (Google Cloud Platform)"
+        FinAgent -.-> OracleDB[("Oracle DB@GCP / Bare Metal")]
+        RetailAgent -.-> SpannerDB[("Cloud Spanner Multi-Region")]
+        AnalyticsAgent -.-> BigQueryDB[("BigQuery Analytics EDW")]
+        CRMAgent -.-> AlloyDB[("AlloyDB PostgreSQL + pgvector")]
+        NSAgent -.-> NetSuiteAPI[("NetSuite Cloud ERP")]
+        WHAgent -.-> WarehouseDB[("Warehouse Store")]
+        HRAgent -.-> HRDB[("Encrypted HR Store")]
+        CatAgent -.-> KnowledgeStore[("Dataplex Metadata / Aspect Catalog")]
+        ApiAgent -.-> OpenAPIEndpoint[("OpenAPI / External Endpoints")]
+    end
 ```
 
-## Process Flow: Cross-Domain Query
+---
 
-The following sequence diagram illustrates the end-to-end flow of a complex, cross-domain query (e.g., "Analyze how recruitment delays in Oracle are affecting the Spanner Global supply chain based on BigQuery churn risk").
+## 2. End-to-End Cross-Domain Query Flow
+
+The following sequence diagram details the full query execution lifecycle for a cross-domain strategic prompt:
+*“Analyze how supplier delivery delays in Oracle ERP and stockouts in Spanner Retail correlate with VIP customer churn risk in BigQuery and CRM support escalation in AlloyDB.”*
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant UI as Web Dashboard
-    participant API as Express API
-    participant ORCH as Master Orchestrator
-    participant FIN as Financial Agent
-    participant RET as Retail Agent
-    participant ANA as Analytics Agent
+    autonumber
+    participant U as Enterprise User
+    participant UI as React UIX Studio
+    participant API as Express Server
+    participant ORCH as Master Orchestrator (Gemini 2.5)
+    participant MCP as GCP One-MCP Gateway
+    participant GOV as Dataplex Governance Agent
+    participant SPEC as Domain Specialists (Oracle / Spanner / BQ / AlloyDB)
+    participant DB as GCP Database Tier
 
-    User->>UI: Submits Query
-    UI->>API: POST /api/query
-    API->>ORCH: askOrchestrator(query)
-    
-    rect rgb(240, 240, 240)
-        Note over ORCH: Reasoning: Needs HR (Oracle), Inventory (Spanner), & Risk (BQ)
-        
-        ORCH->>FIN: call_financial_agent(HR query)
-        FIN->>ORCH: Return Oracle ERP data
-        
-        ORCH->>RET: call_retail_agent(Stock query)
-        RET->>ORCH: Return Spanner Inventory data
-        
-        ORCH->>ANA: call_analytics_agent(Churn query)
-        ANA->>ORCH: Return BigQuery segments
+    U->>UI: Submits NL Query
+    UI->>API: POST /api/query (Stream / Trace ID)
+    API->>ORCH: askOrchestrator(query, meshContext)
+
+    rect rgb(20, 30, 50)
+        Note over ORCH,MCP: Phase 1: Semantic Decomposition & Metadata Grounding
+        ORCH->>MCP: decompose_and_discover_assets(query)
+        MCP->>GOV: Semantic Question Decomposition (3 variations + predicates)
+        GOV-->>MCP: Returns Ranked Assets + Knowledge Catalog Context
+        MCP-->>ORCH: Grounded Metadata & Lineage Graph
     end
 
-    Note over ORCH: Synthesizing final response...
-    ORCH->>API: Return { text, steps }
-    API->>UI: JSON Response
-    UI->>User: Displays Answer + Agent Chain + Graph
+    rect rgb(30, 45, 70)
+        Note over ORCH,SPEC: Phase 2: Autonomous Domain Delegation (A2A)
+        ORCH->>SPEC: call_financial_agent("Retrieve overdue POs from ERP_PURCHASE_ORDERS")
+        SPEC->>DB: query_oracle_sql & query_oracle_graph
+        DB-->>SPEC: Oracle Supplier Delays & Graph Links
+        SPEC-->>ORCH: Standardized Data Product (Domain: Oracle ERP)
+
+        ORCH->>SPEC: call_retail_agent("Check inventory stockouts for affected SKU batches")
+        SPEC->>DB: query_spanner_sql & Spanner Graph traversal
+        DB-->>SPEC: Spanner Inventory Shortage by Store
+        SPEC-->>ORCH: Standardized Data Product (Domain: Spanner Retail)
+
+        ORCH->>SPEC: call_analytics_agent("Correlate with High-Value Churn Segments")
+        SPEC->>DB: query_bigquery & query_alloydb_sql
+        DB-->>SPEC: BigQuery High-Risk VIPs + AlloyDB Escalation Tickets
+        SPEC-->>ORCH: Standardized Data Product (Domain: BigQuery / AlloyDB)
+    end
+
+    rect rgb(25, 40, 60)
+        Note over ORCH,GOV: Phase 3: Governance, Trust Verification & Lineage
+        ORCH->>MCP: calculate_data_trust_scores()
+        MCP->>GOV: Propagate DQ & Policy Tags (Straight-Pull vs Transform)
+        GOV-->>MCP: Verified Trust Index (96%), Zero-Drift Certification
+        MCP-->>ORCH: Governance Attestation
+    end
+
+    Note over ORCH: Phase 4: Synthesis & Cross-Domain Graph Generation
+    ORCH->>API: Return { synthesis, agentChain, dataProducts, graphNodes, trustIndex }
+    API->>UI: HTTP 200 / WebSocket Event
+    UI->>U: Renders Executive Report, Timeline, and Force-Directed Graph
 ```
 
-## Key Components
+---
 
-### 1. Web Dashboard (React + Vite)
+## 3. Core Subsystem Architectures
 
-- **Search Component:** Captures natural language queries.
-- **Agent Chain:** Real-time visualization of the A2A reasoning steps and delegations.
-- **Graph View:** Visualizes relationships between data nodes retrieved from different domains.
+### 3.1 Master Orchestrator
+- **Model Backbone**: Gemini 2.5 Flash / Pro with function calling and structured outputs.
+- **Dynamic Context Fusion**: Maintains a shared blackboard state across sequential tool invocations. Subsequent agent calls automatically inherit upstream factual grounding.
+- **Data Contract Enforcement**: Validates every agent output against the structural `DataProductContract` (schema validity, domain bounding, metadata provenance, and trust confidence).
 
-### 2. Master Orchestrator
+### 3.2 GCP One-MCP Unified Gateway
+- **Architecture**: Single managed Node.js service exposing MCP over Server-Sent Events (SSE) on port 8088 and standard I/O for container sidecars.
+- **Domain Scoping**: Enforces Zero-Trust isolation. The `BigQuery Analytics` agent is scoped strictly to BigQuery and AlloyDB tools, preventing unauthorized lateral execution against `Oracle ERP` or `HR` systems.
+- **Fallback Engine**: Resilient fallback to local drivers and simulated catalogs when operating in offline testing or air-gapped environments.
 
-- **Logic:** Uses Gemini 1.5 Flash to decompose queries.
-- **Tools:** Defined as sub-agent delegation functions (`call_financial_agent`, etc.).
-- **Synthesis:** Aggregates raw data from sub-agents into a human-readable strategic insight.
+### 3.3 Google Cloud Dataplex Labs Governance Agent
+- **Document RAG**: Multimodal extraction pipeline parsing unstructured PDF, Markdown, and JSON data dictionaries.
+- **Lineage-Based Metadata Propagation**: Automatically carries upstream column descriptions and business definitions downstream, appending SQL transformation rationales.
+- **Data Trust Center**: Derived multi-hop Data Quality calculations with automated SQL quality bonus factors (`COALESCE` $+8\%$, `DISTINCT` $+4\%$, `SAFE_CAST` $+5\%$) and drift tracking.
 
-### 3. Specialized Sub-Agents
+### 3.4 Google Cloud Dataplex Labs Discovery Agent
+- **Semantic Decomposition**: Generates 3 query variations (direct synonym, database schema translation, and category breadth) with extracted predicates.
+- **Knowledge Catalog Search**: Concurrent semantic search (`semantic_search: true`) across Dataplex global catalog with cross-engine reranking.
+- **Context Lookup**: Invokes Dataplex `LookupContext` API to retrieve deep lineage, aspect attachments, and asset trust.
 
-- **Financial Agent:** Expert in Oracle ERP schemas, Graph, and Vector search.
-- **Retail Agent:** Expert in Spanner's distributed relational and graph capabilities.
-- **Analytics Agent:** Expert in high-performance BigQuery analysis and AlloyDB CRM data.
-
-### 4. MCP Servers
-
-- Standardized interfaces that allow sub-agents to communicate with various database technologies securely and uniformly.
+### 3.5 React UIX Studio & Cross-Domain Inventory
+- **Technology Stack**: React 19, Vite, Tailwind CSS, Lucide, D3 / SVG Force-Directed Canvas.
+- **Modules**:
+  1. *Real-time Orchestration Console*: Interactive natural language querying and agent timeline inspector.
+  2. *Cross-Domain Inventory*: Force-directed graph rendering relationships across all 9 domains with policy tag indicators and schema drift badges.
+  3. *Governance & Dataplex Studio*: Estate dashboard, Document RAG repository, Data Trust Center, and Aspect Schema editor.
+  4. *AI Semantic Discovery Studio*: Natural language question decomposition and ranked catalog asset browser.
+  5. *W3C DCAT v3 / JSON-LD Catalog*: Standardized linked data metadata export.

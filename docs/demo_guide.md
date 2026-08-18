@@ -1,74 +1,102 @@
-# Enterprise Data Agents Demo (ADK) Setup & Guide
+# Enterprise Agentic Data Mesh (MeshOS) Demo & Exploration Guide
 
-This demo simulates a powerful "Data Agent" operating across four Google Cloud databases: Oracle DB@GCP, Spanner, BigQuery, and AlloyDB.
-It showcases the ability of the Gemini AI to orchestrate Natural Language queries into disparate querying languages (Standard SQL, Oracle Graph, Spanner GQL, pgvector, Oracle AI Vector Search) and synthesize the results.
+This guide walks through running and evaluating **MeshOS**, the Enterprise Agentic Data Mesh platform built on Google Cloud Platform (GCP).
 
-## Prerequisites & Setup (GCP)
+MeshOS showcases multi-agent orchestration, the **GCP One-MCP Gateway**, and **Google Cloud Dataplex Labs** data governance and discovery capabilities across 9 enterprise domains:
+- **Oracle ERP**: `ERP_PURCHASE_ORDERS`, `ERP_SUPPLIERS`, `ERP_EXPENSES`
+- **Spanner Retail**: `Inventory`, `Transactions`, `Stores`, `Products`
+- **BigQuery Analytics**: `marketing_edw.customer_segments`, `churn_risk`
+- **AlloyDB CRM**: `CRM_LEADS`, `SUPPORT_TICKETS`
+- **NetSuite ERP**: `SalesOrders`, `Invoices`, `Fulfillment`
+- **Warehouse**: `StockBatches`, `AisleBins`, `PalletMovements`
+- **HR & Talent**: `Employees`, `Departments`, `HeadcountRequisitions`
+- **Catalog**: Dataplex Aspects, Lineage, W3C DCAT v3
+- **API Domain**: Dynamic external OpenAPI products
 
-1. **Authentication**:
-   Ensure you are logged into Google Cloud locally so the agent can access your projects:
+---
 
-   ```bash
-   gcloud auth application-default login
-   ```
+## 🛠️ Quick Setup
 
-2. **Database Configurations**:
-   For this demo, the Node.js MCP servers (`servers/oracle-mcp`, `servers/spanner-mcp`, `servers/bigquery-mcp`) return *simulated* JSON responses mimicking actual API outputs.
-   To wire them up to your live GCP instances, you would:
-   - Provide your typical Connection Strings / Service Accounts to the `new BigQuery(...)` or `new Spanner(...)` initializers.
-3. **Environment Variables**:
-   Create a `.env` file in the project root:
-
-   ```env
-   GEMINI_API_KEY="your-gemini-key-here"
-   ```
-
-## Running the Demo
-
-Start the core Data Agent CLI:
-
-```bash
-npm start
+### 1. Environment Preparation
+Ensure your `.env` is configured in the repository root:
+```env
+PORT=3000
+GCP_PROJECT_ID="your-gcp-project-id"
+GEMINI_API_KEY="your-gemini-api-key"
+GCP_ONE_MCP_ENABLED="true"
+ONE_MCP_MODE="unified"
+DATAPLEX_ZONE_ID="europe-west3"
+BIGQUERY_DATASET_ID="marketing_edw"
+USE_REAL_CONNECTIONS="false"
 ```
 
-The agent orchestrator will spawn the underlying MCP servers as separate processes via stdio, load their schemas, and provide a prompt loop for you to interrogate your data domains.
+### 2. Launching the System
+```bash
+# Start backend API + One-MCP Gateway + React UIX Studio
+npm run start:all
+```
+- **Web UI Dashboard**: `http://localhost:5173`
+- **Mesh Gateway API**: `http://localhost:3000`
+- **One-MCP Server**: `http://localhost:8088/sse`
 
-## Demo Scenarios
+---
 
-Try the following complex prompts to test the Agent's cross-domain reasoning and tool orchestration:
+## 🎯 Guided Demo Scenarios
 
-### Scenario 1: Analytical + Graph + Vector (The "Holy Grail" Query)
+### Scenario 1: Cross-Domain Strategic Reasoning (Oracle + Spanner + BigQuery + AlloyDB)
 
-*Tests BigQuery SQL, Spanner GQL, and Oracle Vector Search.*
+**Prompt to submit in UI Search Bar:**
+> *"Find VIP customers in BigQuery with high churn risk, check if their recent orders in Spanner Retail suffered stockouts, trace supplier delivery delays in Oracle ERP, and identify unresolved support tickets in AlloyDB CRM."*
 
-**Prompt:**
-> "Find VIP customers in BigQuery, trace their recent purchase path globally through our Spanner supply chain graph to check for delays, and then search our Oracle systems using Vector similarity to see if any high-value anomalies match this supply chain disruption."
-**Expected Agent Action:**
+**What MeshOS Demonstrates:**
+1. **Master Orchestrator Delegation**: Gemini 2.5 decomposes the question into targeted sub-agent tasks.
+2. **One-MCP Routing**: Routes requests through the Zero-Trust gateway.
+3. **Data Product Contracts**: Standardizes outputs from 4 different databases into a unified JSON contract.
+4. **GraphRAG Fact Grounding**: Cites immutable path relationships (`Supplier -> Purchase Order -> Inventory -> Customer`).
+5. **Interactive UI Visualization**: Displays the real-time agent execution timeline and rendered force-directed graph.
 
-1. Call `query_bigquery` for the VIP list.
-2. Feed those IDs conceptually into `query_spanner_graph` to perform a Graph Traversal (GQL).
-3. Feed the resulting compromised node/path to `query_oracle_vector` to check transaction metadata.
-4. Synthesize entirely for the user.
+---
 
-### Scenario 2: Standard Financials + ERP Networking
+### Scenario 2: Dataplex Labs AI Discovery Agent (Semantic Decomposition & Multi-Search)
 
-*Tests Oracle SQL and Oracle Graph.*
+**Navigation:** Open the **Discovery & Drift** tab in the UI.
 
-**Prompt:**
-> "Who are our top 3 suppliers by invoice volume in the Oracle DB, and what does their 3rd party vendor network look like in Oracle Graph?"
-**Expected Agent Action:**
+**Prompt to submit in AI Discovery Search:**
+> *"Locate omnichannel retail revenue, store inventory shortages, and customer acquisition metrics in BigQuery and Spanner tables."*
 
-1. Call `query_oracle_sql` to parse structured ERP tables.
-2. Call `query_oracle_graph` to map out connected entities up to 3 degrees.
+**What MeshOS Demonstrates:**
+1. **Semantic Question Decomposition**: The Discovery Agent decomposes the business question into 3 distinct search variations:
+   - *Direct Synonyms*: `omnichannel retail revenue store inventory`
+   - *Technical Schema Translation*: `spend OR total_amount OR gross_revenue warehouse_stock`
+   - *Category Breadth*: `omnichannel retail sales transaction store`
+2. **Predicate Extraction**: Extracts qualifiers (`type=table`, `system=bigquery`, `system=spanner`, `projectid=...`).
+3. **Knowledge Catalog Multi-Search**: Executes concurrent semantic searches with `semantic_search: true`.
+4. **Context Lookup (`lookupContext`)**: Fetches deep lineage, aspect schemas, and trust scores.
+5. **Asset Reranking**: Reranks assets by relevance and metadata quality score.
 
-### Scenario 3: Global Retail Operations
+---
 
-*Tests Spanner SQL vs. Analytical Data.*
+### Scenario 3: Dataplex Labs Data Governance Agent (Lineage Propagation & AutoDQ Trust Center)
 
-**Prompt:**
-> "What is the real-time stock level for Store NYC-01 in Spanner, and how does that compare to the analytical segment metrics we have in BigQuery for New York VIPs?"
-**Expected Agent Action:**
+**Navigation:** Open the **Lineage & Descriptions** and **Data Trust Center** tabs in the UI.
 
-1. Call `query_spanner_sql`.
-2. Call `query_bigquery`.
-3. Provide a unified summary.
+**Actions to Perform:**
+1. **Document RAG Ingestion**: Upload a markdown data dictionary (e.g. `retail_data_dictionary.md`).
+   - Gemini multimodal extraction automatically indexes table schemas and column descriptions.
+2. **Lineage-Based Metadata Propagation**:
+   - Preview propagation from `raw_orders` to `curated_customer_revenue`.
+   - Inspect automated SQL transformation explanations (`SUM`, `COALESCE`, `SAFE_CAST`).
+3. **Data Trust Center Calculation**:
+   - Trigger derived DQ score calculations.
+   - Inspect automated SQL remediation bonuses (`COALESCE` $+8\%$, `DISTINCT` $+4\%$, `SAFE_CAST` $+5\%$).
+   - Review historical drift trends (`Improving`, `Stable`, `Degrading`).
+
+---
+
+### Scenario 4: GCP One-MCP Gateway Runtime Modes
+
+Test dynamic switching between MCP operational modes in the UI or CLI:
+- **`unified`**: All 31+ tools routed through a single zero-trust endpoint.
+- **`microservices`**: Standalone microservices per domain (`servers/bigquery-mcp`, `servers/spanner-mcp`, etc.).
+- **`local`**: In-process driver execution.
+- **`toolbox`**: MCP Toolbox for Databases integration.
