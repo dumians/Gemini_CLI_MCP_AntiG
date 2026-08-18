@@ -133,7 +133,14 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
       }
     });
 
-    return { nodes: nList, links: lList };
+    const validNodeIds = new Set(nList.map(n => n.id));
+    const safeLinks = lList.filter(l => {
+      const s = typeof l.source === 'object' ? l.source?.id : l.source;
+      const t = typeof l.target === 'object' ? l.target?.id : l.target;
+      return validNodeIds.has(s) && validNodeIds.has(t);
+    });
+
+    return { nodes: nList, links: safeLinks };
   }, [products, contracts]);
 
   const graphData = useMemo(() => ({ nodes, links }), [nodes, links]);

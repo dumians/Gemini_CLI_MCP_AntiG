@@ -186,7 +186,13 @@ export function InventoryGraph({ onSelectEntity }: InventoryGraphProps) {
             ];
 
             if (res && res.nodes && res.nodes.length > 0) {
-                setGraphData({ nodes: res.nodes, links: res.links || [] });
+                const nodeIds = new Set(res.nodes.map((n: any) => n.id));
+                const safeLinks = (res.links || []).filter((l: any) => {
+                    const s = typeof l.source === 'object' ? l.source?.id : l.source;
+                    const t = typeof l.target === 'object' ? l.target?.id : l.target;
+                    return nodeIds.has(s) && nodeIds.has(t);
+                });
+                setGraphData({ nodes: res.nodes, links: safeLinks });
             } else {
                 setGraphData({ nodes: defaultNodes, links: defaultLinks });
             }

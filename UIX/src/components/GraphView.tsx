@@ -134,12 +134,18 @@ export function GraphView({ data: initialData }: { data?: any }) {
                     links: defaultLinks
                 }));
             } else {
+                const nodeIds = new Set(res.nodes.map((n: any) => n.id));
+                const safeLinks = (res.links || []).filter((l: any) => {
+                    const s = typeof l.source === 'object' ? l.source?.id : l.source;
+                    const t = typeof l.target === 'object' ? l.target?.id : l.target;
+                    return nodeIds.has(s) && nodeIds.has(t);
+                });
                 setGraphData((prev: any) => ({
                     nodes: res.nodes.map((node: any) => {
                         const prevNode = prev.nodes?.find((n: any) => n.id === node.id);
                         return prevNode ? { ...node, x: prevNode.x, y: prevNode.y } : node;
                     }),
-                    links: res.links || []
+                    links: safeLinks
                 }));
             }
         } catch (e) {

@@ -135,7 +135,14 @@ export const DataLineageGraph = () => {
         );
       }
 
-      setGraphData({ nodes: newNodes, links: newLinks });
+      const validNodeIds = new Set(newNodes.map(n => n.id));
+      const safeLinks = newLinks.filter(l => {
+        const s = typeof l.source === 'object' ? l.source?.id : l.source;
+        const t = typeof l.target === 'object' ? l.target?.id : l.target;
+        return validNodeIds.has(s) && validNodeIds.has(t);
+      });
+
+      setGraphData({ nodes: newNodes, links: safeLinks });
     } catch (e) {
       console.error("Failed to load lineage graph", e);
     } finally {
