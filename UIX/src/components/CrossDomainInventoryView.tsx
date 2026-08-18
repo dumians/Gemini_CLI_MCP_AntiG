@@ -115,17 +115,20 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
   // Filtered inventory list
   const filteredInventory = useMemo(() => {
     return inventoryData.filter(item => {
-      const matchesDomain = activeFilterDomain === 'ALL' || item.source.toLowerCase() === activeFilterDomain.toLowerCase();
+      const matchesDomain = activeFilterDomain === 'ALL' || 
+        item.source.toLowerCase().includes(activeFilterDomain.toLowerCase()) ||
+        item.domain.toLowerCase().includes(activeFilterDomain.toLowerCase());
       const matchesSearch = !searchFilter.trim() || 
         item.item.toLowerCase().includes(searchFilter.toLowerCase()) || 
         item.id.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchFilter.toLowerCase());
+        item.location.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        (item.correlationKey && item.correlationKey.toLowerCase().includes(searchFilter.toLowerCase()));
       return matchesDomain && matchesSearch;
     });
   }, [inventoryData, activeFilterDomain, searchFilter]);
 
   const adkAgents = [
-    { id: 'CatalogAgent', type: 'A2A', status: 'Connected', latency: '2ms', load: '14%', domain: 'Metadata Layer' },
+    { id: 'CatalogAgent', type: 'A2A', status: 'Connected', latency: '2ms', load: '14%', domain: 'Knowledge Catalog Layer' },
     { id: 'RetailAgent', type: 'A2A', status: 'Connected', latency: '4ms', load: '28%', domain: 'Spanner Retail' },
     { id: 'FinancialAgent', type: 'A2A', status: 'Active', latency: '1ms', load: '6%', domain: 'Oracle ERP' },
     { id: 'SupplyChainAgent', type: 'A2A', status: 'Connected', latency: '3ms', load: '19%', domain: 'Warehouse Spatial' }
@@ -144,7 +147,7 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
             </span>
           </div>
           <p className="text-slate-400 text-sm mt-1">
-            Real-time topology, cross-domain schema relationships, and distributed asset inventory across Oracle, Spanner, BigQuery, AlloyDB & NetSuite.
+            Real-time topology, cross-domain schema relationships, and distributed asset inventory across 9 decentralized mesh domains.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -154,6 +157,12 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
             className="glass px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-white/10 transition-all flex items-center gap-2 text-slate-300 hover:text-white border border-white/10 shadow-lg"
           >
             <RefreshCw size={14} className={loading ? "animate-spin text-primary" : ""} /> Refresh Mesh
+          </button>
+          <button 
+            onClick={() => onNavigate('governance', undefined, 'knowledge_catalog')}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all"
+          >
+            <Database size={14} /> Catalog Aspects
           </button>
           <button 
             onClick={() => onNavigate('marketplace', undefined, 'domains')}
@@ -174,7 +183,7 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Mesh Data Assets</p>
             <h4 className="text-2xl font-extrabold text-white mt-0.5">{inventoryData.length || 9} Entities</h4>
             <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-              <CheckCircle2 size={11} /> 100% Verified in Catalog
+              <CheckCircle2 size={11} /> 100% In Knowledge Catalog
             </span>
           </div>
         </div>
@@ -185,9 +194,9 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
           </div>
           <div>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Connected Engines</p>
-            <h4 className="text-2xl font-extrabold text-white mt-0.5">6 Data Domains</h4>
+            <h4 className="text-2xl font-extrabold text-white mt-0.5">9 Data Domains</h4>
             <span className="text-[11px] text-indigo-400 font-semibold mt-0.5">
-              Oracle · Spanner · BigQuery · Alloy
+              Oracle · Spanner · BQ · Alloy · NetSuite · WH
             </span>
           </div>
         </div>
@@ -200,7 +209,7 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Correlation Keys</p>
             <h4 className="text-2xl font-extrabold text-amber-400 mt-0.5">5 Active Keys</h4>
             <span className="text-[11px] text-slate-400 font-mono mt-0.5">
-              customer_id, supplier_id...
+              customer_id, supplier_id, order_id...
             </span>
           </div>
         </div>
@@ -245,12 +254,14 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400 font-medium">Domain Color Coding:</span>
-            <div className="flex items-center gap-2 text-[10px] font-bold">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold">
               <span className="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400">Oracle</span>
               <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">Spanner</span>
               <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400">BigQuery</span>
               <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400">AlloyDB</span>
               <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">NetSuite</span>
+              <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">Warehouse</span>
+              <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400">HR</span>
             </div>
           </div>
         </div>
@@ -330,8 +341,8 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
                   />
                 </div>
 
-                <div className="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
-                  {['ALL', 'Oracle', 'Spanner', 'BigQuery', 'AlloyDB'].map(domain => (
+                <div className="flex flex-wrap items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+                  {['ALL', 'Oracle', 'Spanner', 'BigQuery', 'AlloyDB', 'NetSuite', 'Warehouse', 'HR'].map(domain => (
                     <button
                       key={domain}
                       onClick={() => setActiveFilterDomain(domain)}
@@ -347,6 +358,44 @@ export const CrossDomainInventoryView = ({ onNavigate }: { onNavigate: (view: an
                 </div>
               </div>
             </div>
+
+            {/* Selected Entity Inspector Banner */}
+            {selectedEntity && (
+              <div className="px-6 py-3.5 bg-indigo-950/40 border-b border-indigo-500/20 flex flex-col md:flex-row md:items-center justify-between gap-3 animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse" />
+                  <div>
+                    <span className="text-xs font-bold text-white">
+                      Selected: <span className="font-mono text-indigo-300">{selectedEntity.label || selectedEntity.item || selectedEntity.id}</span>
+                    </span>
+                    <span className="text-[11px] text-slate-400 ml-2">
+                      ({selectedEntity.domain || 'Unified Mesh'} • {selectedEntity.sourceId || selectedEntity.source || 'Engine'})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onNavigate('governance', undefined, 'knowledge_catalog')}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-md"
+                  >
+                    <Database size={12} /> Inspect Catalog Aspects
+                  </button>
+                  <button
+                    onClick={() => onNavigate('query-analysis', `Analyze cross-domain lineage and inventory stock for entity ${selectedEntity.label || selectedEntity.item || selectedEntity.id}`)}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold transition-all flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <Bot size={12} className="text-primary" /> Run Graph RAG
+                  </button>
+                  <button
+                    onClick={() => setSelectedEntity(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Table View */}
             <div className="overflow-x-auto">

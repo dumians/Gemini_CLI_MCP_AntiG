@@ -1538,6 +1538,26 @@ app.get('/api/catalog/aspects', authMiddleware, (req, res) => {
     }
 });
 
+// 2.1 Get catalog entries with optional filters (query, domain, aspectTypeId)
+app.get('/api/catalog/entries', authMiddleware, (req, res) => {
+    try {
+        const { query, q, domain, aspectTypeId, aspectFilter, limit } = req.query;
+        let effectiveAspectFilter = aspectFilter || '';
+        if (aspectTypeId && aspectTypeId !== 'ALL') {
+            effectiveAspectFilter = `aspect:${aspectTypeId}`;
+        }
+        const results = knowledgeCatalogService.searchCatalog({
+            query: query || q || '',
+            aspectFilter: effectiveAspectFilter,
+            domain: domain === 'ALL' ? '' : domain,
+            limit: limit ? parseInt(limit, 10) : 100
+        });
+        res.json({ status: 'success', ...results });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 3. Get aspects for a specific entity
 app.get('/api/catalog/entries/:id/aspects', authMiddleware, (req, res) => {
     try {

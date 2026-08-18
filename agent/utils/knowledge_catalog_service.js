@@ -115,7 +115,7 @@ export class KnowledgeCatalogService {
         const domLower = (domain || '').toLowerCase().trim();
         const srcLower = (source || '').toLowerCase().trim();
 
-        // Parse aspect filter tokens (e.g., "aspect:governance.classification=Restricted")
+        // Parse aspect filter tokens (e.g., "aspect:governance.classification=Restricted" or "aspect:governance")
         const aspectFilters = [];
         if (aspectFilter) {
             const tokens = aspectFilter.split(/\s+/);
@@ -126,6 +126,8 @@ export class KnowledgeCatalogService {
                     if (path && val) {
                         const [aspectName, fieldName] = path.split('.');
                         aspectFilters.push({ aspectName, fieldName, value: val.toLowerCase() });
+                    } else if (path) {
+                        aspectFilters.push({ aspectName: path, fieldName: null, value: null });
                     }
                 } else if (token.startsWith('tag:pii=')) {
                     const isPii = token.split('=')[1] === 'true';
@@ -153,20 +155,22 @@ export class KnowledgeCatalogService {
                     passesAspects = false;
                     break;
                 }
-                const actualVal = targetAspect[filter.fieldName];
-                if (actualVal === undefined || actualVal === null) {
-                    passesAspects = false;
-                    break;
-                }
-                if (typeof actualVal === 'boolean') {
-                    if (actualVal !== filter.value) {
+                if (filter.fieldName) {
+                    const actualVal = targetAspect[filter.fieldName];
+                    if (actualVal === undefined || actualVal === null) {
                         passesAspects = false;
                         break;
                     }
-                } else if (typeof actualVal === 'string') {
-                    if (!actualVal.toLowerCase().includes(filter.value)) {
-                        passesAspects = false;
-                        break;
+                    if (typeof actualVal === 'boolean') {
+                        if (actualVal !== filter.value) {
+                            passesAspects = false;
+                            break;
+                        }
+                    } else if (typeof actualVal === 'string') {
+                        if (!actualVal.toLowerCase().includes(filter.value)) {
+                            passesAspects = false;
+                            break;
+                        }
                     }
                 }
             }

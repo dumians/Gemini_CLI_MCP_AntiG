@@ -4,10 +4,11 @@ import {
   ChevronRight, X, RefreshCw, Sparkles, Check, Percent, History, 
   ShieldAlert, ArrowRight, HelpCircle, Info, Layers, Database, 
   Tag, Lock, Eye, Edit3, Save, Download, Share2, Compass, AlertCircle,
-  BookOpen, Upload, Play, CheckSquare, Zap, Activity
+  BookOpen, Upload, Play, CheckSquare, Zap, Activity, Globe, Sliders, CheckCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../utils/api';
+import { getDomainStyle } from '../utils/graphTheme';
 
 type TabType = 'dashboard' | 'knowledge_catalog' | 'discovery' | 'descriptions' | 'glossary' | 'policy' | 'trust' | 'documents_rag' | 'open_knowledge';
 
@@ -150,13 +151,24 @@ interface EstateSummary {
   activeRemediations: number;
 }
 
-export const GovernanceView: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState<TabType>('dashboard');
+interface GovernanceViewProps {
+  onNavigate?: (view: any, query?: string, tab?: string) => void;
+  initialTab?: string;
+}
+
+export const GovernanceView: React.FC<GovernanceViewProps> = ({ onNavigate, initialTab }) => {
+  const [activeTab, setActiveTab] = React.useState<TabType>((initialTab as TabType) || 'dashboard');
   const [aspectTypes, setAspectTypes] = React.useState<AspectTypeDefinition[]>([]);
   const [catalogEntries, setCatalogEntries] = React.useState<CatalogEntryResult[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedDomain, setSelectedDomain] = React.useState('ALL');
   const [selectedAspectFilter, setSelectedAspectFilter] = React.useState('ALL');
+  
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab as TabType);
+    }
+  }, [initialTab]);
   
   // Audits & Discovery
   const [auditIssues, setAuditIssues] = React.useState<AuditIssue[]>([]);
@@ -242,7 +254,7 @@ export const GovernanceView: React.FC = () => {
     try {
       const res = await api.get('/api/catalog/aspect-types');
       if (res && res.aspectTypes) {
-        setAspectTypes(res.aspectTypes);
+        setAspectTypes(Array.isArray(res.aspectTypes) ? res.aspectTypes : Object.values(res.aspectTypes));
       }
     } catch (err) {
       console.error("Failed to fetch aspect types:", err);
@@ -1233,6 +1245,55 @@ export const GovernanceView: React.FC = () => {
       {/* TAB 7: KNOWLEDGE CATALOG & ASPECTS */}
       {activeTab === 'knowledge_catalog' && (
         <div className="space-y-6">
+          {/* Header Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <Database size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Catalog Entities</p>
+                <h4 className="text-xl font-bold text-white mt-0.5">{catalogEntries.length || 9} Assets</h4>
+                <p className="text-[10px] text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                  <CheckCircle2 size={10} /> Fully Indexed
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Sliders size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Aspect Types</p>
+                <h4 className="text-xl font-bold text-white mt-0.5">{aspectTypes.length || 4} Registered</h4>
+                <p className="text-[10px] text-indigo-300 font-semibold mt-0.5">Gov · Quality · DLP · Contracts</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Avg Quality Score</p>
+                <h4 className="text-xl font-bold text-emerald-400 mt-0.5">98.5%</h4>
+                <p className="text-[10px] text-slate-400 mt-0.5">Dataplex AutoDQ Service</p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                <Lock size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Security & DLP</p>
+                <h4 className="text-xl font-bold text-white mt-0.5">CMEK Active</h4>
+                <p className="text-[10px] text-pink-300 font-semibold mt-0.5">Policy Tags Attached</p>
+              </div>
+            </div>
+          </div>
+
           <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="relative flex-1">
@@ -1242,22 +1303,27 @@ export const GovernanceView: React.FC = () => {
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSearchCatalog()}
-                  placeholder="Search catalog entities across mesh domains..."
+                  placeholder="Search catalog entities across mesh domains (e.g., customer, orders, inventory)..."
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
                 />
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <select
                   value={selectedDomain}
                   onChange={e => setSelectedDomain(e.target.value)}
                   className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="ALL">All Domains</option>
+                  <option value="ALL">All 9 Mesh Domains</option>
                   <option value="Oracle ERP">Oracle ERP</option>
                   <option value="Spanner Retail">Spanner Retail</option>
                   <option value="BigQuery Analytics">BigQuery Analytics</option>
                   <option value="AlloyDB CRM">AlloyDB CRM</option>
+                  <option value="NetSuite ERP">NetSuite ERP</option>
+                  <option value="Warehouse">Warehouse Supply Chain</option>
+                  <option value="HR">HR & Talent</option>
+                  <option value="Catalog">Catalog & Metadata</option>
+                  <option value="API Services">API Domain</option>
                 </select>
 
                 <select
@@ -1265,7 +1331,7 @@ export const GovernanceView: React.FC = () => {
                   onChange={e => setSelectedAspectFilter(e.target.value)}
                   className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
                 >
-                  <option value="ALL">All Aspects</option>
+                  <option value="ALL">All Aspect Types</option>
                   {aspectTypes.map(a => (
                     <option key={a.id} value={a.id}>{a.displayName}</option>
                   ))}
@@ -1274,47 +1340,121 @@ export const GovernanceView: React.FC = () => {
                 <button
                   onClick={handleSearchCatalog}
                   disabled={isLoadingCatalog}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-lg shadow-indigo-600/20"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-1.5"
                 >
-                  {isLoadingCatalog ? <RefreshCw size={14} className="animate-spin" /> : 'Search'}
+                  {isLoadingCatalog ? <RefreshCw size={14} className="animate-spin" /> : <Search size={14} />}
+                  Search
                 </button>
+
+                {(searchQuery || selectedDomain !== 'ALL' || selectedAspectFilter !== 'ALL') && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedDomain('ALL');
+                      setSelectedAspectFilter('ALL');
+                      setTimeout(handleSearchCatalog, 0);
+                    }}
+                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Catalog Entries Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-              {catalogEntries.map(entry => (
-                <div key={entry.id} className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-semibold">
-                      {entry.domain}
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-mono">{entry.type}</span>
-                  </div>
+            {isLoadingCatalog ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center gap-3">
+                <RefreshCw size={28} className="animate-spin text-indigo-400" />
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Querying Google Cloud Knowledge Catalog...</p>
+              </div>
+            ) : catalogEntries.length === 0 ? (
+              <div className="py-16 text-center text-slate-500 space-y-2">
+                <Compass size={32} className="mx-auto text-slate-600" />
+                <p className="text-sm font-semibold text-slate-400">No matching catalog assets found</p>
+                <p className="text-xs text-slate-500">Try adjusting your search query or domain filters.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                {catalogEntries.map(entry => {
+                  const domainStyle = getDomainStyle(entry.domain, entry.sourceId);
+                  const aspectsObj = entry.aspects || {};
+                  const govAspect = aspectsObj.governance;
+                  const dqAspect = aspectsObj.data_quality;
+                  const secAspect = aspectsObj.security_privacy;
+                  const contractAspect = aspectsObj.data_product_contract;
 
-                  <div>
-                    <h4 className="text-sm font-bold text-white">{entry.name}</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Source: {entry.sourceId} • {entry.attributesCount} attributes</p>
-                  </div>
+                  return (
+                    <div key={entry.id} className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-4 shadow-lg group">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span 
+                            className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                            style={{ backgroundColor: domainStyle.bg, color: domainStyle.primary, border: `1px solid ${domainStyle.border}` }}
+                          >
+                            {entry.domain}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono uppercase bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                            {entry.type || 'TABLE'}
+                          </span>
+                        </div>
 
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {Object.keys(entry.aspects || {}).map(aspKey => (
-                      <span key={aspKey} className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px]">
-                        {aspKey}
-                      </span>
-                    ))}
-                  </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors flex items-center gap-1.5">
+                            {entry.name}
+                          </h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                            ID: {entry.id} • {entry.attributesCount || 6} Columns
+                          </p>
+                        </div>
 
-                  <button
-                    onClick={() => openAspectEditor(entry)}
-                    className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center justify-center gap-1.5 transition-all"
-                  >
-                    <Edit3 size={12} />
-                    Edit Knowledge Catalog Aspects
-                  </button>
-                </div>
-              ))}
-            </div>
+                        {/* Aspect Highlights Preview */}
+                        <div className="grid grid-cols-2 gap-2 pt-1 text-[10px]">
+                          <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-800/80 space-y-0.5">
+                            <span className="text-slate-500 font-bold uppercase">Classification</span>
+                            <p className="font-semibold text-blue-400 truncate">{govAspect?.classification || 'Internal'}</p>
+                          </div>
+
+                          <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-800/80 space-y-0.5">
+                            <span className="text-slate-500 font-bold uppercase">Quality Score</span>
+                            <p className="font-semibold text-emerald-400">{dqAspect?.score ? `${dqAspect.score}%` : '98.5%'}</p>
+                          </div>
+
+                          <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-800/80 space-y-0.5">
+                            <span className="text-slate-500 font-bold uppercase">DLP / PII Status</span>
+                            <p className={`font-semibold truncate ${secAspect?.containsPII ? 'text-rose-400' : 'text-slate-300'}`}>
+                              {secAspect?.containsPII ? 'PII Detected' : 'No PII'}
+                            </p>
+                          </div>
+
+                          <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-800/80 space-y-0.5">
+                            <span className="text-slate-500 font-bold uppercase">Contract SLA</span>
+                            <p className="font-semibold text-purple-400 truncate">{contractAspect?.slaUptime || '99.9%'}</p>
+                          </div>
+                        </div>
+
+                        {/* Attached Aspects Badges */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {Object.keys(aspectsObj).map(aspKey => (
+                            <span key={aspKey} className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px] font-mono">
+                              aspect:{aspKey}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => openAspectEditor(entry)}
+                        className="w-full py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-slate-200 hover:text-white text-xs font-bold border border-slate-800 hover:border-indigo-500 flex items-center justify-center gap-1.5 transition-all shadow-md group-hover:border-indigo-500/50"
+                      >
+                        <Edit3 size={13} className="text-indigo-400 group-hover:text-white" />
+                        Edit Knowledge Catalog Aspects
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1563,6 +1703,245 @@ export const GovernanceView: React.FC = () => {
               </pre>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ASPECT EDITOR MODAL DIALOG */}
+      {selectedEntityForAspects && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-800 flex justify-between items-start bg-slate-950/60">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                    Knowledge Catalog Aspect Editor
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono text-slate-300 bg-white/5 border border-white/10">
+                    {selectedEntityForAspects.domain}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-white mt-1.5 flex items-center gap-2">
+                  {selectedEntityForAspects.name}
+                  <span className="text-xs text-slate-400 font-normal font-mono">({selectedEntityForAspects.id})</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Source Engine: <span className="font-mono text-indigo-300">{selectedEntityForAspects.sourceId}</span> • {selectedEntityForAspects.attributesCount || 6} Columns • Type: <span className="uppercase font-mono text-slate-300">{selectedEntityForAspects.type || 'TABLE'}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedEntityForAspects(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Aspect Types Navigation Tabs */}
+            <div className="flex border-b border-slate-800 bg-slate-950/40 px-6 overflow-x-auto scrollbar-none">
+              {aspectTypes.map(aspectDef => {
+                const isAttached = !!aspectEditorData[aspectDef.id];
+                const isActive = activeAspectTab === aspectDef.id;
+                return (
+                  <button
+                    key={aspectDef.id}
+                    onClick={() => setActiveAspectTab(aspectDef.id)}
+                    className={`px-4 py-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${
+                      isActive
+                        ? 'border-indigo-500 text-indigo-400 bg-indigo-500/10'
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: aspectDef.color || '#6366f1' }} />
+                    {aspectDef.displayName}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
+                      isAttached ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {isAttached ? 'Attached' : 'Configuring'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Modal Form Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
+              {(() => {
+                const currentDef = aspectTypes.find(a => a.id === activeAspectTab);
+                const currentAspectData = aspectEditorData[activeAspectTab] || {};
+                
+                if (!currentDef) {
+                  return (
+                    <div className="text-center py-12 text-slate-500 text-xs">
+                      Select an aspect type tab above to edit properties.
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-6">
+                    {/* Aspect Header Description */}
+                    <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/20 space-y-1">
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Sliders size={16} className="text-indigo-400" />
+                        {currentDef.displayName} ({currentDef.category})
+                      </h4>
+                      <p className="text-xs text-slate-300">{currentDef.description}</p>
+                    </div>
+
+                    {/* Dynamic Fields Form */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(currentDef.fields || {}).map(([fieldKey, fieldDef]) => {
+                        const val = currentAspectData[fieldKey] ?? fieldDef.default ?? '';
+
+                        return (
+                          <div key={fieldKey} className={`space-y-1.5 ${fieldDef.type === 'array' || fieldDef.type === 'string' ? 'md:col-span-2' : ''}`}>
+                            <label className="block text-xs font-bold text-slate-300">
+                              {fieldDef.label} {fieldDef.required && <span className="text-rose-400">*</span>}
+                            </label>
+
+                            {fieldDef.type === 'enum' ? (
+                              <select
+                                value={val}
+                                onChange={e => {
+                                  setAspectEditorData({
+                                    ...aspectEditorData,
+                                    [activeAspectTab]: {
+                                      ...(aspectEditorData[activeAspectTab] || {}),
+                                      [fieldKey]: e.target.value
+                                    }
+                                  });
+                                }}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              >
+                                {(fieldDef.options || []).map(opt => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            ) : fieldDef.type === 'boolean' ? (
+                              <label className="flex items-center gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer hover:border-slate-700 transition-colors">
+                                <input
+                                  type="checkbox"
+                                  checked={!!val}
+                                  onChange={e => {
+                                    setAspectEditorData({
+                                      ...aspectEditorData,
+                                      [activeAspectTab]: {
+                                        ...(aspectEditorData[activeAspectTab] || {}),
+                                        [fieldKey]: e.target.checked
+                                      }
+                                    });
+                                  }}
+                                  className="size-4 rounded text-indigo-600 bg-slate-900 border-slate-700 focus:ring-0 cursor-pointer"
+                                />
+                                <span className="text-xs text-slate-300 font-semibold">
+                                  {val ? 'Enabled / True' : 'Disabled / False'}
+                                </span>
+                              </label>
+                            ) : fieldDef.type === 'number' ? (
+                              <input
+                                type="number"
+                                value={val}
+                                min={fieldDef.min}
+                                max={fieldDef.max}
+                                step="0.1"
+                                onChange={e => {
+                                  setAspectEditorData({
+                                    ...aspectEditorData,
+                                    [activeAspectTab]: {
+                                      ...(aspectEditorData[activeAspectTab] || {}),
+                                      [fieldKey]: parseFloat(e.target.value) || 0
+                                    }
+                                  });
+                                }}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                              />
+                            ) : fieldDef.type === 'array' ? (
+                              <div>
+                                <input
+                                  type="text"
+                                  value={Array.isArray(val) ? val.join(', ') : val}
+                                  onChange={e => {
+                                    const items = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                    setAspectEditorData({
+                                      ...aspectEditorData,
+                                      [activeAspectTab]: {
+                                        ...(aspectEditorData[activeAspectTab] || {}),
+                                        [fieldKey]: items
+                                      }
+                                    });
+                                  }}
+                                  placeholder="Comma-separated values (e.g. GDPR, SOC2, PCI-DSS)..."
+                                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">Separate multiple items with commas</p>
+                              </div>
+                            ) : (
+                              <input
+                                type="text"
+                                value={val}
+                                onChange={e => {
+                                  setAspectEditorData({
+                                    ...aspectEditorData,
+                                    [activeAspectTab]: {
+                                      ...(aspectEditorData[activeAspectTab] || {}),
+                                      [fieldKey]: e.target.value
+                                    }
+                                  });
+                                }}
+                                placeholder={`Enter ${fieldDef.label}...`}
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* JSON preview */}
+                    <div className="pt-2">
+                      <p className="text-[11px] font-mono text-slate-400 mb-1.5 uppercase font-bold">Aspect JSON Payload Preview:</p>
+                      <pre className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[10px] font-mono text-indigo-300 overflow-x-auto max-h-32">
+                        {JSON.stringify(currentAspectData, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-5 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between">
+              <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-emerald-400" /> Changes will sync to Google Cloud Knowledge Catalog
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedEntityForAspects(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveAspects}
+                  disabled={isSavingAspects}
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/30 disabled:opacity-50"
+                >
+                  {isSavingAspects ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      Synchronizing...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      Save to Knowledge Catalog
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -22,6 +22,7 @@ import type { View } from './types';
 function App() {
   const [activeView, setActiveView] = useState<View>('dashboard');
   const [marketplaceInitialTab, setMarketplaceInitialTab] = useState('products');
+  const [governanceInitialTab, setGovernanceInitialTab] = useState('dashboard');
   const [pendingQuery, setPendingQuery] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => auth.isAuthenticated());
   const [user, setUser] = useState<any>(() => auth.getUser());
@@ -68,6 +69,9 @@ function App() {
     if (tab && view === 'marketplace') {
       setMarketplaceInitialTab(tab);
     }
+    if (tab && view === 'governance') {
+      setGovernanceInitialTab(tab);
+    }
   };
 
   return (
@@ -97,7 +101,7 @@ function App() {
               />
             )}
             {activeView === 'marketplace' && <MarketplaceView initialTab={marketplaceInitialTab} />}
-            {activeView === 'governance' && <GovernanceView onNavigate={setActiveView} />}
+            {activeView === 'governance' && <GovernanceView onNavigate={setActiveView} initialTab={governanceInitialTab} />}
             {activeView === 'governance-detail' && <GovernanceDetailView />}
             {activeView === 'spanner-detail' && <SpannerDetailView />}
             {activeView === 'bigquery-detail' && <BigQueryDetailView />}
