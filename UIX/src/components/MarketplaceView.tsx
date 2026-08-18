@@ -5,6 +5,7 @@ import { GraphView } from './GraphView';
 import { DataLineageGraph } from './DataLineageGraph';
 import { DatasetLineageView } from './DatasetLineageView';
 import { ContractsLineageGraph } from './ContractsLineageGraph';
+import { ErrorBoundary } from './ErrorBoundary';
 
 export const MarketplaceView = ({ initialTab = 'products' }: { initialTab?: string }) => {
   const [activeTab, setActiveTab] = React.useState(initialTab);
@@ -516,7 +517,9 @@ export const MarketplaceView = ({ initialTab = 'products' }: { initialTab?: stri
           <div className="lg:col-span-2 space-y-6">
             <div className="w-full">
               <h4 className="text-sm font-bold text-white mb-2">Contracts & Product Lineage Graph</h4>
-              <ContractsLineageGraph products={products} contracts={contracts} />
+              <ErrorBoundary name="Contracts Lineage Graph">
+                <ContractsLineageGraph products={products} contracts={contracts} />
+              </ErrorBoundary>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -681,7 +684,9 @@ export const MarketplaceView = ({ initialTab = 'products' }: { initialTab?: stri
 
       {activeTab === 'lineage' && (
         <div className="space-y-8">
-          <DataLineageGraph />
+          <ErrorBoundary name="Data Lineage Graph">
+            <DataLineageGraph />
+          </ErrorBoundary>
           <DatasetLineageView />
         </div>
       )}

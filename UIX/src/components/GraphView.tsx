@@ -145,9 +145,20 @@ export function GraphView({ data: initialData }: { data?: any }) {
     // Force simulation parameters
     useEffect(() => {
         if (!fgRef.current) return;
-        fgRef.current.d3Force('charge')?.strength(-220);
-        fgRef.current.d3Force('link')?.distance(85);
-        fgRef.current.d3VelocityDecay(0.35);
+        try {
+            if (typeof fgRef.current.d3Force === 'function') {
+                const charge = fgRef.current.d3Force('charge');
+                if (charge && typeof charge.strength === 'function') {
+                    charge.strength(-220);
+                }
+                const link = fgRef.current.d3Force('link');
+                if (link && typeof link.distance === 'function') {
+                    link.distance(85);
+                }
+            }
+        } catch (err) {
+            console.warn("GraphView force simulation warning:", err);
+        }
     }, [graphData]);
 
     const handleZoomIn = () => fgRef.current?.zoom(fgRef.current.zoom() * 1.3, 400);
@@ -297,6 +308,8 @@ export function GraphView({ data: initialData }: { data?: any }) {
                     height={dimensions.height}
                     nodeLabel="label"
                     nodeRelSize={6}
+                    d3VelocityDecay={0.35}
+                    d3AlphaDecay={0.02}
                     onNodeClick={handleNodeClick}
                     onNodeHover={(node: any) => setHoverNode(node || null)}
                     cooldownTicks={120}

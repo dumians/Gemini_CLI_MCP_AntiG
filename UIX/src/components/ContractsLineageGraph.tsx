@@ -162,9 +162,20 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
   // Force simulation tuning
   useEffect(() => {
     if (!fgRef.current) return;
-    fgRef.current.d3Force('charge')?.strength(-200);
-    fgRef.current.d3Force('link')?.distance(75);
-    fgRef.current.d3VelocityDecay(0.35);
+    try {
+      if (typeof fgRef.current.d3Force === 'function') {
+        const charge = fgRef.current.d3Force('charge');
+        if (charge && typeof charge.strength === 'function') {
+          charge.strength(-200);
+        }
+        const link = fgRef.current.d3Force('link');
+        if (link && typeof link.distance === 'function') {
+          link.distance(75);
+        }
+      }
+    } catch (err) {
+      console.warn("Contracts force simulation warning:", err);
+    }
   }, [graphData]);
 
   const handleZoomIn = () => fgRef.current?.zoom(fgRef.current.zoom() * 1.3, 400);
@@ -307,6 +318,8 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
           height={dimensions.height}
           nodeLabel="label"
           nodeRelSize={6}
+          d3VelocityDecay={0.35}
+          d3AlphaDecay={0.02}
           onNodeClick={handleNodeClick}
           onNodeHover={(node: any) => setHoverNode(node || null)}
           cooldownTicks={120}
