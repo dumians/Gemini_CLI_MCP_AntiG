@@ -1,6 +1,10 @@
 steps:
+# 0. Check gcloud version & toolchain environment
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['version']
+
 # 1. Create Artifact Registry if not exists
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+- name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
   - '-c'
@@ -48,7 +52,7 @@ steps:
   args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA']
 
 # 5. Deploy MCP Services to Cloud Run
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+- name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
   - '-c'
@@ -58,7 +62,7 @@ steps:
     gcloud run services replace deploy/mcp-services.yaml --region=europe-west1
 
 # 6. Deploy Orchestrator & WebApp to Cloud Run
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+- name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
   - '-c'
@@ -75,6 +79,11 @@ images:
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA'
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA'
 - 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA'
+
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_SERVICE_ACCOUNT_EMAIL}'
+
+substitutions:
+  _SERVICE_ACCOUNT_EMAIL: 'mesh-builder@${PROJECT_ID}.iam.gserviceaccount.com'
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,11 @@
+steps:
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['version']
+
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_SERVICE_ACCOUNT_EMAIL}'
+
+substitutions:
+  _SERVICE_ACCOUNT_EMAIL: 'mesh-builder@${PROJECT_ID}.iam.gserviceaccount.com'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
