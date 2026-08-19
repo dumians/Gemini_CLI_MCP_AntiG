@@ -9,47 +9,47 @@ steps:
   args:
   - '-c'
   - |
-    gcloud artifacts repositories describe mesh-repo --location=europe-west1 &>/dev/null || \
-    gcloud artifacts repositories create mesh-repo --repository-format=docker --location=europe-west1 --description="Agentic Data Mesh Docker repo"
+    gcloud artifacts repositories describe mesh-repo --location=europe-west3 &>/dev/null || \
+    gcloud artifacts repositories create mesh-repo --repository-format=docker --location=europe-west3 --description="Agentic Data Mesh Docker repo"
 
 # 2. Build & Push MCP Microservices
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/spanner-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/spanner-mcp/index.js']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA']
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/bigquery-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/bigquery-mcp/index.js']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA']
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/alloydb-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/alloydb-mcp/index.js']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA']
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/oracle-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/oracle-mcp/index.js']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA']
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA']
 
 # 2b. Build & Push GCP One-MCP Unified Service
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.one-mcp', '.']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.one-mcp', '.']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA']
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA']
 
 # 3. Build & Push Master Orchestrator
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA', '-f', 'deploy/Dockerfile.orchestrator', '.']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA', '-f', 'deploy/Dockerfile.orchestrator', '.']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA']
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA']
 
 # 4. Build & Push WebApp UIX
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.webapp', '.']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.webapp', '.']
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA']
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA']
 
 # 5. Deploy MCP Services to Cloud Run
 - name: 'gcr.io/cloud-builders/gcloud'
