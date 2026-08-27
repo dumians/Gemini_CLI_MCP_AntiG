@@ -5,5 +5,12 @@
     "term_id": "projects/governance-agent/locations/europe-west1/glossaries/retail-common-glossary/terms/customer-id",
     "term_display": "Customer Identifier",
     "timestamp": "2026-08-18T18:06:19.208Z"
+  },
+  {
+    "table": "campaign_metrics",
+    "column": "spend",
+    "term_id": "projects/governance-agent/locations/europe-west1/glossaries/retail-common-glossary/terms/order-amount",
+    "term_display": "Order Grand Total",
+    "timestamp": "2026-08-27T22:20:49.316Z"
   }
 ]

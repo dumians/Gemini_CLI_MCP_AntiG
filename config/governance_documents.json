@@ -1,5 +1,54 @@
 [
   {
+    "id": "doc-1787869239740-cpim5",
+    "title": "Test Financial Governance Spec",
+    "fileName": "financial_governance_spec.md",
+    "fileType": "markdown",
+    "uploadedAt": "2026-08-27T22:20:39.740Z",
+    "extractedMetadata": {
+      "documentTitle": "Data Governance for Invoices Table",
+      "summary": "Details data governance for the invoices table, including column definitions, data types, policy tags, and remediation logic.",
+      "tables": [
+        {
+          "tableName": "invoices",
+          "domain": "Oracle ERP",
+          "description": "Master customer billing invoices ledger.",
+          "columns": [
+            {
+              "name": "invoice_id",
+              "dataType": "STRING",
+              "description": "Unique financial invoice document identifier.",
+              "suggestedGlossaryTerm": "Invoice Identifier",
+              "policyTag": "Confidential",
+              "remediationLogic": "DISTINCT deduplication"
+            },
+            {
+              "name": "gross_total",
+              "dataType": "FLOAT",
+              "description": "Total invoice amount before sales tax.",
+              "suggestedGlossaryTerm": "Gross Revenue",
+              "policyTag": "Financial",
+              "remediationLogic": "ROUND(gross_total, 2)"
+            }
+          ]
+        }
+      ],
+      "glossaryTerms": [
+        {
+          "term": "Invoice Identifier",
+          "definition": "Unique financial invoice document identifier.",
+          "category": "Financial"
+        },
+        {
+          "term": "Gross Revenue",
+          "definition": "Total invoice amount before sales tax.",
+          "category": "Financial"
+        }
+      ],
+      "policyRules": []
+    }
+  },
+  {
     "id": "doc-1787082945249-3fi6a",
     "title": "Test Financial Governance Spec",
     "fileName": "financial_governance_spec.md",

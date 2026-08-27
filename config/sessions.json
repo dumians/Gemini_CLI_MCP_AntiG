@@ -1038,5 +1038,44 @@
         "timestamp": "2026-08-18T21:38:04.659Z"
       }
     ]
+  },
+  {
+    "id": "simulated-session-1787869234909",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787869234909",
+    "userId": "admin",
+    "createdAt": "2026-08-27T22:20:34.910Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Show me a summary of HR recruitment delays and retail impact.",
+        "timestamp": "2026-08-27T22:20:34.910Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787869235082",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787869235082",
+    "userId": "admin",
+    "createdAt": "2026-08-27T22:20:35.088Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Synthesize cross-domain inventory and identify data lineage across the following data sources: Oracle ERP, Spanner Retail, BigQuery Analytics, AlloyDB CRM, Oracle HR, Metadata Catalog, API Driven Source, Warehouse Supply Chain, NetSuite ERP, GCP One MCP Unified Gateway. Use Graph RAG to link relationships.",
+        "timestamp": "2026-08-27T22:20:35.089Z"
+      }
+    ]
+  },
+  {
+    "id": "simulated-session-1787869237097",
+    "sessionPath": "projects/total-vertex-469513-r8/locations/europe-west1/reasoningEngines/default-engine/sessions/simulated-session-1787869237097",
+    "userId": "test_user_999",
+    "createdAt": "2026-08-27T22:20:37.097Z",
+    "messages": [
+      {
+        "role": "USER",
+        "text": "Hello Memory Bank",
+        "timestamp": "2026-08-27T22:20:37.099Z"
+      }
+    ]
   }
 ]

@@ -72,20 +72,20 @@ steps:
     gcloud run services replace deploy/cloudrun.yaml --region=europe-west1
 
 images:
-- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA'
-- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA'
-- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA'
-- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA'
-- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA'
-- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA'
-- 'europe-west1-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA'
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA'
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA'
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA'
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA'
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/gcp-one-mcp:$COMMIT_SHA'
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-orchestrator:$COMMIT_SHA'
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/mesh-webapp:$COMMIT_SHA'
 
 serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_SERVICE_ACCOUNT_EMAIL}'
 
 substitutions:
   _SERVICE_ACCOUNT_EMAIL: '207265762145-compute@developer.gserviceaccount.com'
 
-
 options:
-   logging: CLOUD_LOGGING_ONLY
+  logging: CLOUD_LOGGING_ONLY
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
   substitutionOption: ALLOW_LOOSE
