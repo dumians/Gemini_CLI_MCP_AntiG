@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build artifacts
+dist
+**/dist
+build
+**/build
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Git and logs
+.git
+.gitignore
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+.venv
+**/__pycache__
