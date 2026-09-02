@@ -4,11 +4,10 @@ metadata:
   name: mesh-orchestrator
   labels:
     cloud.googleapis.com/location: europe-west1
+  annotations:
+    run.googleapis.com/ingress: all
 spec:
   template:
-    metadata:
-      annotations:
-        run.googleapis.com/ingress: all
     spec:
       containers:
       - image: europe-west3-docker.pkg.dev/PROJECT_ID/mesh-repo/mesh-orchestrator:latest
@@ -39,11 +38,10 @@ metadata:
   name: mesh-webapp
   labels:
     cloud.googleapis.com/location: europe-west1
+  annotations:
+    run.googleapis.com/ingress: all
 spec:
   template:
-    metadata:
-      annotations:
-        run.googleapis.com/ingress: all
     spec:
       containers:
       - image: europe-west3-docker.pkg.dev/PROJECT_ID/mesh-repo/mesh-webapp:latest
