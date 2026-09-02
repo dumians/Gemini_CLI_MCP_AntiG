@@ -147,13 +147,15 @@ export { server };
 const SSE_TRANSPORT_PATH = "/sse";
 
 async function run() {
-    let mode = "stdio";
-    let port = process.env.PORT || 8088;
+    let mode = process.env.MCP_TRANSPORT === "sse" ? "sse" : "stdio";
+    let port = parseInt(process.env.PORT, 10) || 8088;
 
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--transport" && process.argv[i+1] === "sse") {
             mode = "sse";
             i++;
+        } else if (process.argv[i] === "--sse") {
+            mode = "sse";
         } else if (process.argv[i] === "--port" && process.argv[i+1]) {
             port = parseInt(process.argv[i+1], 10);
             i++;
@@ -173,6 +175,9 @@ async function run() {
             const app = express();
             let transport;
 
+            app.get("/", (req, res) => res.json({ status: "ok", service: "netsuite-mcp" }));
+            app.get("/health", (req, res) => res.json({ status: "ok" }));
+
             app.get(SSE_TRANSPORT_PATH, async (req, res) => {
                 transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
                 await server.connect(transport);
@@ -184,7 +189,7 @@ async function run() {
                 }
             });
         
-            app.listen(port, () => {
+            app.listen(port, "0.0.0.0", () => {
                 console.error(`NetSuite MCP Server running on port ${port} (SSE)`);
             });
         }

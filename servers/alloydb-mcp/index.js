@@ -207,8 +207,8 @@ export { server };
 
 async function run() {
     // Support both STDIO (local) and SSE (hosted)
-    let mode = "stdio";
-    let port = process.env.PORT || 8084;
+    let mode = process.env.MCP_TRANSPORT === "sse" ? "sse" : "stdio";
+    let port = parseInt(process.env.PORT, 10) || 8084;
 
     for (let i = 2; i < process.argv.length; i++) {
         if (process.argv[i] === "--transport" && process.argv[i+1] === "sse") {
@@ -238,6 +238,9 @@ async function run() {
             const app = express();
             let transport;
 
+            app.get("/", (req, res) => res.json({ status: "ok", service: "alloydb-mcp" }));
+            app.get("/health", (req, res) => res.json({ status: "ok" }));
+
             app.get(SSE_TRANSPORT_PATH, async (req, res) => {
                 transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
                 await server.connect(transport);
@@ -249,7 +252,7 @@ async function run() {
                 }
             });
         
-            app.listen(port, () => {
+            app.listen(port, "0.0.0.0", () => {
                 console.error(`AlloyDB MCP Server running on port ${port} (SSE)`);
             });
         }

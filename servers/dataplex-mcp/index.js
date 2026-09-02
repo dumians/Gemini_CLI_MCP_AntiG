@@ -326,6 +326,9 @@ async function run() {
         const app = express();
         let transport;
 
+        app.get("/", (req, res) => res.json({ status: "ok", service: "dataplex-mcp" }));
+        app.get("/health", (req, res) => res.json({ status: "ok" }));
+
         app.get(SSE_TRANSPORT_PATH, async (req, res) => {
             transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
             await server.connect(transport);
@@ -337,7 +340,7 @@ async function run() {
             }
         });
 
-        app.listen(port, () => {
+        app.listen(port, "0.0.0.0", () => {
             console.error(`Dataplex MCP Server running on port ${port} (SSE)`);
         });
     }

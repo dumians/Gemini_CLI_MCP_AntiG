@@ -17,8 +17,9 @@ COPY agent/utils/ ./agent/utils/
 EXPOSE 8080
 
 # Use an environment variable to determine which server to run.
-# Example: MCP_SERVICE=bigquery-mcp
-ENV MCP_SERVICE=oracle-mcp
+ARG MCP_SERVICE=oracle-mcp
+ENV MCP_SERVICE=${MCP_SERVICE}
+ENV MCP_TRANSPORT=sse
 
 # Start the selected MCP server in SSE mode on the Cloud Run port
-CMD node servers/${MCP_SERVICE}/index.js --sse --port 8080
+CMD ["sh", "-c", "node servers/${MCP_SERVICE}/index.js --transport sse --port ${PORT:-8080}"]

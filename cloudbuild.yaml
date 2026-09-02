@@ -14,22 +14,22 @@ steps:
 
 # 2. Build & Push MCP Microservices
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/spanner-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'MCP_SERVICE=spanner-mcp']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/bigquery-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'MCP_SERVICE=bigquery-mcp']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/bigquery-mcp:$COMMIT_SHA']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/alloydb-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'MCP_SERVICE=alloydb-mcp']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/alloydb-mcp:$COMMIT_SHA']
 
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'SERVER_PATH=servers/oracle-mcp/index.js']
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA', '-f', 'deploy/Dockerfile.mcp', '.', '--build-arg', 'MCP_SERVICE=oracle-mcp']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/oracle-mcp:$COMMIT_SHA']
 
@@ -74,6 +74,17 @@ steps:
   - |
     sed -i "s/PROJECT_ID/$PROJECT_ID/g" deploy/cloudrun.yaml
     sed -i "s/:latest/:$COMMIT_SHA/g" deploy/cloudrun.yaml
+
+    SPANNER_URL=$(gcloud run services describe retail-spanner-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    BIGQUERY_URL=$(gcloud run services describe analytics-bigquery-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    ALLOYDB_URL=$(gcloud run services describe crm-alloydb-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    ORACLE_URL=$(gcloud run services describe hr-oracle-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+
+    [ -n "$SPANNER_URL" ] && sed -i "s|https://retail-spanner-mcp-XYZ-ew.a.run.app|$SPANNER_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$BIGQUERY_URL" ] && sed -i "s|https://analytics-bigquery-mcp-XYZ-ew.a.run.app|$BIGQUERY_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$ALLOYDB_URL" ] && sed -i "s|https://crm-alloydb-mcp-XYZ-ew.a.run.app|$ALLOYDB_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$ORACLE_URL" ] && sed -i "s|https://hr-oracle-mcp-XYZ-ew.a.run.app|$ORACLE_URL/sse|g" deploy/cloudrun.yaml
+
     mkdir -p /tmp/cloudrun-services
     awk '/^---/{i++; next} {print > ("/tmp/cloudrun-services/app_" i ".yaml")}' i=1 deploy/cloudrun.yaml
     for f in /tmp/cloudrun-services/app_*.yaml; do
