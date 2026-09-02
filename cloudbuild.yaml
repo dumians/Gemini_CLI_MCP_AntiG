@@ -62,8 +62,8 @@ steps:
     mkdir -p /tmp/mcp-services
     awk '/^---/{i++; next} {print > ("/tmp/mcp-services/svc_" i ".yaml")}' i=1 deploy/mcp-services.yaml
     for f in /tmp/mcp-services/svc_*.yaml; do
-      echo "Deploying $f to Cloud Run..."
-      gcloud run services replace "$f" --region=europe-west1
+      echo "Deploying $$f to Cloud Run..."
+      gcloud run services replace "$$f" --region=europe-west1
     done
 
 # 6. Deploy Orchestrator & WebApp to Cloud Run
@@ -75,21 +75,21 @@ steps:
     sed -i "s/PROJECT_ID/$PROJECT_ID/g" deploy/cloudrun.yaml
     sed -i "s/:latest/:$COMMIT_SHA/g" deploy/cloudrun.yaml
 
-    SPANNER_URL=$(gcloud run services describe retail-spanner-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
-    BIGQUERY_URL=$(gcloud run services describe analytics-bigquery-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
-    ALLOYDB_URL=$(gcloud run services describe crm-alloydb-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
-    ORACLE_URL=$(gcloud run services describe hr-oracle-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    SPANNER_URL=$$(gcloud run services describe retail-spanner-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    BIGQUERY_URL=$$(gcloud run services describe analytics-bigquery-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    ALLOYDB_URL=$$(gcloud run services describe crm-alloydb-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    ORACLE_URL=$$(gcloud run services describe hr-oracle-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
 
-    [ -n "$SPANNER_URL" ] && sed -i "s|https://retail-spanner-mcp-XYZ-ew.a.run.app|$SPANNER_URL/sse|g" deploy/cloudrun.yaml
-    [ -n "$BIGQUERY_URL" ] && sed -i "s|https://analytics-bigquery-mcp-XYZ-ew.a.run.app|$BIGQUERY_URL/sse|g" deploy/cloudrun.yaml
-    [ -n "$ALLOYDB_URL" ] && sed -i "s|https://crm-alloydb-mcp-XYZ-ew.a.run.app|$ALLOYDB_URL/sse|g" deploy/cloudrun.yaml
-    [ -n "$ORACLE_URL" ] && sed -i "s|https://hr-oracle-mcp-XYZ-ew.a.run.app|$ORACLE_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$$SPANNER_URL" ] && sed -i "s|https://retail-spanner-mcp-XYZ-ew.a.run.app|$$SPANNER_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$$BIGQUERY_URL" ] && sed -i "s|https://analytics-bigquery-mcp-XYZ-ew.a.run.app|$$BIGQUERY_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$$ALLOYDB_URL" ] && sed -i "s|https://crm-alloydb-mcp-XYZ-ew.a.run.app|$$ALLOYDB_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$$ORACLE_URL" ] && sed -i "s|https://hr-oracle-mcp-XYZ-ew.a.run.app|$$ORACLE_URL/sse|g" deploy/cloudrun.yaml
 
     mkdir -p /tmp/cloudrun-services
     awk '/^---/{i++; next} {print > ("/tmp/cloudrun-services/app_" i ".yaml")}' i=1 deploy/cloudrun.yaml
     for f in /tmp/cloudrun-services/app_*.yaml; do
-      echo "Deploying $f to Cloud Run..."
-      gcloud run services replace "$f" --region=europe-west1
+      echo "Deploying $$f to Cloud Run..."
+      gcloud run services replace "$$f" --region=europe-west1
     done
 
 images:
