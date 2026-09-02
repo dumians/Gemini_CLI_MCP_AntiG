@@ -59,7 +59,12 @@ steps:
   - |
     sed -i "s/PROJECT_ID/$PROJECT_ID/g" deploy/mcp-services.yaml
     sed -i "s/:latest/:$COMMIT_SHA/g" deploy/mcp-services.yaml
-    gcloud run services replace deploy/mcp-services.yaml --region=europe-west1
+    mkdir -p /tmp/mcp-services
+    awk '/^---/{i++; next} {print > ("/tmp/mcp-services/svc_" i ".yaml")}' i=1 deploy/mcp-services.yaml
+    for f in /tmp/mcp-services/svc_*.yaml; do
+      echo "Deploying $f to Cloud Run..."
+      gcloud run services replace "$f" --region=europe-west1
+    done
 
 # 6. Deploy Orchestrator & WebApp to Cloud Run
 - name: 'gcr.io/cloud-builders/gcloud'
@@ -69,7 +74,12 @@ steps:
   - |
     sed -i "s/PROJECT_ID/$PROJECT_ID/g" deploy/cloudrun.yaml
     sed -i "s/:latest/:$COMMIT_SHA/g" deploy/cloudrun.yaml
-    gcloud run services replace deploy/cloudrun.yaml --region=europe-west1
+    mkdir -p /tmp/cloudrun-services
+    awk '/^---/{i++; next} {print > ("/tmp/cloudrun-services/app_" i ".yaml")}' i=1 deploy/cloudrun.yaml
+    for f in /tmp/cloudrun-services/app_*.yaml; do
+      echo "Deploying $f to Cloud Run..."
+      gcloud run services replace "$f" --region=europe-west1
+    done
 
 images:
 - 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA'

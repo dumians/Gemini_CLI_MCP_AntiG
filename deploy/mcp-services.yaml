@@ -13,7 +13,7 @@ spec:
         run.googleapis.com/sessionAffinity: "true"
     spec:
       containers:
-      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/spanner-mcp:latest
+      - image: europe-west3-docker.pkg.dev/PROJECT_ID/mesh-repo/spanner-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "spanner-mcp"
@@ -39,7 +39,7 @@ spec:
         run.googleapis.com/sessionAffinity: "true"
     spec:
       containers:
-      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/bigquery-mcp:latest
+      - image: europe-west3-docker.pkg.dev/PROJECT_ID/mesh-repo/bigquery-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "bigquery-mcp"
@@ -67,7 +67,7 @@ spec:
         run.googleapis.com/network-interfaces: '[{"network":"default","subnetwork":"default"}]'
     spec:
       containers:
-      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/alloydb-mcp:latest
+      - image: europe-west3-docker.pkg.dev/PROJECT_ID/mesh-repo/alloydb-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "alloydb-mcp"
@@ -106,7 +106,7 @@ spec:
         run.googleapis.com/network-interfaces: '[{"network":"default","subnetwork":"default"}]'
     spec:
       containers:
-      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/oracle-mcp:latest
+      - image: europe-west3-docker.pkg.dev/PROJECT_ID/mesh-repo/oracle-mcp:latest
         env:
         - name: MCP_SERVICE
           value: "oracle-mcp"
@@ -139,7 +139,7 @@ spec:
         run.googleapis.com/network-interfaces: '[{"network":"default","subnetwork":"default"}]'
     spec:
       containers:
-      - image: europe-west1-docker.pkg.dev/PROJECT_ID/mesh-repo/gcp-one-mcp:latest
+      - image: europe-west3-docker.pkg.dev/PROJECT_ID/mesh-repo/gcp-one-mcp:latest
         env:
         - name: GCP_PROJECT_ID
           value: "PROJECT_ID"
