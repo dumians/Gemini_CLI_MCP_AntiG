@@ -66,6 +66,12 @@ steps:
       gcloud run services replace "$$f" --region=europe-west1
     done
 
+    # Allow ingress invocation from orchestrator
+    for svc in retail-spanner-mcp analytics-bigquery-mcp crm-alloydb-mcp hr-oracle-mcp gcp-one-mcp; do
+      echo "Configuring invoker permissions on $$svc..."
+      gcloud run services add-iam-policy-binding "$$svc" --region=europe-west1 --member="allUsers" --role="roles/run.invoker" || true
+    done
+
 # 6. Deploy Orchestrator & WebApp to Cloud Run
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
@@ -75,22 +81,50 @@ steps:
     sed -i "s/PROJECT_ID/$PROJECT_ID/g" deploy/cloudrun.yaml
     sed -i "s/:latest/:$COMMIT_SHA/g" deploy/cloudrun.yaml
 
+    # Dynamically inject deployed MCP service URLs into orchestrator
     SPANNER_URL=$$(gcloud run services describe retail-spanner-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
     BIGQUERY_URL=$$(gcloud run services describe analytics-bigquery-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
     ALLOYDB_URL=$$(gcloud run services describe crm-alloydb-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
     ORACLE_URL=$$(gcloud run services describe hr-oracle-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    ONE_MCP_URL=$$(gcloud run services describe gcp-one-mcp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
 
     [ -n "$$SPANNER_URL" ] && sed -i "s|https://retail-spanner-mcp-XYZ-ew.a.run.app|$$SPANNER_URL/sse|g" deploy/cloudrun.yaml
     [ -n "$$BIGQUERY_URL" ] && sed -i "s|https://analytics-bigquery-mcp-XYZ-ew.a.run.app|$$BIGQUERY_URL/sse|g" deploy/cloudrun.yaml
     [ -n "$$ALLOYDB_URL" ] && sed -i "s|https://crm-alloydb-mcp-XYZ-ew.a.run.app|$$ALLOYDB_URL/sse|g" deploy/cloudrun.yaml
     [ -n "$$ORACLE_URL" ] && sed -i "s|https://hr-oracle-mcp-XYZ-ew.a.run.app|$$ORACLE_URL/sse|g" deploy/cloudrun.yaml
+    [ -n "$$ONE_MCP_URL" ] && sed -i "s|https://gcp-one-mcp-XYZ-ew.a.run.app|$$ONE_MCP_URL/sse|g" deploy/cloudrun.yaml
 
     mkdir -p /tmp/cloudrun-services
     awk '/^---/{i++; next} {print > ("/tmp/cloudrun-services/app_" i ".yaml")}' i=1 deploy/cloudrun.yaml
-    for f in /tmp/cloudrun-services/app_*.yaml; do
-      echo "Deploying $$f to Cloud Run..."
-      gcloud run services replace "$$f" --region=europe-west1
-    done
+
+    # 6a. Deploy Orchestrator first
+    echo "Deploying mesh-orchestrator to Cloud Run..."
+    gcloud run services replace /tmp/cloudrun-services/app_1.yaml --region=europe-west1
+    gcloud run services add-iam-policy-binding mesh-orchestrator --region=europe-west1 --member="allUsers" --role="roles/run.invoker" || true
+
+    # 6b. Retrieve Orchestrator URL and inject into WebApp
+    ORCHESTRATOR_URL=$$(gcloud run services describe mesh-orchestrator --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    echo "Discovered Orchestrator URL: $$ORCHESTRATOR_URL"
+    if [ -n "$$ORCHESTRATOR_URL" ]; then
+      sed -i "s|https://mesh-orchestrator-XYZ-ew.a.run.app|$$ORCHESTRATOR_URL|g" /tmp/cloudrun-services/app_2.yaml
+    fi
+
+    # 6c. Deploy WebApp
+    echo "Deploying mesh-webapp to Cloud Run..."
+    gcloud run services replace /tmp/cloudrun-services/app_2.yaml --region=europe-west1
+    gcloud run services add-iam-policy-binding mesh-webapp --region=europe-west1 --member="allUsers" --role="roles/run.invoker" || true
+
+    WEBAPP_URL=$$(gcloud run services describe mesh-webapp --region=europe-west1 --format="value(status.url)" 2>/dev/null || echo "")
+    echo "================================================================="
+    echo "Agentic Mesh Deployment Successful!"
+    echo "UIX WebApp Endpoint:       $$WEBAPP_URL"
+    echo "Backend Orchestrator:      $$ORCHESTRATOR_URL"
+    echo "Retail Spanner MCP:        $$SPANNER_URL/sse"
+    echo "Analytics BigQuery MCP:    $$BIGQUERY_URL/sse"
+    echo "CRM AlloyDB MCP:           $$ALLOYDB_URL/sse"
+    echo "HR Oracle MCP:             $$ORACLE_URL/sse"
+    echo "Unified GCP One MCP:       $$ONE_MCP_URL/sse"
+    echo "================================================================="
 
 images:
 - 'europe-west3-docker.pkg.dev/$PROJECT_ID/mesh-repo/spanner-mcp:$COMMIT_SHA'

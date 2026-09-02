@@ -1,4 +1,22 @@
-const BASE_URL = 'http://localhost:3001';
+declare global {
+  interface Window {
+    __ENV__?: {
+      VITE_API_BASE_URL?: string;
+    };
+  }
+}
+
+const getBaseUrl = (): string => {
+  if (typeof window !== 'undefined' && window.__ENV__?.VITE_API_BASE_URL) {
+    return window.__ENV__.VITE_API_BASE_URL.replace(/\/+$/, '');
+  }
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return (import.meta.env.VITE_API_BASE_URL as string).replace(/\/+$/, '');
+  }
+  return import.meta.env.DEV ? 'http://localhost:3001' : '';
+};
+
+const BASE_URL = getBaseUrl();
 
 async function request(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('mesh_auth_token');
