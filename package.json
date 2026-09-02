@@ -14,11 +14,11 @@
         "test": "node --test tests/integration/*.test.js"
     },
     "dependencies": {
-        "@google-cloud/alloydb": "^3.0.0",
-        "@google-cloud/bigquery": "^9.0.2",
+        "@google-cloud/alloydb": "^3.1.0",
+        "@google-cloud/bigquery": "^9.0.3",
         "@google-cloud/dataplex": "^6.0.0",
         "@google-cloud/modelarmor": "^0.8.0",
-        "@google-cloud/spanner": "^8.10.0",
+        "@google-cloud/spanner": "^8.11.0",
         "@google/generative-ai": "^0.24.0",
         "@modelcontextprotocol/sdk": "^1.30.0",
         "dotenv": "^17.4.2",
