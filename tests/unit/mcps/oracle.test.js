@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert";
 
 process.env.NODE_ENV = "test";
+process.env.USE_REAL_CONNECTIONS = "false";
 process.env.ORACLE_USER = "test-user";
 process.env.ORACLE_PASSWORD = "test-password";
 process.env.ORACLE_CONNECT_STRING = "test-conn";

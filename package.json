@@ -11,7 +11,9 @@
         "start-spanner-mcp": "node servers/spanner-mcp/index.js",
         "start-bigquery-mcp": "node servers/bigquery-mcp/index.js",
         "setup-bq-governance": "node scripts/create_bq_governance_demo.js",
-        "test": "node --test tests/integration/*.test.js"
+        "test": "node --test tests/unit/mcps/*.test.js tests/integration/*.test.js",
+        "test:unit": "node --test tests/unit/mcps/*.test.js",
+        "test:integration": "node --test tests/integration/*.test.js"
     },
     "dependencies": {
         "@google-cloud/alloydb": "^3.1.0",

@@ -605,9 +605,20 @@ export class MetadataCatalog {
      */
     getSchemaForDomain(domain) {
         this.initialize();
-        const domainSources = Object.values(this.sources).filter(s =>
-            s.domain.toLowerCase() === domain.toLowerCase()
-        );
+        const dLow = (domain || '').toLowerCase();
+        const domainAliases = {
+            'retail': 'spanner retail',
+            'finance': 'oracle erp',
+            'erp': 'oracle erp',
+            'analytics': 'bigquery analytics',
+            'crm': 'alloydb crm',
+            'catalog': 'catalog'
+        };
+        const normalized = domainAliases[dLow] || dLow;
+        const domainSources = Object.values(this.sources).filter(s => {
+            const sLow = (s.domain || '').toLowerCase();
+            return sLow === normalized || sLow === dLow || sLow.includes(dLow);
+        });
         const sourceIds = domainSources.map(s => s.id);
         const entities = Object.values(this.entities).filter(e =>
             sourceIds.includes(e.sourceId)

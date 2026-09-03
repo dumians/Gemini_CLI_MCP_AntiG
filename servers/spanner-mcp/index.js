@@ -76,7 +76,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     const db = getDb();
-    const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
+    const isTest = process.env.NODE_ENV === 'test' || process.env.USE_REAL_CONNECTIONS !== 'true';
 
     if (!db || isTest) {
         // FALLBACK TO SIMULATION
@@ -222,7 +222,10 @@ async function run() {
     }
 }
 
-run().catch((error) => {
-    console.error("Error running server:", error);
-    process.exit(1);
-});
+const isMainModule = process.argv[1] && (process.argv[1].endsWith('spanner-mcp/index.js') || process.argv[1].endsWith('spanner-mcp'));
+if (isMainModule) {
+    run().catch((error) => {
+        console.error("Error running server:", error);
+        process.exit(1);
+    });
+}

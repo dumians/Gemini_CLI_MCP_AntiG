@@ -196,7 +196,10 @@ async function run() {
     }
 }
 
-run().catch((error) => {
-    console.error("Error running NetSuite server:", error);
-    process.exit(1);
-});
+const isMainModule = process.argv[1] && (process.argv[1].endsWith('netsuite-mcp/index.js') || process.argv[1].endsWith('netsuite-mcp'));
+if (isMainModule) {
+    run().catch((error) => {
+        console.error("Error running NetSuite server:", error);
+        process.exit(1);
+    });
+}

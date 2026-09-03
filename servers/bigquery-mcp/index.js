@@ -73,7 +73,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === "query_bigquery") {
         const query = args.query || args.sql || "";
-        const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
+        const isTest = process.env.NODE_ENV === 'test' || process.env.USE_REAL_CONNECTIONS !== 'true';
         if (!bigquery || isTest) {
             // FALLBACK TO SIMULATION
             try {
@@ -253,7 +253,10 @@ async function run() {
     }
 }
 
-run().catch((error) => {
-    console.error("Error running server:", error);
-    process.exit(1);
-});
+const isMainModule = process.argv[1] && (process.argv[1].endsWith('bigquery-mcp/index.js') || process.argv[1].endsWith('bigquery-mcp'));
+if (isMainModule) {
+    run().catch((error) => {
+        console.error("Error running server:", error);
+        process.exit(1);
+    });
+}

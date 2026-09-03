@@ -27,15 +27,8 @@ export class GovernanceMetadataPropagator {
     constructor() {
         this.projectId = projectId;
         this.location = process.env.DATAPLEX_ZONE_ID || 'europe-west3';
-        this.isSimulationMode = !projectId || process.env.NODE_ENV === 'test' || process.env.USE_REAL_CONNECTIONS !== 'true';
-        
-        if (this.isSimulationMode) {
-            logger.log('GovernancePropagator', 'Running in SIMULATION MODE (resilient fallback)', 'WARNING');
-        }
-
-        // Clients
-        this.bqClient = (!this.isSimulationMode) ? new BigQuery({ projectId }) : null;
-        this.dataplexClient = (!this.isSimulationMode) ? new dataplexv1.CatalogServiceClient() : null;
+        this._bqClient = null;
+        this._dataplexClient = null;
         this.ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'mock-key');
         
         // Paths for Simulation Mocking
@@ -45,6 +38,26 @@ export class GovernanceMetadataPropagator {
         this.dqHistoryPath = path.join(__dirname, '../../config/dq_history.json');
         this.glossaryLinksPath = path.join(__dirname, '../../config/glossary_links.json');
         this.scansPath = path.join(__dirname, '../../config/dataplex_scans.json');
+    }
+
+    get isSimulationMode() {
+        return !this.projectId || process.env.NODE_ENV === 'test' || process.env.USE_REAL_CONNECTIONS !== 'true';
+    }
+
+    get bqClient() {
+        if (this.isSimulationMode) return null;
+        if (!this._bqClient && this.projectId) {
+            this._bqClient = new BigQuery({ projectId: this.projectId });
+        }
+        return this._bqClient;
+    }
+
+    get dataplexClient() {
+        if (this.isSimulationMode) return null;
+        if (!this._dataplexClient && this.projectId) {
+            this._dataplexClient = new dataplexv1.CatalogServiceClient();
+        }
+        return this._dataplexClient;
     }
 
     /**

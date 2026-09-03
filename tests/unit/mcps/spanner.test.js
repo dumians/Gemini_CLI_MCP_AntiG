@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert";
 
 process.env.NODE_ENV = "test";
+process.env.USE_REAL_CONNECTIONS = "false";
 process.env.GCP_PROJECT_ID = "test-project";
 process.env.SPANNER_INSTANCE_ID = "test-instance";
 process.env.SPANNER_DATABASE_ID = "test-db";

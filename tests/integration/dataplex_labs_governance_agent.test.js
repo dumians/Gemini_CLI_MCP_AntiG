@@ -1,3 +1,6 @@
+process.env.NODE_ENV = 'test';
+process.env.USE_REAL_CONNECTIONS = 'false';
+
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
 import { governancePropagator } from '../../agent/utils/governance_metadata_propagator.js';
@@ -9,6 +12,8 @@ describe('Dataplex Labs Governance Agent Integration Tests', () => {
     let dataplexAgent;
 
     before(() => {
+        process.env.NODE_ENV = 'test';
+        process.env.USE_REAL_CONNECTIONS = 'false';
         metadataCatalog.initialize();
         dataplexAgent = new DataplexAgent();
     });

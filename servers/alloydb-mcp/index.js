@@ -92,7 +92,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === "query_alloydb_vector") {
         const query = args.query || args.sql || "";
-        const isTest = process.env.NODE_ENV === 'test' && process.env.USE_REAL_CONNECTIONS !== 'true';
+        const isTest = process.env.NODE_ENV === 'test' || process.env.USE_REAL_CONNECTIONS !== 'true';
         if (isTest || (!pool && !process.env.ALLOYDB_INSTANCE)) {
             try {
                 const csvPath = path.resolve(__dirname, '../../test-data/alloydb_tickets.csv');
@@ -259,7 +259,10 @@ async function run() {
     }
 }
 
-run().catch((error) => {
-    console.error("Error running server:", error);
-    process.exit(1);
-});
+const isMainModule = process.argv[1] && (process.argv[1].endsWith('alloydb-mcp/index.js') || process.argv[1].endsWith('alloydb-mcp'));
+if (isMainModule) {
+    run().catch((error) => {
+        console.error("Error running server:", error);
+        process.exit(1);
+    });
+}

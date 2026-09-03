@@ -128,7 +128,10 @@ async function run() {
     console.error("API MCP Server running in stdio mode");
 }
 
-run().catch((error) => {
-    console.error("Error running server:", error);
-    process.exit(1);
-});
+const isMainModule = process.argv[1] && (process.argv[1].endsWith('api-mcp/index.js') || process.argv[1].endsWith('api-mcp'));
+if (isMainModule) {
+    run().catch((error) => {
+        console.error("Error running server:", error);
+        process.exit(1);
+    });
+}

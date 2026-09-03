@@ -969,7 +969,10 @@ async function startServer() {
     }
 }
 
-startServer().catch(err => {
-    console.error("[GCP One-MCP] Fatal server error:", err);
-    process.exit(1);
-});
+const isMainModule = process.argv[1] && (process.argv[1].endsWith('one-mcp/index.js') || process.argv[1].endsWith('one-mcp'));
+if (isMainModule) {
+    startServer().catch(err => {
+        console.error("[GCP One-MCP] Fatal server error:", err);
+        process.exit(1);
+    });
+}

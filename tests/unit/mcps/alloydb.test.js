@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert";
 
 process.env.NODE_ENV = "test";
+process.env.USE_REAL_CONNECTIONS = "false";
 process.env.GCP_PROJECT_ID = "test-project";
 process.env.ALLOYDB_REGION = "test-region";
 process.env.ALLOYDB_CLUSTER = "test-cluster";
