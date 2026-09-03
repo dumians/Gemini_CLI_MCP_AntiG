@@ -5,8 +5,11 @@ import { logger } from "./logging_service.js";
 import dotenv from "dotenv";
 import { verifyAgentToken } from "./identity_service.js";
 import path from "path";
+import { GoogleAuth } from "google-auth-library";
 
 dotenv.config();
+
+const gAuth = new GoogleAuth();
 
 /**
  * Enterprise GCP One-MCP Gateway
@@ -92,7 +95,33 @@ class OneMCPGateway {
         }
 
         if (url && url.startsWith("http")) {
-            return new SSEClientTransport(new URL(url));
+            const urlObj = new URL(url);
+            const requestHeaders = {};
+            if (url.includes('run.app')) {
+                try {
+                    const client = await gAuth.getIdTokenClient(urlObj.origin);
+                    const gHeaders = await client.getRequestHeaders();
+                    if (gHeaders && gHeaders['Authorization']) {
+                        requestHeaders['Authorization'] = gHeaders['Authorization'];
+                    }
+                } catch (e) {
+                    try {
+                        const metaRes = await fetch(`http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${encodeURIComponent(urlObj.origin)}`, {
+                            headers: { 'Metadata-Flavor': 'Google' },
+                            signal: AbortSignal.timeout(1500)
+                        });
+                        if (metaRes.ok) {
+                            const token = await metaRes.text();
+                            requestHeaders['Authorization'] = `Bearer ${token.trim()}`;
+                        }
+                    } catch (_) {}
+                }
+            }
+            return new SSEClientTransport(urlObj, {
+                requestInit: {
+                    headers: requestHeaders
+                }
+            });
         } else {
             const rootDir = process.cwd().endsWith('server') ? path.resolve(process.cwd(), '..') : process.cwd();
             const absoluteArgs = (serverConfig.serverArgs || []).map(arg => {

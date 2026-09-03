@@ -22,7 +22,7 @@ async function request(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('mesh_auth_token');
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(token ? { 'Authorization': `Bearer ${token}`, 'X-Mesh-Token': token } : {}),
     ...options.headers,
   };
 
