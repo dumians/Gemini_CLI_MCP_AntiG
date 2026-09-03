@@ -1,7 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { createAuthenticatedMcpClient } from "./utils/mcp_client_helper.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { governanceAgent } from "./utils/governance_agent.js";
@@ -17,27 +15,6 @@ dotenv.config();
 const config = configService.getConfig("analytics_agent");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
-    console.log(`[AnalyticsAgent] Connecting to MCP: ${remoteUrl || serverArgs[0]}`);
-    try {
-        const transport = remoteUrl
-            ? new SSEClientTransport(new URL(remoteUrl))
-            : new StdioClientTransport({ command: serverCmd, args: serverArgs });
-
-        const client = new Client(
-            { name: `analytics-agent-mcp`, version: "1.0.0" },
-            { capabilities: {} }
-        );
-
-        await client.connect(transport);
-        console.log(`[AnalyticsAgent] Connected to: ${remoteUrl || serverArgs[0]}`);
-        return client;
-    } catch (error) {
-        console.error(`[AnalyticsAgent] MCP Connection Failed:`, error);
-        return null;
-    }
-}
-
 let bqClient = null;
 let alloydbClient = null;
 
@@ -45,7 +22,7 @@ async function getBqClient() {
     if (!bqClient) {
         const bqMcpUrl = process.env.BIGQUERY_MCP_URL;
         const serverPath = path.resolve(__dirname, '../servers/bigquery-mcp/index.js');
-        bqClient = await createMcpClient("node", [serverPath], bqMcpUrl);
+        bqClient = await createAuthenticatedMcpClient("analytics-agent-bq", "node", [serverPath], bqMcpUrl);
     }
     return bqClient;
 }
@@ -54,7 +31,7 @@ async function getAlloyDbClient() {
     if (!alloydbClient) {
         const alloydbMcpUrl = process.env.ALLOYDB_MCP_URL;
         const serverPath = path.resolve(__dirname, '../servers/alloydb-mcp/index.js');
-        alloydbClient = await createMcpClient("node", [serverPath], alloydbMcpUrl);
+        alloydbClient = await createAuthenticatedMcpClient("analytics-agent-alloydb", "node", [serverPath], alloydbMcpUrl);
     }
     return alloydbClient;
 }

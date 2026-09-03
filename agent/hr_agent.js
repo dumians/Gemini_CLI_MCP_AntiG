@@ -1,6 +1,4 @@
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { createAuthenticatedMcpClient } from "./utils/mcp_client_helper.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { configService } from "./utils/config_service.js";
 import { groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
@@ -13,26 +11,12 @@ dotenv.config();
 const config = configService.getConfig("hr_agent");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
-    const transport = remoteUrl
-        ? new SSEClientTransport(new URL(remoteUrl))
-        : new StdioClientTransport({ command: serverCmd, args: serverArgs });
-
-    const client = new Client(
-        { name: `hr-agent-mcp`, version: "1.0.0" },
-        { capabilities: {} }
-    );
-
-    await client.connect(transport);
-    return client;
-}
-
 let hrClient = null;
 
 async function getHrClient() {
     if (!hrClient) {
         const hrMcpUrl = process.env.HR_MCP_URL || process.env.ORACLE_MCP_URL;
-        hrClient = await createMcpClient("node", ["servers/oracle-mcp/index.js"], hrMcpUrl);
+        hrClient = await createAuthenticatedMcpClient("hr-agent-mcp", "node", ["servers/oracle-mcp/index.js"], hrMcpUrl);
     }
     return hrClient;
 }

@@ -1,8 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { createAuthenticatedMcpClient } from "./utils/mcp_client_helper.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import dotenv from "dotenv";
@@ -12,26 +10,12 @@ dotenv.config();
 const config = configService.getConfig("crm_agent");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
-    const transport = remoteUrl
-        ? new SSEClientTransport(new URL(remoteUrl))
-        : new StdioClientTransport({ command: serverCmd, args: serverArgs });
-
-    const client = new Client(
-        { name: `crm-agent-mcp`, version: "1.0.0" },
-        { capabilities: {} }
-    );
-
-    await client.connect(transport);
-    return client;
-}
-
 let alloyClient = null;
 
 async function getAlloyClient() {
     if (!alloyClient) {
         const alloyMcpUrl = process.env.ALLOYDB_MCP_URL;
-        alloyClient = await createMcpClient("node", ["servers/alloydb-mcp/index.js"], alloyMcpUrl);
+        alloyClient = await createAuthenticatedMcpClient("crm-agent-mcp", "node", ["servers/alloydb-mcp/index.js"], alloyMcpUrl);
     }
     return alloyClient;
 }

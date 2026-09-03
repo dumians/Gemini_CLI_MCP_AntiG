@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { verifyAgentToken } from "./identity_service.js";
 import path from "path";
 import { GoogleAuth } from "google-auth-library";
+import { resolveGcpIdToken } from "./mcp_client_helper.js";
 
 dotenv.config();
 
@@ -97,30 +98,9 @@ class OneMCPGateway {
         if (url && url.startsWith("http")) {
             const urlObj = new URL(url);
             const requestHeaders = {};
-            if (url.includes('run.app')) {
-                try {
-                    const metaRes = await fetch(`http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${encodeURIComponent(urlObj.origin)}`, {
-                        headers: { 'Metadata-Flavor': 'Google' },
-                        signal: AbortSignal.timeout(1500)
-                    });
-                    if (metaRes.ok) {
-                        const token = await metaRes.text();
-                        if (token && token.trim()) {
-                            requestHeaders['Authorization'] = `Bearer ${token.trim()}`;
-                        }
-                    }
-                } catch (_) {}
-
-                if (!requestHeaders['Authorization']) {
-                    try {
-                        const client = await gAuth.getIdTokenClient(urlObj.origin);
-                        const gHeaders = await client.getRequestHeaders();
-                        const authVal = gHeaders && (gHeaders['authorization'] || gHeaders['Authorization']);
-                        if (authVal) {
-                            requestHeaders['Authorization'] = authVal;
-                        }
-                    } catch (_) {}
-                }
+            const authHeader = await resolveGcpIdToken(url);
+            if (authHeader) {
+                requestHeaders['Authorization'] = authHeader;
             }
             return new SSEClientTransport(urlObj, {
                 requestInit: {

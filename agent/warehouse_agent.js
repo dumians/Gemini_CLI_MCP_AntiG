@@ -1,8 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { createAuthenticatedMcpClient } from "./utils/mcp_client_helper.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { memoryBankService } from "./utils/memory_bank_service.js";
@@ -12,26 +10,12 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
-    const transport = remoteUrl
-        ? new SSEClientTransport(new URL(remoteUrl))
-        : new StdioClientTransport({ command: serverCmd, args: serverArgs });
-
-    const client = new Client(
-        { name: `warehouse-agent-mcp`, version: "1.0.0" },
-        { capabilities: {} }
-    );
-
-    await client.connect(transport);
-    return client;
-}
-
 let warehouseClient = null;
 
 async function getWarehouseClient() {
     if (!warehouseClient) {
         const warehouseMcpUrl = process.env.WAREHOUSE_MCP_URL;
-        warehouseClient = await createMcpClient("node", ["servers/oracle-mcp/index.js"], warehouseMcpUrl);
+        warehouseClient = await createAuthenticatedMcpClient("warehouse-agent-mcp", "node", ["servers/oracle-mcp/index.js"], warehouseMcpUrl);
     }
     return warehouseClient;
 }

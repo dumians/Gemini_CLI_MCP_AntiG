@@ -1,9 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { handleAnalyticsRequest } from "./analytics_agent.js";
 import { groundGraphContext, groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { createAuthenticatedMcpClient } from "./utils/mcp_client_helper.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { memoryBankService } from "./utils/memory_bank_service.js";
@@ -20,27 +18,13 @@ dotenv.config();
 const config = configService.getConfig("retail_agent");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function createMcpClient(serverCmd, serverArgs, remoteUrl = null) {
-    const transport = remoteUrl
-        ? new SSEClientTransport(new URL(remoteUrl))
-        : new StdioClientTransport({ command: serverCmd, args: serverArgs });
-
-    const client = new Client(
-        { name: `retail-agent-mcp`, version: "1.0.0" },
-        { capabilities: {} }
-    );
-
-    await client.connect(transport);
-    return client;
-}
-
 let spannerClient = null;
 
 async function getSpannerClient() {
     if (!spannerClient) {
         const spannerMcpUrl = process.env.SPANNER_MCP_URL;
         const serverPath = path.resolve(__dirname, '../servers/spanner-mcp/index.js');
-        spannerClient = await createMcpClient("node", [serverPath], spannerMcpUrl);
+        spannerClient = await createAuthenticatedMcpClient("retail-agent-mcp", "node", [serverPath], spannerMcpUrl);
     }
     return spannerClient;
 }
