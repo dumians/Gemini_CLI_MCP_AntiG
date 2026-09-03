@@ -99,20 +99,25 @@ class OneMCPGateway {
             const requestHeaders = {};
             if (url.includes('run.app')) {
                 try {
-                    const client = await gAuth.getIdTokenClient(urlObj.origin);
-                    const gHeaders = await client.getRequestHeaders();
-                    if (gHeaders && gHeaders['Authorization']) {
-                        requestHeaders['Authorization'] = gHeaders['Authorization'];
-                    }
-                } catch (e) {
-                    try {
-                        const metaRes = await fetch(`http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${encodeURIComponent(urlObj.origin)}`, {
-                            headers: { 'Metadata-Flavor': 'Google' },
-                            signal: AbortSignal.timeout(1500)
-                        });
-                        if (metaRes.ok) {
-                            const token = await metaRes.text();
+                    const metaRes = await fetch(`http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${encodeURIComponent(urlObj.origin)}`, {
+                        headers: { 'Metadata-Flavor': 'Google' },
+                        signal: AbortSignal.timeout(1500)
+                    });
+                    if (metaRes.ok) {
+                        const token = await metaRes.text();
+                        if (token && token.trim()) {
                             requestHeaders['Authorization'] = `Bearer ${token.trim()}`;
+                        }
+                    }
+                } catch (_) {}
+
+                if (!requestHeaders['Authorization']) {
+                    try {
+                        const client = await gAuth.getIdTokenClient(urlObj.origin);
+                        const gHeaders = await client.getRequestHeaders();
+                        const authVal = gHeaders && (gHeaders['authorization'] || gHeaders['Authorization']);
+                        if (authVal) {
+                            requestHeaders['Authorization'] = authVal;
                         }
                     } catch (_) {}
                 }

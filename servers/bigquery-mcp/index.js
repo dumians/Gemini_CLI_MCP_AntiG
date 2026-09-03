@@ -26,19 +26,8 @@ const location = process.env.BIGQUERY_LOCATION; // e.g. 'US'
 // During testing, we keep this null to trigger simulation mode.
 const bigquery = (projectId && (process.env.NODE_ENV !== 'test' || process.env.USE_REAL_CONNECTIONS === 'true')) ? new BigQuery({ projectId }) : null;
 
-const server = new Server(
-    {
-        name: "bigquery-mcp",
-        version: "1.0.0",
-    },
-    {
-        capabilities: {
-            tools: {},
-        },
-    }
-);
-
-server.setRequestHandler(ListToolsRequestSchema, async () => {
+function registerHandlers(server) {
+    server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
             {
@@ -182,10 +171,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     throw new Error(`Tool not found: ${name}`);
 });
+}
 
+function createServer() {
+    const s = new Server(
+        {
+            name: "bigquery-mcp",
+            version: "1.0.0",
+        },
+        {
+            capabilities: {
+                tools: {},
+            },
+        }
+    );
+    registerHandlers(s);
+    return s;
+}
 
+const server = createServer();
 
-export { server };
+export { server, createServer };
 
 const SSE_TRANSPORT_PATH = "/sse";
 
@@ -216,7 +222,7 @@ async function run() {
             console.error("BigQuery MCP Server running in stdio mode");
         } else {
             const app = express();
-            let transport;
+            const transports = new Map();
 
             app.get("/", (req, res) => res.json({ status: "ok", service: "bigquery-mcp" }));
             app.get("/health", (req, res) => res.json({ status: "ok" }));
@@ -236,13 +242,25 @@ async function run() {
             });
 
             app.get(SSE_TRANSPORT_PATH, async (req, res) => {
-                transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
-                await server.connect(transport);
+                const transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
+                const sessionServer = createServer();
+                transports.set(transport.sessionId, transport);
+
+                req.on("close", () => {
+                    transports.delete(transport.sessionId);
+                    sessionServer.close().catch(() => {});
+                });
+
+                await sessionServer.connect(transport);
             });
 
             app.post(SSE_TRANSPORT_PATH, async (req, res) => {
+                const sessionId = req.query.sessionId;
+                const transport = sessionId ? transports.get(sessionId) : transports.values().next().value;
                 if (transport) {
                     await transport.handlePostMessage(req, res);
+                } else {
+                    res.status(404).json({ error: "Session not found" });
                 }
             });
         

@@ -944,17 +944,28 @@ async function startServer() {
             });
         });
 
+        const transports = new Map();
+
         app.get('/sse', async (req, res) => {
-            activeServer = createOneMcpServer();
-            sseTransport = new SSEServerTransport('/message', res);
+            const activeServer = createOneMcpServer();
+            const sseTransport = new SSEServerTransport('/message', res);
+            transports.set(sseTransport.sessionId, sseTransport);
+
+            req.on('close', () => {
+                transports.delete(sseTransport.sessionId);
+                activeServer.close().catch(() => {});
+            });
+
             await activeServer.connect(sseTransport);
         });
 
         app.post('/message', async (req, res) => {
-            if (sseTransport) {
-                await sseTransport.handlePostMessage(req, res);
+            const sessionId = req.query.sessionId;
+            const transport = sessionId ? transports.get(sessionId) : transports.values().next().value;
+            if (transport) {
+                await transport.handlePostMessage(req, res);
             } else {
-                res.status(400).send('SSE transport is not initialized');
+                res.status(404).send('SSE transport is not initialized');
             }
         });
 

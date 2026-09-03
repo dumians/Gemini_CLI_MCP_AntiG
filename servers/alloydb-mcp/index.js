@@ -40,17 +40,7 @@ const auth = new AlloyDBAuth({
     cluster: process.env.ALLOYDB_CLUSTER,
 });
 
-const server = new Server(
-    {
-        name: "alloydb-mcp",
-        version: "1.0.0",
-    },
-    {
-        capabilities: {
-            tools: {},
-        },
-    }
-);
+function registerHandlers(server) {
 
 // Database Connection
 const pool = (process.env.ALLOYDB_URL && (process.env.NODE_ENV !== 'test' || process.env.USE_REAL_CONNECTIONS === 'true')) ? new Pool({
@@ -200,10 +190,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     throw new Error(`Tool not found: ${name}`);
 });
+}
+
+function createServer() {
+    const s = new Server(
+        {
+            name: "alloydb-mcp",
+            version: "1.0.0",
+        },
+        {
+            capabilities: {
+                tools: {},
+            },
+        }
+    );
+    registerHandlers(s);
+    return s;
+}
+
+const server = createServer();
+
+export { server, createServer };
 
 const SSE_TRANSPORT_PATH = "/sse";
-
-export { server };
 
 async function run() {
     // Support both STDIO (local) and SSE (hosted)
@@ -236,19 +245,31 @@ async function run() {
             console.error("AlloyDB MCP Server running on stdio");
         } else {
             const app = express();
-            let transport;
+            const transports = new Map();
 
             app.get("/", (req, res) => res.json({ status: "ok", service: "alloydb-mcp" }));
             app.get("/health", (req, res) => res.json({ status: "ok" }));
 
             app.get(SSE_TRANSPORT_PATH, async (req, res) => {
-                transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
-                await server.connect(transport);
+                const transport = new SSEServerTransport(SSE_TRANSPORT_PATH, res);
+                const sessionServer = createServer();
+                transports.set(transport.sessionId, transport);
+
+                req.on("close", () => {
+                    transports.delete(transport.sessionId);
+                    sessionServer.close().catch(() => {});
+                });
+
+                await sessionServer.connect(transport);
             });
 
             app.post(SSE_TRANSPORT_PATH, async (req, res) => {
+                const sessionId = req.query.sessionId;
+                const transport = sessionId ? transports.get(sessionId) : transports.values().next().value;
                 if (transport) {
                     await transport.handlePostMessage(req, res);
+                } else {
+                    res.status(404).json({ error: "Session not found" });
                 }
             });
         
