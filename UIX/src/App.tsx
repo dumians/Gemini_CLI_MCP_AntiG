@@ -107,7 +107,7 @@ function App() {
             {activeView === 'bigquery-detail' && <BigQueryDetailView />}
             {activeView === 'oracle-detail' && <OracleDetailView />}
             {activeView === 'alloy-detail' && <AlloyDetailView />}
-            {activeView === 'domains' && <DataDomainsView />}
+            {activeView === 'data-domains' && <DataDomainsView />}
             {activeView === 'warehouse-detail' && <WarehouseDetailView />}
             {activeView === 'netsuite-detail' && <NetSuiteDetailView />}
             {activeView === 'cross-domain-inventory' && <CrossDomainInventoryView onNavigate={handleNavigate} />}

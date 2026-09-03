@@ -4,7 +4,7 @@ import { Settings, Bot, FileText, Terminal, RefreshCw, Database, Server, Plus, T
 import { api } from '../utils/api';
 import { SourceModal } from './SourceModal';
 
-type TabType = 'general' | 'agents' | 'mcp' | 'api' | 'security' | 'logs';
+type TabType = 'general' | 'agents' | 'domains' | 'mcp' | 'api' | 'security' | 'logs';
 
 export const AVAILABLE_GEMINI_MODELS = [
   { id: 'gemini-3.6-pro', name: 'Gemini 3.6 Pro (Next-Gen Reasoning)' },
@@ -233,6 +233,7 @@ export const AdminPortalView = () => {
   const tabs = [
     { id: 'general', label: 'Data Sources', icon: Database },
     { id: 'agents', label: 'Agent Configuration', icon: Bot },
+    { id: 'domains', label: 'Data Domains', icon: Layers },
     { id: 'mcp', label: 'MCP Toolbox', icon: Cpu },
     { id: 'api', label: 'API Keys', icon: Key },
     { id: 'security', label: 'Security', icon: Shield },

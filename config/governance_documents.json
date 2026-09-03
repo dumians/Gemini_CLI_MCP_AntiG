@@ -1,5 +1,105 @@
 [
   {
+    "id": "doc-1788445789421-4i0yc",
+    "title": "Test Financial Governance Spec",
+    "fileName": "financial_governance_spec.md",
+    "fileType": "markdown",
+    "uploadedAt": "2026-09-03T14:29:49.421Z",
+    "extractedMetadata": {
+      "documentTitle": "Test Financial Governance Spec",
+      "summary": "Governance specifications extracted from financial_governance_spec.md",
+      "tables": [
+        {
+          "tableName": "invoices",
+          "domain": "Oracle ERP",
+          "description": "Master customer billing invoices ledger.",
+          "columns": [
+            {
+              "name": "invoice_id",
+              "dataType": "STRING",
+              "description": "Unique financial invoice document identifier",
+              "policyTag": "Confidential",
+              "suggestedGlossaryTerm": "Invoice Identifier",
+              "remediationLogic": "DISTINCT deduplication"
+            },
+            {
+              "name": "gross_total",
+              "dataType": "FLOAT",
+              "description": "Total invoice amount before sales tax",
+              "policyTag": "Financial",
+              "suggestedGlossaryTerm": "Gross Revenue",
+              "remediationLogic": "ROUND(gross_total, 2)"
+            }
+          ]
+        }
+      ],
+      "glossaryTerms": [
+        {
+          "term": "Test Financial Governance Spec",
+          "definition": "Governance term defined in financial_governance_spec.md",
+          "category": "General"
+        }
+      ],
+      "policyRules": [
+        {
+          "name": "Test Financial Governance Spec Standard Policy",
+          "classification": "Medium",
+          "maskingRule": "Role-Based"
+        }
+      ]
+    }
+  },
+  {
+    "id": "doc-1788445639429-09z3c",
+    "title": "Test Financial Governance Spec",
+    "fileName": "financial_governance_spec.md",
+    "fileType": "markdown",
+    "uploadedAt": "2026-09-03T14:27:19.429Z",
+    "extractedMetadata": {
+      "documentTitle": "Test Financial Governance Spec",
+      "summary": "Governance specifications extracted from financial_governance_spec.md",
+      "tables": [
+        {
+          "tableName": "invoices",
+          "domain": "Oracle ERP",
+          "description": "Master customer billing invoices ledger.",
+          "columns": [
+            {
+              "name": "invoice_id",
+              "dataType": "STRING",
+              "description": "Unique financial invoice document identifier",
+              "policyTag": "Confidential",
+              "suggestedGlossaryTerm": "Invoice Identifier",
+              "remediationLogic": "DISTINCT deduplication"
+            },
+            {
+              "name": "gross_total",
+              "dataType": "FLOAT",
+              "description": "Total invoice amount before sales tax",
+              "policyTag": "Financial",
+              "suggestedGlossaryTerm": "Gross Revenue",
+              "remediationLogic": "ROUND(gross_total, 2)"
+            }
+          ]
+        }
+      ],
+      "glossaryTerms": [
+        {
+          "term": "Test Financial Governance Spec",
+          "definition": "Governance term defined in financial_governance_spec.md",
+          "category": "General"
+        }
+      ],
+      "policyRules": [
+        {
+          "name": "Test Financial Governance Spec Standard Policy",
+          "classification": "Medium",
+          "maskingRule": "Role-Based"
+        }
+      ]
+    }
+  },
+  {
     "id": "doc-1787869239740-cpim5",
     "title": "Test Financial Governance Spec",
     "fileName": "financial_governance_spec.md",

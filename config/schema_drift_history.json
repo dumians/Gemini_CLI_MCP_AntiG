@@ -1,415 +1,6 @@
 {
-  "lastScan": "2026-08-27T22:20:34.714Z",
+  "lastScan": "2026-09-03T14:30:56.921Z",
   "latestSnapshot": {
-    "oracle.suppliers": [
-      {
-        "name": "supplier_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "name",
-        "dataType": "VARCHAR2(255)"
-      },
-      {
-        "name": "country",
-        "dataType": "VARCHAR2(100)"
-      }
-    ],
-    "oracle.purchase_orders": [
-      {
-        "name": "po_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "supplier_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "status",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "total_amount",
-        "dataType": "NUMBER(15, 2)"
-      },
-      {
-        "name": "created_date",
-        "dataType": "DATE"
-      }
-    ],
-    "oracle.invoices": [
-      {
-        "name": "invoice_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "po_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "amount_paid",
-        "dataType": "NUMBER(15, 2)"
-      },
-      {
-        "name": "payment_status",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "transaction_metadata",
-        "dataType": "VARCHAR2(4000)"
-      },
-      {
-        "name": "metadata_vector",
-        "dataType": "VECTOR(768, FLOAT32)"
-      }
-    ],
-    "oracle.erp_supply_graph": [],
-    "oracle.invoice_meta_idx": [
-      {
-        "name": "metadata_vector",
-        "dataType": "vector"
-      }
-    ],
-    "spanner.stores": [
-      {
-        "name": "store_id",
-        "dataType": "STRING(MAX)"
-      },
-      {
-        "name": "location",
-        "dataType": "STRING(MAX)"
-      },
-      {
-        "name": "region",
-        "dataType": "STRING(50)"
-      }
-    ],
-    "spanner.global_inventory": [
-      {
-        "name": "item_id",
-        "dataType": "STRING(MAX)"
-      },
-      {
-        "name": "store_id",
-        "dataType": "STRING(MAX)"
-      },
-      {
-        "name": "stock_quantity",
-        "dataType": "INT64"
-      },
-      {
-        "name": "product_name",
-        "dataType": "STRING(255)"
-      }
-    ],
-    "spanner.realtime_transactions": [
-      {
-        "name": "transaction_id",
-        "dataType": "STRING(MAX)"
-      },
-      {
-        "name": "item_id",
-        "dataType": "STRING(MAX)"
-      },
-      {
-        "name": "store_id",
-        "dataType": "STRING(MAX)"
-      },
-      {
-        "name": "quantity_sold",
-        "dataType": "INT64"
-      },
-      {
-        "name": "timestamp",
-        "dataType": "TIMESTAMP"
-      }
-    ],
-    "spanner.RetailGraph": [],
-    "spanner.product_similarity_idx": [
-      {
-        "name": "product_embedding",
-        "dataType": "vector"
-      }
-    ],
-    "bigquery.customer_segments": [
-      {
-        "name": "customer_id",
-        "dataType": "STRING"
-      },
-      {
-        "name": "segment_name",
-        "dataType": "STRING"
-      },
-      {
-        "name": "lifetime_value",
-        "dataType": "FLOAT64"
-      },
-      {
-        "name": "last_interaction",
-        "dataType": "TIMESTAMP"
-      }
-    ],
-    "bigquery.campaign_metrics": [
-      {
-        "name": "campaign_id",
-        "dataType": "STRING"
-      },
-      {
-        "name": "segment_name",
-        "dataType": "STRING"
-      },
-      {
-        "name": "spend",
-        "dataType": "FLOAT64",
-        "description": "Total net media cost expenditure. Calculated using arithmetic aggregation, converted to float format."
-      },
-      {
-        "name": "impressions",
-        "dataType": "INT64"
-      },
-      {
-        "name": "conversions",
-        "dataType": "INT64"
-      },
-      {
-        "name": "date",
-        "dataType": "DATE"
-      }
-    ],
-    "bigquery.web_events": [
-      {
-        "name": "event_id",
-        "dataType": "STRING"
-      },
-      {
-        "name": "customer_id",
-        "dataType": "STRING"
-      },
-      {
-        "name": "event_type",
-        "dataType": "STRING"
-      },
-      {
-        "name": "page_url",
-        "dataType": "STRING"
-      },
-      {
-        "name": "event_timestamp",
-        "dataType": "TIMESTAMP"
-      }
-    ],
-    "bigquery.marketing_graph": [],
-    "alloydb.customers": [
-      {
-        "name": "customer_id",
-        "dataType": "VARCHAR(50"
-      }
-    ],
-    "alloydb.support_tickets": [
-      {
-        "name": "ticket_id",
-        "dataType": "SERIAL"
-      },
-      {
-        "name": "customer_id",
-        "dataType": "VARCHAR(50)"
-      },
-      {
-        "name": "status",
-        "dataType": "VARCHAR(50)"
-      },
-      {
-        "name": "subject",
-        "dataType": "VARCHAR(255)"
-      },
-      {
-        "name": "description",
-        "dataType": "TEXT"
-      },
-      {
-        "name": "resolution_notes",
-        "dataType": "TEXT"
-      },
-      {
-        "name": "resolution_embedding",
-        "dataType": "vector(768)"
-      },
-      {
-        "name": "created_at",
-        "dataType": "TIMESTAMP"
-      },
-      {
-        "name": "resolved_at",
-        "dataType": "TIMESTAMP"
-      }
-    ],
-    "oracle_hr.hr_departments": [
-      {
-        "name": "dept_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "dept_name",
-        "dataType": "VARCHAR2(100)"
-      },
-      {
-        "name": "manager_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "location",
-        "dataType": "VARCHAR2(100)"
-      }
-    ],
-    "oracle_hr.hr_employees": [
-      {
-        "name": "emp_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "first_name",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "last_name",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "email",
-        "dataType": "VARCHAR2(100)"
-      },
-      {
-        "name": "hire_date",
-        "dataType": "DATE"
-      },
-      {
-        "name": "job_title",
-        "dataType": "VARCHAR2(100)"
-      },
-      {
-        "name": "dept_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "salary",
-        "dataType": "NUMBER(12, 2)"
-      }
-    ],
-    "oracle_hr.hr_recruitment": [
-      {
-        "name": "req_id",
-        "dataType": "VARCHAR2(20"
-      }
-    ],
-    "catalog.catalog_sources": [
-      {
-        "name": "source_id",
-        "dataType": "VARCHAR(50"
-      }
-    ],
-    "catalog.catalog_entities": [
-      {
-        "name": "entity_id",
-        "dataType": "VARCHAR(100"
-      }
-    ],
-    "catalog.catalog_attributes": [
-      {
-        "name": "attribute_id",
-        "dataType": "VARCHAR(150"
-      }
-    ],
-    "catalog.catalog_relationships": [
-      {
-        "name": "relationship_id",
-        "dataType": "VARCHAR(200"
-      }
-    ],
-    "catalog.catalog_lineage": [
-      {
-        "name": "lineage_id",
-        "dataType": "VARCHAR(200"
-      }
-    ],
-    "api_driven.flexcube_transactions": [
-      {
-        "name": "trn_ref_no",
-        "dataType": "VARCHAR2(20"
-      }
-    ],
-    "warehouse.warehouse_master": [
-      {
-        "name": "warehouse_id",
-        "dataType": "VARCHAR2(50"
-      }
-    ],
-    "warehouse.product_master": [
-      {
-        "name": "sku_id",
-        "dataType": "VARCHAR2(50"
-      }
-    ],
-    "warehouse.inventory_levels": [
-      {
-        "name": "inventory_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "warehouse_id",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "sku_id",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "stock_quantity",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "reorder_threshold",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "last_updated",
-        "dataType": "TIMESTAMP"
-      }
-    ],
-    "warehouse.supplier_master": [
-      {
-        "name": "supplier_id",
-        "dataType": "VARCHAR2(50"
-      }
-    ],
-    "warehouse.supply_network_edges": [
-      {
-        "name": "edge_id",
-        "dataType": "NUMBER"
-      },
-      {
-        "name": "from_supplier_id",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "to_sku_id",
-        "dataType": "VARCHAR2(50)"
-      },
-      {
-        "name": "cost_per_unit",
-        "dataType": "NUMBER(12,2)"
-      },
-      {
-        "name": "currency",
-        "dataType": "VARCHAR2(3)"
-      }
-    ],
-    "warehouse.spatial_risk_hotspots": [
-      {
-        "name": "hotspot_id",
-        "dataType": "VARCHAR2(50"
-      }
-    ],
-    "warehouse.supply_chain_graph": [],
     "netsuite.netsuite_customers": [
       {
         "name": "customer_id",
@@ -494,53 +85,159 @@
         "name": "ai_embedding",
         "dataType": "vector"
       }
-    ],
-    "gcp_one_mcp.catalog_sources": [
-      {
-        "name": "source_id",
-        "dataType": "VARCHAR(50"
-      }
-    ],
-    "gcp_one_mcp.catalog_entities": [
-      {
-        "name": "entity_id",
-        "dataType": "VARCHAR(100"
-      }
-    ],
-    "gcp_one_mcp.catalog_attributes": [
-      {
-        "name": "attribute_id",
-        "dataType": "VARCHAR(150"
-      }
-    ],
-    "gcp_one_mcp.catalog_relationships": [
-      {
-        "name": "relationship_id",
-        "dataType": "VARCHAR(200"
-      }
-    ],
-    "gcp_one_mcp.catalog_lineage": [
-      {
-        "name": "lineage_id",
-        "dataType": "VARCHAR(200"
-      }
     ]
   },
   "recentEvents": [
     {
-      "entityId": "bigquery.customer_segments",
+      "entityId": "netsuite.netsuite_customers",
       "changeType": "COLUMN_ADDED",
-      "columnName": "loyalty_tier_score",
-      "dataType": "NUMERIC",
-      "timestamp": "2026-08-26T22:20:34.714Z",
+      "columnName": "customer_id",
+      "dataType": "STRING(MAX)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
       "severity": "INFO"
     },
     {
-      "entityId": "spanner.global_inventory",
-      "changeType": "INDEX_OPTIMIZED",
-      "columnName": "sku_store_composite_idx",
-      "dataType": "INDEX",
-      "timestamp": "2026-08-25T22:20:34.714Z",
+      "entityId": "netsuite.netsuite_customers",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "company_name",
+      "dataType": "STRING(255)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_customers",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "email",
+      "dataType": "STRING(255)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_customers",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "subsidiary",
+      "dataType": "STRING(100)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_customers",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "credit_limit",
+      "dataType": "FLOAT64",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_inventory_items",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "item_id",
+      "dataType": "STRING(MAX)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_inventory_items",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "display_name",
+      "dataType": "STRING(255)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_inventory_items",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "available_quantity",
+      "dataType": "INT64",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_inventory_items",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "base_price",
+      "dataType": "FLOAT64",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_inventory_items",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "ai_connector_summary",
+      "dataType": "STRING(MAX)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "order_id",
+      "dataType": "STRING(MAX)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "customer_id",
+      "dataType": "STRING(MAX)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "item_id",
+      "dataType": "STRING(MAX)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "status",
+      "dataType": "STRING(50)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "total_amount",
+      "dataType": "FLOAT64",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "created_date",
+      "dataType": "TIMESTAMP",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "fulfillment_status",
+      "dataType": "STRING(50)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_sales_orders",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "ai_summary",
+      "dataType": "STRING(MAX)",
+      "timestamp": "2026-09-03T14:30:56.921Z",
+      "severity": "INFO"
+    },
+    {
+      "entityId": "netsuite.netsuite_ai_idx",
+      "changeType": "COLUMN_ADDED",
+      "columnName": "ai_embedding",
+      "dataType": "vector",
+      "timestamp": "2026-09-03T14:30:56.921Z",
       "severity": "INFO"
     }
   ]

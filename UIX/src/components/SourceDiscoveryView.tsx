@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, Plus, Search, CheckCircle, AlertTriangle, ShieldCheck, Tag, Lock, Sparkles, RefreshCw } from 'lucide-react';
+import { Database, Plus, Search, CheckCircle, CheckCircle2, AlertCircle, AlertTriangle, ShieldCheck, Tag, Lock, Sparkles, RefreshCw } from 'lucide-react';
 import { api } from '../utils/api';
 
 export const SourceDiscoveryView = () => {
@@ -7,7 +7,9 @@ export const SourceDiscoveryView = () => {
     name: '',
     type: 'REST API',
     uri: '',
+    connectionUri: '',
     domain: '',
+    schemaSample: '',
   });
 
   const [discoveryResult, setDiscoveryResult] = useState<any>(null);

@@ -135,8 +135,8 @@ export const ContractsLineageGraph = ({ products = [], contracts = [] }: { produ
 
     const validNodeIds = new Set(nList.map(n => n.id));
     const safeLinks = lList.filter(l => {
-      const s = typeof l.source === 'object' ? l.source?.id : l.source;
-      const t = typeof l.target === 'object' ? l.target?.id : l.target;
+      const s = typeof l.source === 'object' && l.source !== null ? (l.source as any)?.id : l.source;
+      const t = typeof l.target === 'object' && l.target !== null ? (l.target as any)?.id : l.target;
       return validNodeIds.has(s) && validNodeIds.has(t);
     });
 
