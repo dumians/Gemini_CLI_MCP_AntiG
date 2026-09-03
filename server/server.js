@@ -101,6 +101,9 @@ function parseCSV(filePath) {
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => res.json({ status: 'ok', service: 'mesh-orchestrator' }));
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'mesh-orchestrator' }));
+
 // --- Authentication Endpoints ---
 
 app.post('/api/auth/login', async (req, res) => {
@@ -1938,8 +1941,8 @@ app.get('/api/mesh/cross_inventory', authMiddleware, async (req, res) => {
 export { app };
 
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => {
-        console.log(`\n\x1b[32m[Mesh Server] Running on http://localhost:${PORT}\x1b[0m`);
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n\x1b[32m[Mesh Server] Running on http://0.0.0.0:${PORT}\x1b[0m`);
         logger.log('Server', `Starting system in ${process.env.NODE_ENV || 'development'} mode`, 'INFO');
         checkAgentConnectivity();
     });

@@ -13,6 +13,7 @@ RUN npm install --production
 COPY servers/ ./servers/
 COPY agent/ ./agent/
 COPY config/ ./config/
+COPY db-schemas/ ./db-schemas/
 COPY test-data/ ./test-data/
 
 # Default port for Cloud Run

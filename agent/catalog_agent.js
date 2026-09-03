@@ -22,8 +22,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 class CatalogAgent {
     constructor() {
-        this.config = JSON.parse(fs.readFileSync(path.join(__dirname, '../config/catalog_agent.json'), 'utf8'));
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        try {
+            const configPath = path.join(__dirname, '../config/catalog_agent.json');
+            this.config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
+        } catch (e) {
+            this.config = {};
+        }
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'mock-key');
         
         let domainKnowledge = "";
         if (this.config.domain_metadata) {
