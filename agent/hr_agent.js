@@ -4,6 +4,7 @@ import { configService } from "./utils/config_service.js";
 import { groundingInstructions, groundWithCatalogContext } from "./utils/grounding.js";
 import { logger } from "./utils/logging_service.js";
 import { validateDataProduct } from "./utils/catalog.js";
+import { resolveGeminiModel } from "./utils/ai_retry_helper.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -59,7 +60,7 @@ export async function handleHRTask(query, meshContext = {}, traceId = null) {
 
 
     const model = genAI.getGenerativeModel({
-        model: config.model || "gemini-1.5-flash",
+        model: resolveGeminiModel(config.model),
         systemInstruction,
         tools: geminiTools
     });

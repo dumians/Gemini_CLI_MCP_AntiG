@@ -36,3 +36,20 @@ export async function callAiOperationWithRetry(operation, maxRetries = 3, initia
         }
     }
 }
+
+/**
+ * Normalizes Gemini model names to ensure active GA/preview models are invoked.
+ * @param {string} modelName - Requested model name
+ * @returns {string} Normalized model name
+ */
+export function resolveGeminiModel(modelName) {
+    if (!modelName || typeof modelName !== 'string') return "gemini-2.5-flash";
+    const clean = modelName.trim().toLowerCase();
+    if (clean.includes("3.5-pro") || clean.includes("1.5-pro") || clean.includes("3.6-pro")) {
+        return "gemini-2.5-pro";
+    }
+    if (clean.includes("1.5-flash")) {
+        return "gemini-2.5-flash";
+    }
+    return modelName.trim();
+}

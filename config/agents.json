@@ -34,15 +34,11 @@
         "serverArgs": [
           "servers/spanner-mcp/index.js"
         ]
-      },
-      {
-        "name": "cloud_api_registry",
-        "mcpUrl": "process.env.SPANNER_REGISTRY_URL"
       }
     ],
     "groundingDomain": "Retail",
     "enabled": true,
-    "model": "gemini-3.5-pro"
+    "model": "gemini-2.5-flash"
   },
   {
     "id": "analytics_agent",
@@ -66,10 +62,6 @@
         "serverArgs": [
           "servers/alloydb-mcp/index.js"
         ]
-      },
-      {
-        "name": "cloud_api_registry",
-        "mcpUrl": "process.env.BIGQUERY_REGISTRY_URL"
       }
     ],
     "groundingDomain": "Analytics",

@@ -3,6 +3,7 @@ import { groundGraphContext, groundingInstructions, groundWithCatalogContext } f
 import { createAuthenticatedMcpClient } from "./utils/mcp_client_helper.js";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
+import { resolveGeminiModel } from "./utils/ai_retry_helper.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -49,7 +50,7 @@ export async function handleCRMRequest(query, context = {}, traceId = null) {
     ${JSON.stringify(context, null, 2)}`;
 
     const model = genAI.getGenerativeModel({
-        model: config.model || "gemini-1.5-flash",
+        model: resolveGeminiModel(config.model),
         systemInstruction,
         tools: geminiTools
     });

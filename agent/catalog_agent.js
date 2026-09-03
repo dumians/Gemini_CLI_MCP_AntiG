@@ -10,6 +10,7 @@ import { groundWithCatalogContext, groundingInstructions } from "./utils/groundi
 import { kgService } from "./utils/kg_service.js";
 import { knowledgeCatalogService } from "./utils/knowledge_catalog_service.js";
 import { discoveryService } from "./utils/discovery_service.js";
+import { resolveGeminiModel } from "./utils/ai_retry_helper.js";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -39,7 +40,7 @@ class CatalogAgent {
         }
 
         this.model = genAI.getGenerativeModel({
-            model: this.config.model,
+            model: resolveGeminiModel(this.config.model),
             systemInstruction: `${this.config.system_instruction_prefix}\n\n` +
                 `Your mission is to map the Agentic Data Mesh. You have access to a logical Metadata Catalog.\n` +
                 `You answer questions about WHERE data is, WHAT schemas look like, HOW entities relate across domains, and Dataplex Aspects.\n` +

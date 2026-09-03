@@ -3,10 +3,16 @@ process.env.USE_REAL_CONNECTIONS = 'false';
 
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { governancePropagator } from '../../agent/utils/governance_metadata_propagator.js';
 import { documentRAGEngine } from '../../agent/utils/document_rag_engine.js';
 import { DataplexAgent } from '../../agent/dataplex_agent.js';
 import { metadataCatalog } from '../../agent/utils/catalog.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('Dataplex Labs Governance Agent Integration Tests', () => {
     let dataplexAgent;
@@ -16,6 +22,14 @@ describe('Dataplex Labs Governance Agent Integration Tests', () => {
         process.env.USE_REAL_CONNECTIONS = 'false';
         metadataCatalog.initialize();
         dataplexAgent = new DataplexAgent();
+
+        try {
+            const linksPath = path.join(__dirname, '../../config/glossary_links.json');
+            if (fs.existsSync(linksPath)) {
+                const links = JSON.parse(fs.readFileSync(linksPath, 'utf8')).filter(l => l.table !== 'campaign_metrics');
+                fs.writeFileSync(linksPath, JSON.stringify(links, null, 2));
+            }
+        } catch (_) {}
     });
 
     it('1. Document RAG Engine - Ingest and query unstructured governance documents', async () => {

@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import { ModelArmorClient } from "@google-cloud/modelarmor";
 import { gateway } from "./one_mcp_gateway.js";
 import { mcpToolbox } from "./mcp_toolbox.js";
-import { callAiOperationWithRetry } from "./ai_retry_helper.js";
+import { callAiOperationWithRetry, resolveGeminiModel } from "./ai_retry_helper.js";
 import { signAgentToken } from "./identity_service.js";
 
 
@@ -23,7 +23,7 @@ class GenericAgent {
         this.systemInstruction = config.systemInstruction || "";
         this.mcpServers = config.mcpServers || [];
         this.groundingDomain = config.groundingDomain || config.domain;
-        this.model = config.model || "gemini-2.5-flash";
+        this.model = resolveGeminiModel(config.model);
         this.gcpServiceAccount = config.gcpServiceAccount || null;
     }
 

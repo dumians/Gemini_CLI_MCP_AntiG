@@ -5,6 +5,7 @@ import { logger } from "./logging_service.js";
 import dotenv from "dotenv";
 import { verifyAgentToken } from "./identity_service.js";
 import path from "path";
+import fs from "fs";
 import { GoogleAuth } from "google-auth-library";
 import { resolveGcpIdToken } from "./mcp_client_helper.js";
 
@@ -24,8 +25,8 @@ class OneMCPGateway {
         // Domain to allowed MCP server names mapping
         this.domainAccessMap = {
             "Oracle ERP": ["oracle", "gcp-one-mcp"],
-            "Spanner Retail": ["spanner", "gcp-one-mcp", "cloud_api_registry"],
-            "BigQuery Analytics": ["bigquery", "alloydb", "gcp-one-mcp", "cloud_api_registry"],
+            "Spanner Retail": ["spanner", "gcp-one-mcp"],
+            "BigQuery Analytics": ["bigquery", "alloydb", "gcp-one-mcp"],
             "Oracle HR": ["oracle_hr", "oracle", "gcp-one-mcp"],
             "AlloyDB CRM": ["alloydb", "gcp-one-mcp"],
             "Warehouse": ["oracle_warehouse", "oracle", "spanner", "gcp-one-mcp"],
@@ -108,13 +109,21 @@ class OneMCPGateway {
                 }
             });
         } else {
+            const rawArgs = serverConfig.serverArgs || [];
+            if (!Array.isArray(rawArgs) || rawArgs.length === 0) {
+                throw new Error(`Cannot create Stdio transport for '${serverConfig.name}': no valid serverArgs or remote URL provided`);
+            }
             const rootDir = process.cwd().endsWith('server') ? path.resolve(process.cwd(), '..') : process.cwd();
-            const absoluteArgs = (serverConfig.serverArgs || []).map(arg => {
-                if (arg.startsWith('servers/')) {
+            const absoluteArgs = rawArgs.map(arg => {
+                if (typeof arg === 'string' && arg.startsWith('servers/')) {
                     return path.resolve(rootDir, arg);
                 }
                 return arg;
             });
+            const scriptPath = absoluteArgs[0];
+            if (scriptPath && typeof scriptPath === 'string' && scriptPath.endsWith('.js') && !fs.existsSync(scriptPath)) {
+                throw new Error(`Cannot create Stdio transport for '${serverConfig.name}': script file not found at '${scriptPath}'`);
+            }
             return new StdioClientTransport({
                 command: serverConfig.serverCmd || "node",
                 args: absoluteArgs,

@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { AgentRegistry } from "./utils/catalog.js";
-import { callAiOperationWithRetry } from "./utils/ai_retry_helper.js";
+import { callAiOperationWithRetry, resolveGeminiModel } from "./utils/ai_retry_helper.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -41,7 +41,7 @@ export async function generatePlan(query, traceId = null) {
     ]`;
 
     const model = genAI.getGenerativeModel({
-        model: config.model || "gemini-2.5-flash",
+        model: resolveGeminiModel(config.model),
         systemInstruction,
         generationConfig: { responseMimeType: "application/json" } // Force JSON output
     });

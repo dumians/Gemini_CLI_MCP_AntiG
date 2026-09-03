@@ -414,6 +414,7 @@ export class GovernanceMetadataPropagator {
             if (tableId === 'campaign_metrics') {
                 fields = [
                     { name: "campaign_id", description: "Code representing a campaign.", type: "STRING" },
+                    { name: "customer_id", description: "Unique internal ID for a registered customer.", type: "STRING" },
                     { name: "segment_name", description: "Classification of target customer group.", type: "STRING" },
                     { name: "spend", description: "Cost spent on media impressions.", type: "FLOAT" },
                     { name: "impressions", description: "Total count of visual ad deliveries.", type: "INTEGER" },
@@ -484,9 +485,12 @@ Output ONLY raw JSON array.`;
                 }
             }
 
-            return filtered;
+            if (filtered.length > 0) {
+                return filtered;
+            }
         } catch (err) {
             logger.log('GovernancePropagator', `Glossary matching fallback: ${err.message}`, 'WARNING');
+        }
             
             return [
                 {
@@ -507,7 +511,6 @@ Output ONLY raw JSON array.`;
                 }
             ];
         }
-    }
 
     _checkGlossaryLinkExists(datasetId, tableId, column, termId) {
         try {

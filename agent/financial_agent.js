@@ -6,6 +6,7 @@ import { logger } from "./utils/logging_service.js";
 import { configService } from "./utils/config_service.js";
 import { memoryBankService } from "./utils/memory_bank_service.js";
 import { governanceAgent } from "./utils/governance_agent.js";
+import { resolveGeminiModel } from "./utils/ai_retry_helper.js";
 import dotenv from "dotenv";
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -77,7 +78,7 @@ export async function handleFinancialRequest(query, context = {}, traceId = null
     Use this context to enrich your analysis if relevant.`;
 
     const model = genAI.getGenerativeModel({
-        model: config.model || "gemini-1.5-flash",
+        model: resolveGeminiModel(config.model),
         systemInstruction,
         tools: geminiTools
     });

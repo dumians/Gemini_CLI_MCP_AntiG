@@ -15,7 +15,7 @@ import { semanticCache } from "./utils/semantic_cache.js";
 import { governanceAgent } from "./utils/governance_agent.js";
 import GenericAgent from "./utils/generic_agent.js";
 import { eventBus } from "./utils/event_bus.js";
-import { callAiOperationWithRetry } from "./utils/ai_retry_helper.js";
+import { callAiOperationWithRetry, resolveGeminiModel } from "./utils/ai_retry_helper.js";
 dotenv.config();
 
 import { agenticFactory } from "./utils/agentic_factory.js";
@@ -89,7 +89,7 @@ async function mapBusinessTerms(query, traceId) {
     
     Output ONLY the JSON object.`;
 
-    const modelName = config.model || "gemini-2.5-flash";
+    const modelName = resolveGeminiModel(config.model);
     const model = new GoogleGenerativeAI(process.env.GEMINI_API_KEY).getGenerativeModel({
         model: modelName,
         systemInstruction,
@@ -173,7 +173,7 @@ export async function askOrchestrator(query, userId = 'admin', userRole = 'admin
     const enrichedSystemInstruction = systemInstruction + `\n\n[GLOBAL MESH CONTEXT]\n${horizontalContext}` + vertexMemoriesContext + conversationalContext + planContext;
 
 
-    const modelName = config.model || "gemini-2.5-flash";
+    const modelName = resolveGeminiModel(config.model);
     const model = ai.getGenerativeModel({
         model: modelName,
         systemInstruction: enrichedSystemInstruction,
@@ -326,19 +326,6 @@ export async function askOrchestrator(query, userId = 'admin', userRole = 'admin
 
         logger.log("Orchestrator", `Successfully synthesized result`, "INFO");
 
-        if (sessionPath) {
-            try {
-                await memoryBankService.appendEvent(sessionPath, { role: 'MODEL', text: finalAnswer });
-                // Trigger background memory generation
-                memoryBankService.generateMemories(sessionPath).catch(e => 
-                    logger.log("Orchestrator", `Async Memory Gen error: ${e.message}`, "WARNING")
-                );
-            } catch (err) {
-                logger.log("Orchestrator", `Failed to append MODEL event: ${err.message}`, "WARNING");
-            }
-        }
-
-
         // Phase 3: Reflection / Self-Correction
         logger.log("Orchestrator", `Reflecting on synthesis...`, "INFO");
         const reflectionPrompt = `Act as a critic. Reflect on the following answer generated for the original query: "${query}".
@@ -351,7 +338,7 @@ export async function askOrchestrator(query, userId = 'admin', userRole = 'admin
         If no, provide a 'REVISED_ANSWER:' followed by the corrected answer.
         Output ONLY 'APPROVED' or 'REVISED_ANSWER: <content>'.`;
 
-        const reflectionModel = ai.getGenerativeModel({ model: config.model || "gemini-2.5-flash" });
+        const reflectionModel = ai.getGenerativeModel({ model: resolveGeminiModel(config.model) });
         const reflectionResult = await callAiOperationWithRetry(() => reflectionModel.generateContent(reflectionPrompt));
         const reflectionText = reflectionResult.response.text();
         
@@ -361,6 +348,18 @@ export async function askOrchestrator(query, userId = 'admin', userRole = 'admin
             finalAnswer = reflectionText.split('REVISED_ANSWER:')[1].trim();
         } else {
             logger.log("Orchestrator", `Reflection approved answer.`, "INFO");
+        }
+
+        if (sessionPath) {
+            try {
+                await memoryBankService.appendEvent(sessionPath, { role: 'MODEL', text: finalAnswer });
+                // Trigger background memory generation
+                memoryBankService.generateMemories(sessionPath).catch(e => 
+                    logger.log("Orchestrator", `Async Memory Gen error: ${e.message}`, "WARNING")
+                );
+            } catch (err) {
+                logger.log("Orchestrator", `Failed to append MODEL event: ${err.message}`, "WARNING");
+            }
         }
 
         // Phase 4: Human-in-the-Loop (Simulation for Demo)

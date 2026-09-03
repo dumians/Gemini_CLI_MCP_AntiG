@@ -4,6 +4,7 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { GoogleAuth } from "google-auth-library";
 import { logger } from "./logging_service.js";
 import path from "path";
+import fs from "fs";
 
 const gAuth = new GoogleAuth();
 
@@ -91,13 +92,23 @@ export async function createAuthenticatedMcpClient(clientName, serverCmd, server
         }
     }
 
+    const rawArgs = serverArgs || [];
+    if (!Array.isArray(rawArgs) || rawArgs.length === 0) {
+        throw new Error(`Cannot create MCP client '${clientName}': no remote URL and no serverArgs provided`);
+    }
+
     const rootDir = process.cwd().endsWith('server') ? path.resolve(process.cwd(), '..') : process.cwd();
-    const absoluteArgs = (serverArgs || []).map(arg => {
+    const absoluteArgs = rawArgs.map(arg => {
         if (arg && typeof arg === 'string' && arg.startsWith('servers/')) {
             return path.resolve(rootDir, arg);
         }
         return arg;
     });
+
+    const scriptPath = absoluteArgs[0];
+    if (scriptPath && typeof scriptPath === 'string' && scriptPath.endsWith('.js') && !fs.existsSync(scriptPath)) {
+        throw new Error(`Cannot create Stdio transport for '${clientName}': script file not found at '${scriptPath}'`);
+    }
 
     const transport = new StdioClientTransport({
         command: serverCmd || "node",

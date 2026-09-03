@@ -65,9 +65,16 @@ Output ONLY valid JSON.`;
 
                 const res = await model.generateContent(prompt);
                 const parsed = JSON.parse(res.response.text());
+                const combinedPredicates = new Set(parsed.predicates || []);
+                const lower = naturalQuery.toLowerCase();
+                if (lower.includes('table') || lower.includes('view')) combinedPredicates.add('type=table');
+                if (lower.includes('bigquery') || lower.includes('edw')) combinedPredicates.add('system=bigquery');
+                if (lower.includes('spanner') || lower.includes('retail')) combinedPredicates.add('system=spanner');
+                if (lower.includes('alloydb') || lower.includes('crm')) combinedPredicates.add('system=alloydb');
+                if (lower.includes('oracle') || lower.includes('erp')) combinedPredicates.add('system=oracle');
                 return {
                     originalQuery: naturalQuery,
-                    predicates: parsed.predicates || [],
+                    predicates: Array.from(combinedPredicates),
                     variations: parsed.variations || [naturalQuery]
                 };
             } catch (err) {

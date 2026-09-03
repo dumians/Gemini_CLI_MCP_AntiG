@@ -6,8 +6,11 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { callAiOperationWithRetry } from "./ai_retry_helper.js";
+
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
