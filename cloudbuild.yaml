@@ -70,7 +70,7 @@ steps:
     for svc in retail-spanner-mcp analytics-bigquery-mcp crm-alloydb-mcp hr-oracle-mcp gcp-one-mcp; do
       echo "Configuring invoker permissions on $$svc..."
       gcloud run services add-iam-policy-binding "$$svc" --region=europe-west1 --member="allUsers" --role="roles/run.invoker" || true
-      gcloud run services add-iam-policy-binding "$$svc" --region=europe-west1 --member="serviceAccount:$${_SERVICE_ACCOUNT_EMAIL}" --role="roles/run.invoker" || true
+      gcloud run services add-iam-policy-binding "$$svc" --region=europe-west1 --member="serviceAccount:${_SERVICE_ACCOUNT_EMAIL}" --role="roles/run.invoker" || true
       gcloud run services add-iam-policy-binding "$$svc" --region=europe-west1 --member="user:admin@jdumitru.altostrat.com" --role="roles/run.invoker" || true
     done
 
@@ -103,7 +103,7 @@ steps:
     echo "Deploying mesh-orchestrator to Cloud Run..."
     gcloud run services replace /tmp/cloudrun-services/app_1.yaml --region=europe-west1
     gcloud run services add-iam-policy-binding mesh-orchestrator --region=europe-west1 --member="allUsers" --role="roles/run.invoker" || true
-    gcloud run services add-iam-policy-binding mesh-orchestrator --region=europe-west1 --member="serviceAccount:$${_SERVICE_ACCOUNT_EMAIL}" --role="roles/run.invoker" || true
+    gcloud run services add-iam-policy-binding mesh-orchestrator --region=europe-west1 --member="serviceAccount:${_SERVICE_ACCOUNT_EMAIL}" --role="roles/run.invoker" || true
     gcloud run services add-iam-policy-binding mesh-orchestrator --region=europe-west1 --member="user:admin@jdumitru.altostrat.com" --role="roles/run.invoker" || true
 
     # 6b. Retrieve Orchestrator URL and inject into WebApp
