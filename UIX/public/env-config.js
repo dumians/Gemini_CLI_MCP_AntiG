@@ -1,1 +1,1 @@
-window.__ENV__ = { VITE_API_BASE_URL: "" };
+window.__ENV__ = window.__ENV__ || { VITE_API_BASE_URL: "" };

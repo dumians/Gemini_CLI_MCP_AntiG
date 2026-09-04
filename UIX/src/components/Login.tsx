@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Cpu, ShieldCheck, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Cpu, ShieldCheck, Mail, Lock, Loader2, AlertCircle, Server, ChevronDown, ChevronUp } from 'lucide-react';
 import { auth } from '../utils/auth';
-import { api } from '../utils/api';
+import { api, getBaseUrl } from '../utils/api';
 
 interface LoginProps {
     onLoginSuccess: (user: any) => void;
@@ -10,8 +10,23 @@ interface LoginProps {
 export function Login({ onLoginSuccess }: LoginProps) {
     const [username, setUsername] = useState('admin');
     const [password, setPassword] = useState('');
+    const [orchestratorUrl, setOrchestratorUrl] = useState(() => {
+        return typeof window !== 'undefined' ? (localStorage.getItem('mesh_orchestrator_url') || getBaseUrl()) : '';
+    });
+    const [showConfig, setShowConfig] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const handleSaveOrchUrl = (val: string) => {
+        setOrchestratorUrl(val);
+        if (typeof window !== 'undefined') {
+            if (val.trim()) {
+                localStorage.setItem('mesh_orchestrator_url', val.trim());
+            } else {
+                localStorage.removeItem('mesh_orchestrator_url');
+            }
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,15 +34,19 @@ export function Login({ onLoginSuccess }: LoginProps) {
         setIsProcessing(true);
 
         try {
-            // For UIX, we simulate a successful login if it's admin/admin or just proceed.
-            // Replace with actual API call if UIX has its own auth endpoint
+            if (orchestratorUrl.trim()) {
+                localStorage.setItem('mesh_orchestrator_url', orchestratorUrl.trim());
+            } else {
+                localStorage.removeItem('mesh_orchestrator_url');
+            }
             const data = await api.post('/api/auth/login', { username, password });
 
             auth.setToken(data.token);
             auth.setUser(data.user);
             onLoginSuccess(data.user);
         } catch (err: any) {
-            setError(err.message || 'System link failed. Check mesh status.');
+            const target = getBaseUrl() || (typeof window !== 'undefined' ? window.location.origin : '');
+            setError(`${err.message || 'System link failed'} [Target: ${target}]`);
         } finally {
             setIsProcessing(false);
         }
@@ -113,9 +132,41 @@ export function Login({ onLoginSuccess }: LoginProps) {
                         </button>
                     </form>
 
-                    <div className="mt-10 flex items-center justify-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
-                        <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Global Governance Active</span>
+                    <div className="mt-8 pt-6 border-t border-white/5">
+                        <button
+                            type="button"
+                            onClick={() => setShowConfig(!showConfig)}
+                            className="flex items-center justify-between w-full text-[10px] font-bold text-white/40 hover:text-white/70 uppercase tracking-widest transition-colors"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Server size={12} className="text-primary/70" />
+                                <span>Backend Orchestrator Endpoint</span>
+                            </span>
+                            {showConfig ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+
+                        {showConfig && (
+                            <div className="mt-3 space-y-2">
+                                <input
+                                    type="text"
+                                    value={orchestratorUrl}
+                                    onChange={(e) => handleSaveOrchUrl(e.target.value)}
+                                    placeholder="e.g. http://localhost:3001 or Cloud Run URL"
+                                    className="w-full h-10 bg-white/[0.02] border border-white/10 rounded-xl px-3 focus:outline-none focus:border-primary/50 text-[11px] font-mono text-white/80 placeholder:text-white/20"
+                                />
+                                <p className="text-[9px] text-white/30 tracking-wide">
+                                    Leave blank to use auto-detected URL ({getBaseUrl() || 'same-origin reverse proxy'}).
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-6 flex flex-col items-center justify-center gap-1.5">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
+                            <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Global Governance Active</span>
+                        </div>
+                        <span className="text-[8px] font-mono text-white/20">Target: {getBaseUrl() || '(relative)'}</span>
                     </div>
                 </div>
                 
