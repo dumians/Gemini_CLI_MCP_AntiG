@@ -21,6 +21,7 @@ import { knowledgeCatalogService } from '../agent/utils/knowledge_catalog_servic
 import { discoveryService } from '../agent/utils/discovery_service.js';
 import { documentRAGEngine } from '../agent/utils/document_rag_engine.js';
 import { kcDiscoveryService } from '../agent/utils/knowledge_catalog_discovery_service.js';
+import { requestLogger } from './middleware/request_logger.js';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -100,6 +101,7 @@ function parseCSV(filePath) {
 
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
 
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'mesh-orchestrator' }));
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'mesh-orchestrator' }));
@@ -186,7 +188,7 @@ app.post('/api/query', authMiddleware, async (req, res) => {
         return res.status(400).json({ error: "Query is required" });
     }
 
-    logger.log('Server', `Received query: ${query} (Session: ${sessionId || 'New'})`, 'INFO');
+    logger.log('Server', `Received query: ${query} (Session: ${sessionId || 'New'})`, 'INFO', null, req.traceId);
     currentStatus.state = "processing";
     currentStatus.lastQuery = query;
     currentStatus.steps = [];
@@ -194,14 +196,14 @@ app.post('/api/query', authMiddleware, async (req, res) => {
     try {
         const userId = req.user ? req.user.username : 'admin';
         const userRole = req.user ? req.user.role : 'admin';
-        const result = await askOrchestrator(query, userId, userRole, sessionId);
+        const result = await askOrchestrator(query, userId, userRole, sessionId, req.traceId);
         currentStatus.state = "completed";
         currentStatus.steps = result.steps;
         currentStatus.context = result.context;
 
         res.json(result);
     } catch (error) {
-        logger.log('Server', `Query Error: ${error.message}`, 'ERROR');
+        logger.log('Server', `Query Error: ${error.message}`, 'ERROR', null, req.traceId);
         currentStatus.state = "error";
         res.status(500).json({ error: error.message });
     }
@@ -507,7 +509,155 @@ app.get('/api/admin/events', authMiddleware, (req, res) => {
 });
 
 app.get('/api/admin/logs', authMiddleware, (req, res) => {
-    res.json(logger.getLogs());
+    try {
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 100, 1), 1000);
+        const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+        const filter = {
+            level: req.query.level,
+            type: req.query.type,
+            agent: req.query.agent,
+            domain: req.query.domain,
+            traceId: req.query.traceId,
+            search: req.query.search || req.query.q,
+            source: req.query.source
+        };
+        const result = logger.getLogs(filter, limit, offset);
+
+        if (req.query.raw === 'true') {
+            return res.json([...result]);
+        }
+
+        res.json({
+            logs: result.logs || [...result],
+            total: result.total ?? result.length,
+            limit,
+            offset,
+            stats: result.stats || logger.getStats()
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/logs/stats', authMiddleware, (req, res) => {
+    try {
+        res.json(logger.getStats());
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/logs/stream', authMiddleware, (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+
+    // Initial connection handshake with stats
+    const initialPayload = JSON.stringify({
+        type: 'CONNECTED',
+        timestamp: new Date().toISOString(),
+        stats: logger.getStats()
+    });
+    res.write(`data: ${initialPayload}\n\n`);
+
+    // Subscribe to real-time log events
+    const unsubscribe = logger.subscribe((entry) => {
+        try {
+            res.write(`data: ${JSON.stringify(entry)}\n\n`);
+        } catch (err) {
+            // Client closed connection
+        }
+    });
+
+    // 15s heartbeat to prevent proxy timeouts
+    const heartbeat = setInterval(() => {
+        try {
+            res.write(`: heartbeat\n\n`);
+        } catch (err) {
+            clearInterval(heartbeat);
+        }
+    }, 15000);
+
+    req.on('close', () => {
+        clearInterval(heartbeat);
+        unsubscribe();
+        res.end();
+    });
+});
+
+app.post('/api/admin/logs/client', (req, res) => {
+    try {
+        const { level = 'INFO', message, meta, traceId, agent = 'UIX-Client', domain = 'Frontend UIX', type = 'CLIENT_EVENT' } = req.body;
+        if (!message) {
+            return res.status(400).json({ error: 'Message is required' });
+        }
+        logger.log(agent, message, type, meta, traceId || req.traceId, level, 'client');
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/admin/logs', authMiddleware, (req, res) => {
+    try {
+        logger.clearLogs();
+        res.json({ success: true, message: 'Logs buffer cleared' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/logs/export', authMiddleware, (req, res) => {
+    try {
+        const format = (req.query.format || 'json').toLowerCase();
+        const limit = Math.min(parseInt(req.query.limit) || 2000, 2500);
+        const filter = {
+            level: req.query.level,
+            agent: req.query.agent,
+            domain: req.query.domain,
+            type: req.query.type,
+            traceId: req.query.traceId,
+            search: req.query.search || req.query.q,
+            source: req.query.source
+        };
+        const logsResult = logger.getLogs(filter, limit, 0);
+        const logs = logsResult.logs || [...logsResult];
+
+        if (format === 'csv') {
+            const escapeCsv = (val) => {
+                if (val === null || val === undefined) return '""';
+                const str = typeof val === 'object' ? JSON.stringify(val) : String(val);
+                return `"${str.replace(/"/g, '""')}"`;
+            };
+
+            const headers = ['id', 'timestamp', 'level', 'type', 'agent', 'domain', 'message', 'traceId', 'source', 'meta'];
+            const rows = logs.map(l => [
+                escapeCsv(l.id),
+                escapeCsv(l.timestamp),
+                escapeCsv(l.level),
+                escapeCsv(l.type),
+                escapeCsv(l.agent),
+                escapeCsv(l.domain),
+                escapeCsv(l.message),
+                escapeCsv(l.traceId),
+                escapeCsv(l.source),
+                escapeCsv(l.meta)
+            ].join(','));
+
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', `attachment; filename="mesh-logs-${Date.now()}.csv"`);
+            return res.send(csvContent);
+        }
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="mesh-logs-${Date.now()}.json"`);
+        res.send(JSON.stringify(logs, null, 2));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // --- Domain Factory Endpoints ---

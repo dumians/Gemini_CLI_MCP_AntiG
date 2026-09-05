@@ -114,10 +114,10 @@ async function mapBusinessTerms(query, traceId) {
  * @param {string} userId The user ID for scoping memory.
  * @returns {Promise<{text: string, steps: Array<{agent: string, query: string, result: any}>}>}
  */
-export async function askOrchestrator(query, userId = 'admin', userRole = 'admin', sessionId = null) {
+export async function askOrchestrator(query, userId = 'admin', userRole = 'admin', sessionId = null, incomingTraceId = null) {
 
 
-    const traceId = Math.random().toString(36).substring(2, 10);
+    const traceId = incomingTraceId || `orch-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`;
     logger.log("Orchestrator", `Received query: ${query} (User: ${userId})`, "INFO", null, traceId);
     
     // 1. Record the User Intent in the Knowledge Graph
