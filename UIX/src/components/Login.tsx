@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Cpu, ShieldCheck, Mail, Lock, Loader2, AlertCircle, Server, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Cpu, ShieldCheck, Mail, Lock, Loader2, AlertCircle, AlertTriangle, Server, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { auth } from '../utils/auth';
 import { api, getBaseUrl } from '../utils/api';
+import { clientConfigVerifier, ConfigVerificationReport } from '../utils/configVerifier';
+import { ConfigVerificationModal } from './ConfigVerificationModal';
 
 interface LoginProps {
     onLoginSuccess: (user: any) => void;
@@ -16,6 +18,27 @@ export function Login({ onLoginSuccess }: LoginProps) {
     const [showConfig, setShowConfig] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Startup configuration verification state
+    const [configReport, setConfigReport] = useState<ConfigVerificationReport | null>(null);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+    const [isVerifyingConfig, setIsVerifyingConfig] = useState(false);
+
+    const runConfigCheck = async (force = false) => {
+        setIsVerifyingConfig(true);
+        try {
+            const rep = await clientConfigVerifier.verify(force);
+            setConfigReport(rep);
+        } catch {
+            // non-fatal
+        } finally {
+            setIsVerifyingConfig(false);
+        }
+    };
+
+    useEffect(() => {
+        runConfigCheck();
+    }, []);
 
     const handleSaveOrchUrl = (val: string) => {
         setOrchestratorUrl(val);
@@ -161,17 +184,51 @@ export function Login({ onLoginSuccess }: LoginProps) {
                         )}
                     </div>
 
-                    <div className="mt-6 flex flex-col items-center justify-center gap-1.5">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
-                            <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Global Governance Active</span>
-                        </div>
+                    <div className="mt-6 pt-4 border-t border-white/5 flex flex-col items-center justify-center gap-2">
+                        {configReport ? (
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsConfigModalOpen(true)}
+                                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+                                        configReport.overallStatus === 'HEALTHY'
+                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                            : configReport.overallStatus === 'DEGRADED'
+                                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                                            : 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
+                                    }`}
+                                >
+                                    {configReport.overallStatus === 'HEALTHY' ? (
+                                        <ShieldCheck size={12} />
+                                    ) : configReport.overallStatus === 'DEGRADED' ? (
+                                        <AlertTriangle size={12} />
+                                    ) : (
+                                        <AlertCircle size={12} />
+                                    )}
+                                    <span>Config Access: {configReport.overallStatus} ({configReport.summary.passed}/{configReport.summary.totalChecks})</span>
+                                    <span className="underline ml-1">Inspect</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 text-white/30 text-[10px]">
+                                <RefreshCw size={11} className="animate-spin text-primary" />
+                                <span>Verifying startup configuration access...</span>
+                            </div>
+                        )}
                         <span className="text-[8px] font-mono text-white/20">Target: {getBaseUrl() || '(relative)'}</span>
                     </div>
                 </div>
                 
                 <p className="text-center mt-8 text-[9px] font-bold text-white/10 uppercase tracking-[0.4em]">Strategic Control Node • Unauthorized Access Logged</p>
             </div>
+
+            <ConfigVerificationModal
+                isOpen={isConfigModalOpen}
+                onClose={() => setIsConfigModalOpen(false)}
+                report={configReport}
+                onReVerify={() => runConfigCheck(true)}
+                isVerifying={isVerifyingConfig}
+            />
         </div>
     );
 }

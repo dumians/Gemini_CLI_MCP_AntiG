@@ -19,6 +19,9 @@ import { NetSuiteDetailView } from './components/NetSuiteDetailView';
 import { Login } from './components/Login';
 import { auth } from './utils/auth';
 import type { View } from './types';
+import { clientConfigVerifier, ConfigVerificationReport } from './utils/configVerifier';
+import { ConfigVerificationModal } from './components/ConfigVerificationModal';
+import { AlertCircle } from 'lucide-react';
 
 function App() {
   const [activeView, setActiveView] = useState<View>('dashboard');
@@ -42,6 +45,27 @@ function App() {
     }
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Startup configuration verification state
+  const [configReport, setConfigReport] = useState<ConfigVerificationReport | null>(null);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isVerifyingConfig, setIsVerifyingConfig] = useState(false);
+
+  useEffect(() => {
+    clientConfigVerifier.verify().then(setConfigReport).catch(console.error);
+    const unsub = clientConfigVerifier.subscribe(setConfigReport);
+    return () => unsub();
+  }, []);
+
+  const handleReVerifyConfig = async () => {
+    setIsVerifyingConfig(true);
+    try {
+      const rep = await clientConfigVerifier.verify(true);
+      setConfigReport(rep);
+    } finally {
+      setIsVerifyingConfig(false);
+    }
+  };
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
@@ -89,7 +113,21 @@ function App() {
           breadcrumbs={['MeshOS', activeView.charAt(0).toUpperCase() + activeView.slice(1).replace('-', ' ')]} 
           theme={theme}
           onThemeChange={toggleTheme}
+          configReport={configReport}
+          onOpenConfigModal={() => setIsConfigModalOpen(true)}
         />
+
+        {configReport?.overallStatus === 'FAILED' && (
+          <div className="bg-red-500/15 border-b border-red-500/30 px-6 py-2.5 flex items-center justify-between text-xs text-red-600 dark:text-red-400 z-10 relative">
+            <div className="flex items-center gap-2 font-medium">
+              <AlertCircle size={15} />
+              <span>Configuration Access Failure: One or more critical startup configuration checks failed ({configReport.summary.failed} errors).</span>
+            </div>
+            <button onClick={() => setIsConfigModalOpen(true)} className="underline font-bold hover:text-red-300 cursor-pointer">
+              Inspect Diagnostics
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-auto overflow-x-hidden relative scroll-smooth thin-scrollbar">
           <div className="min-h-full pb-12">
@@ -117,6 +155,14 @@ function App() {
           </div>
         </div>
       </main>
+
+      <ConfigVerificationModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        report={configReport}
+        onReVerify={handleReVerifyConfig}
+        isVerifying={isVerifyingConfig}
+      />
     </div>
   );
 }

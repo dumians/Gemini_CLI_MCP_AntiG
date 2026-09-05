@@ -22,6 +22,7 @@ import { discoveryService } from '../agent/utils/discovery_service.js';
 import { documentRAGEngine } from '../agent/utils/document_rag_engine.js';
 import { kcDiscoveryService } from '../agent/utils/knowledge_catalog_discovery_service.js';
 import { requestLogger } from './middleware/request_logger.js';
+import { verifyStartupConfigAccess, getOrRunStartupReport, OverallStatus } from '../agent/utils/config_verifier.js';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -104,7 +105,30 @@ app.use(express.json());
 app.use(requestLogger);
 
 app.get('/', (req, res) => res.json({ status: 'ok', service: 'mesh-orchestrator' }));
-app.get('/health', (req, res) => res.json({ status: 'ok', service: 'mesh-orchestrator' }));
+app.get('/health', async (req, res) => {
+    const report = await getOrRunStartupReport(false).catch(() => null);
+    res.json({ 
+        status: 'ok', 
+        service: 'mesh-orchestrator',
+        configStatus: report?.overallStatus || 'UNKNOWN'
+    });
+});
+
+// Pre-flight Startup Configuration Access Verification (Public)
+app.get('/api/health/config-access', async (req, res) => {
+    try {
+        const report = await getOrRunStartupReport(false);
+        const statusCode = report.overallStatus === OverallStatus.FAILED ? 503 : 200;
+        res.status(statusCode).json({
+            status: report.overallStatus,
+            timestamp: report.timestamp,
+            summary: report.summary,
+            checks: report.checks
+        });
+    } catch (err) {
+        res.status(500).json({ status: 'FAILED', error: err.message });
+    }
+});
 
 // --- Authentication Endpoints ---
 
@@ -655,6 +679,27 @@ app.get('/api/admin/logs/export', authMiddleware, (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Content-Disposition', `attachment; filename="mesh-logs-${Date.now()}.json"`);
         res.send(JSON.stringify(logs, null, 2));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Startup Configuration Access Verification Endpoints ---
+
+app.get('/api/admin/config/verify', authMiddleware, async (req, res) => {
+    try {
+        const forceRefresh = req.query.refresh === 'true';
+        const report = await getOrRunStartupReport(forceRefresh);
+        res.json(report);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/admin/config/verify', authMiddleware, async (req, res) => {
+    try {
+        const report = await verifyStartupConfigAccess({ logToConsole: true });
+        res.json(report);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -2091,9 +2136,12 @@ app.get('/api/mesh/cross_inventory', authMiddleware, async (req, res) => {
 export { app };
 
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, '0.0.0.0', () => {
+    app.listen(PORT, '0.0.0.0', async () => {
         console.log(`\n\x1b[32m[Mesh Server] Running on http://0.0.0.0:${PORT}\x1b[0m`);
         logger.log('Server', `Starting system in ${process.env.NODE_ENV || 'development'} mode`, 'INFO');
+        await verifyStartupConfigAccess({ logToConsole: true }).catch(err => {
+            console.error('[Config Verification] Startup check failed:', err);
+        });
         checkAgentConnectivity();
     });
 }
